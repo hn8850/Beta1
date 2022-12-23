@@ -8,6 +8,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -121,4 +123,55 @@ public class Login extends AppCompatActivity {
 
         return matcher.matches();
     }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        String st = item.getTitle().toString();
+
+        if (st.equals("Login")) {
+            Intent si = new Intent(this, Login.class);
+            startActivity(si);
+        }
+
+        if (st.equals("Navi")) {
+            Intent si = new Intent(this, Navi.class);
+            startActivity(si);
+        }
+
+        /*
+        if (st.equals("Camera")) {
+            Intent si = new Intent(this, activity_3.class);
+            startActivity(si);
+        }
+
+        if (st.equals("Chat")){
+            Toast.makeText(this, "You're in this Activity!!", Toast.LENGTH_SHORT).show();
+        }
+
+        if (st.equals("Notifications")){
+            Intent si = new Intent(this, notifs.class);
+            startActivity(si);
+        }
+
+        if (st.equals("Google Pay")) {
+            Intent si = new Intent(this, GooglePay.class);
+            startActivity(si);
+        }
+
+        if (st.equals("Maps")) {
+            Intent si = new Intent(this, mapa.class);
+            startActivity(si);
+        }
+         */
+        return true;
+    }
+
+
+
 }
