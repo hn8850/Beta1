@@ -143,6 +143,11 @@ public class Login extends AppCompatActivity {
             Intent si = new Intent(this, Navi.class);
             startActivity(si);
         }
+        if (st.equals("test")) {
+            Intent si = new Intent(this, test.class);
+            startActivity(si);
+        }
+
 
         /*
         if (st.equals("Camera")) {

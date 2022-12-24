@@ -1,28 +1,26 @@
 package com.example.beta1;
 
+import static android.content.ContentValues.TAG;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.location.Location;
+import android.location.LocationManager;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.AlertDialog;
-import android.content.ActivityNotFoundException;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Handler;
-
+import com.example.beta1.databinding.ActivityNaviBinding;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapsInitializer;
@@ -30,10 +28,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.example.beta1.databinding.ActivityNaviBinding;
 
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +37,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     private GoogleMap mMap;
     private ActivityNaviBinding binding;
     private final static int LOCATION_PERMISSION_CODE = 101;
-    private static final String GEO_URI_PREFIX = "geo:";
+    //private static final String GEO_URI_PREFIX = "geo:";
 
 
     @Override
@@ -59,8 +54,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         } else {
             requestLocationPermission();
         }
-
-
     }
 
     public void onMapReady(GoogleMap googleMap) {
@@ -73,6 +66,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 mMap.clear();
                 mMap.addMarker(new MarkerOptions().position(latLng));
                 NaviToMarker(latLng);
+                System.out.println("onMapClick: Latitude = " + latLng.latitude + " , Longitude = " + latLng.longitude);
             }
         });
 
@@ -134,6 +128,35 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         }
         return true;
     }
+
+    /**
+     * to use later... (custom markers)
+     */
+/*
+   public void addCustomMarker(GoogleMap googleMap, LatLng latLng, String title) {
+        // create a blue circle marker icon
+        Drawable circleDrawable = getResources().getDrawable(R.drawable.blue_circle);
+        BitmapDescriptor markerIcon = getMarkerIconFromDrawable(circleDrawable);
+
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.title(title);
+        markerOptions.icon(markerIcon);
+
+        Marker marker = googleMap.addMarker(markerOptions);
+        marker.setVisible(true); // set the marker's title to always be visible
+    }
+
+    private static BitmapDescriptor getMarkerIconFromDrawable(Drawable drawable) {
+        Canvas canvas = new Canvas();
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        canvas.setBitmap(bitmap);
+        drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+        drawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+ */
+
 
 
     @SuppressLint("MissingPermission")

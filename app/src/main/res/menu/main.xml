@@ -7,6 +7,7 @@
     <item android:title="Order" />
     <item android:title="Support" />
     <item android:title="Edit Profile" />
+    <item android:title="test" />
 
 
 </menu>
