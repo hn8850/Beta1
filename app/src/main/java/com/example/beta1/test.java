@@ -11,7 +11,11 @@ import android.widget.TextView;
 import android.location.Address;
 import android.location.Geocoder;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -22,6 +26,7 @@ public class test extends AppCompatActivity {
     private TextView mTextViewLatitude;
     private TextView mTextViewLongitude;
     private Button mButtonTranslate;
+    FirebaseDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,10 +49,19 @@ public class test extends AppCompatActivity {
                 if (latLng != null) {
                     double latitude = latLng[0];
                     double longitude = latLng[1];
-
+                    db = FirebaseDatabase.getInstance();
                     mTextViewLatitude.setText(String.format("Latitude: %f", latitude));
                     mTextViewLongitude.setText(String.format("Longitude: %f", longitude));
-                }            }
+                    DatabaseReference test = db.getReference("ParkAds");
+                    DatabaseReference park = test.child("3126763334810943");
+                    ArrayList<String> test2 = new ArrayList<>();
+                    test2.add(String.valueOf(latitude));
+                    test2.add(String.valueOf(longitude));
+                    park.child("test").setValue(test2);
+                }
+
+
+            }
         });
     }
 

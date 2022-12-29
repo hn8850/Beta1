@@ -1,19 +1,23 @@
 package com.example.beta1;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 public class ParkAd {
-    String latitude; //latitude,longitude
+    String latitude;
     String longitude;
     String userID;
-    Boolean Active;
+    int Active;
     String Date;
     String BeginHour;
     String FinishHour;
     Double HourlyRate;
-    String PictureUrl;
+    //ArrayList<String> PictureUrl;
     String Description;
     String Address;
 
-    public ParkAd(String latitude,String longitude,String userID, Boolean active,String date, String beginHour, String finishHour, Double hourlyRate, String PictureUrl, String description, String address) {
+    public ParkAd(String latitude,String longitude,String userID, int active,String date, String beginHour, String finishHour, Double hourlyRate, String description, String address) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.userID = userID;
@@ -22,7 +26,7 @@ public class ParkAd {
         BeginHour = beginHour;
         FinishHour = finishHour;
         HourlyRate = hourlyRate;
-        this.PictureUrl = PictureUrl;
+        //this.PictureUrl = PictureUrl;
         Description = description;
         Address = address;
     }
@@ -59,11 +63,11 @@ public class ParkAd {
         this.userID = userID;
     }
 
-    public Boolean getActive() {
+    public int getActive() {
         return Active;
     }
 
-    public void setActive(Boolean active) {
+    public void setActive(int active) {
         Active = active;
     }
 
@@ -99,13 +103,13 @@ public class ParkAd {
         HourlyRate = hourlyRate;
     }
 
-    public String getPictureUrl() {
-        return PictureUrl;
-    }
-
-    public void setPictureUrl(String pictureUrl) {
-        PictureUrl = pictureUrl;
-    }
+//    public ArrayList<String> getPictureUrl() {
+//        return PictureUrl;
+//    }
+//
+//    public void setPictureUrl(ArrayList<String> pictureUrl) {
+//        PictureUrl = pictureUrl;
+//    }
 
     public String getDescription() {
         return Description;

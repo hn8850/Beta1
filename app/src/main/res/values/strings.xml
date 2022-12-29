@@ -2,6 +2,23 @@
     <string name="app_name">Beta1</string>
     <string name="title_activity_navi">Navi</string>
     <string name="title_activity_upload_ad">UploadAd</string>
-    <string name="tab_text_1">Tab 1</string>
-    <string name="tab_text_2">Tab 2</string>
+
+    <string name="prefs_address_key">address</string>
+    <string name="prefs_latitude_key">latitude</string>
+    <string name="prefs_longitude_key">longitude</string>
+    <string name="prefs_date_key">Date</string>
+    <string name="prefs_beginhour_key">BeginHour</string>
+    <string name="prefs_finishhour_key">FinishHour</string>
+    <string name="prefs_hourlyrate_key">HourlyRate</string>
+    <string name="prefs_description_key">Description</string>
+    <string name="prefs_URI1_key">URI1</string>
+    <string name="prefs_URI2_key">URI2</string>
+    <string name="prefs_URI3_key">URI3</string>
+    <string name="prefs_URI4_key">URI4</string>
+    <string name="prefs_URI5_key">URI5</string>
+    <string name="prefs_FINISH_key">Finish</string>
+
+
+
+
 </resources>

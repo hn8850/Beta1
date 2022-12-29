@@ -149,12 +149,11 @@ public class Login extends AppCompatActivity {
         }
 
 
-        /*
-        if (st.equals("Camera")) {
-            Intent si = new Intent(this, activity_3.class);
+        if (st.equals("Post Ad")) {
+            Intent si = new Intent(this, UploadAd.class);
             startActivity(si);
         }
-
+/*
         if (st.equals("Chat")){
             Toast.makeText(this, "You're in this Activity!!", Toast.LENGTH_SHORT).show();
         }
