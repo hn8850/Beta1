@@ -130,9 +130,16 @@ public class Register extends AppCompatActivity {
                             @Override
                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                                 System.out.println("Upload successful");
-                                User userDB = new User(userName, 1, name, date, phone, picUrl);
-                                DatabaseReference refDb = mDb.getReference("Users");
-                                refDb.child(UID).setValue(userDB);
+                                refPic.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        picUrl = uri.toString();
+                                        User userDB = new User(userName, 1, name, date, phone, picUrl);
+                                        DatabaseReference refDb = mDb.getReference("Users");
+                                        refDb.child(UID).setValue(userDB);
+                                    }
+                                });
+
                             }
                         });
 

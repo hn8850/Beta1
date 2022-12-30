@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="24dp"
-    tools:context=".Register">
+    tools:context=".EditProfile">
 
     <ImageView
         android:id="@+id/imageView"
@@ -28,11 +28,11 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginVertical="16dp"
-            android:layout_weight="2"
+            android:layout_weight="1"
             android:gravity="center_horizontal"
-            android:text="Register"
+            android:text="Update"
             android:textColor="@color/teal_700"
-            android:textSize="30sp"
+            android:textSize="24sp"
             android:textStyle="bold" />
 
 
@@ -40,38 +40,7 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etRegEmail"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:hint="Email"
-                android:inputType="textEmailAddress" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="12dp"
-            android:layout_weight="3"
-            app:passwordToggleEnabled="true">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etRegPass"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Password"
-                android:inputType="textPassword" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="3">
+            android:layout_weight="2">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRegID"
@@ -86,7 +55,7 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3">
+            android:layout_weight="2">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRegName"
@@ -101,7 +70,7 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3">
+            android:layout_weight="2">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRegDateofBirth"
@@ -116,7 +85,7 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3">
+            android:layout_weight="2">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRegPhone"
@@ -127,39 +96,58 @@
         </com.google.android.material.textfield.TextInputLayout>
 
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRegister"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="24dp"
-            android:layout_weight="3"
-            android:text="Register" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="15dp"
             android:layout_weight="2"
-            android:gravity="center"
             android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Already registered"
-                android:textSize="16sp" />
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.5" />
 
             <TextView
-                android:id="@+id/tvLoginHere"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="8dp"
-                android:text="Login here"
-                android:textColor="@color/teal_700"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:id="@+id/ActiveTv"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_weight="1.5"
+                android:gravity="center|center_horizontal"
+                android:text="Active"
+                android:textSize="20sp" />
+
+            <Switch
+                android:id="@+id/switch1"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginRight="30dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/NotActiveTv"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_weight="1.5"
+                android:gravity="center|center_horizontal"
+                android:text="Not Active"
+                android:textSize="20sp" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.5" />
 
         </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnUpdate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:onClick="update"
+            android:text="update" />
 
     </LinearLayout>
 

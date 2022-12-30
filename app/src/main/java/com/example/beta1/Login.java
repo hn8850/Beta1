@@ -45,6 +45,7 @@ public class Login extends AppCompatActivity {
 
 
         mAuth = FirebaseAuth.getInstance();
+        //mAuth.signOut();
 
         btnLogin.setOnClickListener(view -> {
             loginUser();
@@ -135,8 +136,7 @@ public class Login extends AppCompatActivity {
         String st = item.getTitle().toString();
 
         if (st.equals("Login")) {
-            Intent si = new Intent(this, Login.class);
-            startActivity(si);
+            Toast.makeText(this, "You're in this Activity!!", Toast.LENGTH_SHORT).show();
         }
 
         if (st.equals("Navi")) {
@@ -148,16 +148,16 @@ public class Login extends AppCompatActivity {
             startActivity(si);
         }
 
-
         if (st.equals("Post Ad")) {
             Intent si = new Intent(this, UploadAd.class);
             startActivity(si);
         }
-/*
-        if (st.equals("Chat")){
-            Toast.makeText(this, "You're in this Activity!!", Toast.LENGTH_SHORT).show();
-        }
 
+        if (st.equals("Edit Profile")) {
+            Intent si = new Intent(this, EditProfile.class);
+            startActivity(si);
+        }
+/*
         if (st.equals("Notifications")){
             Intent si = new Intent(this, notifs.class);
             startActivity(si);
@@ -175,7 +175,6 @@ public class Login extends AppCompatActivity {
          */
         return true;
     }
-
 
 
 }
