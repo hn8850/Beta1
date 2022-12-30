@@ -262,13 +262,12 @@ public class InfoFrag extends Fragment {
         String Description = sharedPrefs.getString("Description", "No desc");
         String Address = sharedPrefs.getString("address", "0");
 
-        ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, Date, BeginHour, FinishHour, HourlyRate, Description, Address);
+        ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, Date, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
         DatabaseReference adRef = mDb.getReference("ParkAds");
         adRef.child(path).setValue(ad);
-        adRef.child(path).child("IMAGE URLS").setValue(imageURLS);
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
-
     }
+
 
 
     public void ReCreateFolder(String path) {

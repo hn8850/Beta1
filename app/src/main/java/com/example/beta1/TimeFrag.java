@@ -109,7 +109,7 @@ public class TimeFrag extends Fragment {
         sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
         sharedPrefs.registerOnSharedPreferenceChangeListener(prefsListener2);
 
-        if (sharedPrefs.contains(getString(R.string.prefs_FINISH_key))){
+        if (sharedPrefs.contains(getString(R.string.prefs_FINISH_key))) {
             finishButton.setVisibility(View.VISIBLE);
             finishButton.setClickable(true);
         }
@@ -212,12 +212,10 @@ public class TimeFrag extends Fragment {
         String Description = sharedPrefs.getString("Description", "No desc");
         String Address = sharedPrefs.getString("address", "0");
 
-        ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, Date, BeginHour, FinishHour, HourlyRate, Description, Address);
+        ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, Date, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
         DatabaseReference adRef = mDb.getReference("ParkAds");
         adRef.child(path).setValue(ad);
-        adRef.child(path).child("IMAGE URLS").setValue(imageURLS);
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
-
     }
 
 
@@ -248,8 +246,6 @@ public class TimeFrag extends Fragment {
         });
 
     }
-
-
 
 
     AdapterView.OnItemSelectedListener spinListener = new AdapterView.OnItemSelectedListener() {
@@ -301,7 +297,6 @@ public class TimeFrag extends Fragment {
 
         }
     };
-
 
 
     private View.OnClickListener saveButtonClickListener = new View.OnClickListener() {

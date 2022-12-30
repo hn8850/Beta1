@@ -13,11 +13,11 @@ public class ParkAd {
     String BeginHour;
     String FinishHour;
     Double HourlyRate;
-    //ArrayList<String> PictureUrl;
+    ArrayList<String> PictureUrl;
     String Description;
     String Address;
 
-    public ParkAd(String latitude,String longitude,String userID, int active,String date, String beginHour, String finishHour, Double hourlyRate, String description, String address) {
+    public ParkAd(String latitude,String longitude,String userID, int active,String date, String beginHour, String finishHour, Double hourlyRate,ArrayList<String> pictureUrl, String description, String address) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.userID = userID;
@@ -26,7 +26,7 @@ public class ParkAd {
         BeginHour = beginHour;
         FinishHour = finishHour;
         HourlyRate = hourlyRate;
-        //this.PictureUrl = PictureUrl;
+        this.PictureUrl = pictureUrl;
         Description = description;
         Address = address;
     }
@@ -103,13 +103,13 @@ public class ParkAd {
         HourlyRate = hourlyRate;
     }
 
-//    public ArrayList<String> getPictureUrl() {
-//        return PictureUrl;
-//    }
-//
-//    public void setPictureUrl(ArrayList<String> pictureUrl) {
-//        PictureUrl = pictureUrl;
-//    }
+    public ArrayList<String> getPictureUrl() {
+        return PictureUrl;
+    }
+
+    public void setPictureUrl(ArrayList<String> pictureUrl) {
+        PictureUrl = pictureUrl;
+    }
 
     public String getDescription() {
         return Description;
