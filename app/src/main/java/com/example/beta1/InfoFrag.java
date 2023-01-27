@@ -266,6 +266,8 @@ public class InfoFrag extends Fragment {
         DatabaseReference adRef = mDb.getReference("ParkAds");
         adRef.child(path).setValue(ad);
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
+        sharedPrefs.edit().clear().apply();
+
     }
 
 

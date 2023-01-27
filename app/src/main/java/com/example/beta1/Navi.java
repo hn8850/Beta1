@@ -1,7 +1,5 @@
 package com.example.beta1;
 
-import static android.content.ContentValues.TAG;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -13,7 +11,6 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -27,7 +24,13 @@ import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +40,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     private GoogleMap mMap;
     private ActivityNaviBinding binding;
     private final static int LOCATION_PERMISSION_CODE = 101;
-    //private static final String GEO_URI_PREFIX = "geo:";
+    FirebaseDatabase fbDB;
+    ArrayList<ParkAd> parkAds = new ArrayList<>();
 
 
     @Override
@@ -59,6 +63,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         MapsInitializer.initialize(this);
         mMap = googleMap;
+        SetParkAdMarkers(this);
         animateCamera();
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
@@ -70,8 +75,55 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             }
         });
 
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull Marker marker) {
+                Intent si = new Intent(getApplicationContext(), ViewParkAd.class);
+                si.putExtra("lat",marker.getPosition().latitude);
+                si.putExtra("long",marker.getPosition().longitude);
+                startActivity(si);
+                return true;
+            }
+        });
+
     }
 
+    public void SetParkAdMarkers(Context context) {
+        fbDB = FirebaseDatabase.getInstance();
+        DatabaseReference AdsDB = fbDB.getReference("ParkAds");
+        AdsDB.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                parkAds.clear();
+                for (DataSnapshot snapshot1 : snapshot.getChildren()) {
+                    ParkAd parkAd = snapshot1.getValue(ParkAd.class);
+                    parkAds.add(parkAd);
+                    System.out.println("PARK AD ADDED");
+                }
+
+                CustomInfoWindowAdapter customInfoWindow = new CustomInfoWindowAdapter(context);
+                mMap.setInfoWindowAdapter(customInfoWindow);
+                for (ParkAd parkAd : parkAds) {
+                    LatLng location = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
+                    MarkerOptions markerOptions = new MarkerOptions()
+                            .position(location)
+                            .title(parkAd.getHourlyRate().toString());
+                    // Add the marker to the map
+                    Marker marker = mMap.addMarker(markerOptions);
+                    marker.showInfoWindow();
+                    System.out.println("LOCATION = " + location);
+                    System.out.println("ADDress = " + parkAd.getAddress());
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+    }
 
     public void NaviToMarker(@NonNull LatLng latLng) {
         double latitude = latLng.latitude;
@@ -99,7 +151,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         appsList.add(wazeIntent);
         appsList.add(googleMapsIntent);
 
-        if (doAppsExist(appsList)){
+        if (doAppsExist(appsList)) {
             // Create an app chooser using the createChooser method of the Intent class and pass in the Intents for Google Maps and Waze
             Intent chooserIntent = Intent.createChooser(googleMapsIntent, "Navigate using:");
             chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{wazeIntent});
@@ -107,14 +159,13 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
             // Start the app chooser using the startActivity method of the Activity class
             startActivity(chooserIntent);
-        }
-        else{
+        } else {
             Intent playStoreIntent = new Intent(Intent.ACTION_VIEW);
             playStoreIntent.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.waze"));
             startActivity(playStoreIntent);
         }
 
-        
+
     }
 
     private boolean doAppsExist(List<Intent> apps) {
@@ -156,14 +207,12 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
  */
-
-
-
     @SuppressLint("MissingPermission")
     private void animateCamera() {
+        System.out.println("00000");
         Location location = getLastKnownLocation();
         if (location != null) {
-
+            System.out.println("11111");
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
                 //    ActivityCompat#requestPermissions
@@ -172,8 +221,10 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 //                                          int[] grantResults)
                 // to handle the case where the user grants the permission. See the documentation
                 // for ActivityCompat#requestPermissions for more details.
+                System.out.println("22222");
                 return;
             }
+            System.out.println("333333");
             mMap.setMyLocationEnabled(true);
             mMap.getUiSettings().setMyLocationButtonEnabled(true);
             mMap.getUiSettings().setAllGesturesEnabled(true);
@@ -182,7 +233,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15));
+                    System.out.println("444444");
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 10));
 
                 }
             }, 2000);
@@ -190,6 +242,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     }
 
     private Location getLastKnownLocation() {
+        System.out.println("55555");
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = locationManager.getProviders(true);
         Location bestLocation = null;
@@ -199,6 +252,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 continue;
             }
             if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+                System.out.println("666666");
+
                 // Found best last known location: %s", l);
                 bestLocation = l;
             }

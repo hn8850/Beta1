@@ -134,6 +134,7 @@ public class Register extends AppCompatActivity {
                                     @Override
                                     public void onSuccess(Uri uri) {
                                         picUrl = uri.toString();
+                                        System.out.println("WHAT    = " + picUrl);
                                         User userDB = new User(userName, 1, name, date, phone, picUrl);
                                         DatabaseReference refDb = mDb.getReference("Users");
                                         refDb.child(UID).setValue(userDB);

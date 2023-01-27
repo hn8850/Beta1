@@ -1,11 +1,15 @@
 package com.example.beta1;
 
+import android.content.Context;
 import android.content.Intent;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -17,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -32,8 +37,10 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class EditProfile extends AppCompatActivity {
@@ -84,7 +91,6 @@ public class EditProfile extends AppCompatActivity {
             for (UserInfo userInfo : CurrentUserAuth.getProviderData()) {
                 if (userInfo.getProviderId().equals("password")) {
                     UID = CurrentUserAuth.getUid();
-                    System.out.println(CurrentUserAuth.getUid() + " WJEWJJ");
                     signedIn = true;
                     readUser();
                 }
@@ -110,9 +116,9 @@ public class EditProfile extends AppCompatActivity {
                     PhoneEt.setText(currentUser.getPhoneNumber());
                     picUrl = currentUser.getProfilePicURL();
                     imageUri = Uri.parse(picUrl);
-                    StorageReference refStorage = mStorage.getReference("UserPics");
-                    StorageReference refPic = refStorage.child(IDEt.getText().toString());
-                    Glide.with(getApplicationContext()).load(refPic).into(iv);
+                    System.out.println("WHAT = " + picUrl);
+                    downloadImage(picUrl, getApplicationContext());
+
                     active = currentUser.getActive();
                     if (active == 1) {
                         sw.setChecked(false);
@@ -152,32 +158,37 @@ public class EditProfile extends AppCompatActivity {
                     else active = 1;
 
 
-//                    StorageReference refStorage = mStorage.getReference("UserPics");
-//                    StorageReference refPic = refStorage.child(UID);
-//                    uploadTask = refPic.putFile(imageUri);
-//                    uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-//                        @Override
-//                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-//                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-//                            System.out.println("Upload is " + progress + "% done");
-//                        }
-//                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-//                        @Override
-//                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-//
-//                        }
-//                    });
+                    StorageReference refStorage = mStorage.getReference("UserPics");
+                    StorageReference refPic = refStorage.child(UID);
+                    uploadTask = refPic.putFile(imageUri);
+                    uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                            System.out.println("Upload is " + progress + "% done");
+                        }
+                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            refPic.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    picUrl = uri.toString();
+                                    System.out.println("SYSURL = " + imageUri);
 
-                    System.out.println("SYSURL = " + imageUri);
+                                    DatabaseReference userDB = mDb.getReference("Users").child(UID);
+                                    userDB.child("userName").setValue(userName);
+                                    userDB.child("name").setValue(name);
+                                    userDB.child("dateOfBirth").setValue(date);
+                                    userDB.child("phoneNumber").setValue(phone);
+                                    userDB.child("profilePicURL").setValue(picUrl);
+                                    userDB.child("active").setValue(active);
+                                }
+                            });
 
+                        }
+                    });
 
-                    DatabaseReference userDB = mDb.getReference("Users").child(UID);
-                    userDB.child("userName").setValue(userName);
-                    userDB.child("name").setValue(name);
-                    userDB.child("dateOfBirth").setValue(date);
-                    userDB.child("phoneNumber").setValue(phone);
-                    userDB.child("profilePicURL").setValue(picUrl);
-                    userDB.child("active").setValue(active);
                 }
             }
             if (!signedIn) Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
@@ -211,6 +222,30 @@ public class EditProfile extends AppCompatActivity {
             }
         }
     };
+
+
+    private void downloadImage(String imageUrl, final Context context) {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReferenceFromUrl(imageUrl);
+
+        final long FIVE_MEGABYTE = 5 * 1024 * 1024;
+        storageRef.getBytes(FIVE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                // Data for "images/island.jpg" is returns, use this as needed
+                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                iv.setImageBitmap(bitmap);
+                File file = new File(context.getCacheDir(), "tempImage");
+                file.delete();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle any errors
+                System.out.println("Error occured while downloading image");
+            }
+        });
+    }
 
 
     public void ProfilePic(View view) {
