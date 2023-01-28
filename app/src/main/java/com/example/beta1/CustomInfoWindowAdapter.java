@@ -28,8 +28,6 @@ public class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
         TextView tvTitle = view.findViewById(R.id.title);
         tvTitle.setText(marker.getTitle());
 
-
-
         return view;
     }
 }

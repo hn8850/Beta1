@@ -23,6 +23,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -42,7 +44,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     private final static int LOCATION_PERMISSION_CODE = 101;
     FirebaseDatabase fbDB;
     ArrayList<ParkAd> parkAds = new ArrayList<>();
-
+    List<MarkerOptions> parkAdMarkerOptions = new ArrayList<>();
+    List<Marker> parkAdMarkers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,8 +72,14 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             @Override
             public void onMapClick(@NonNull LatLng latLng) {
                 mMap.clear();
-                mMap.addMarker(new MarkerOptions().position(latLng));
+                for (MarkerOptions specificMarker : parkAdMarkerOptions) {
+                    Marker marker = mMap.addMarker(specificMarker);
+                    marker.showInfoWindow();
+                }
+                MarkerOptions marker = new MarkerOptions().position(latLng).draggable(false);
+                mMap.addMarker(marker);
                 NaviToMarker(latLng);
+
                 System.out.println("onMapClick: Latitude = " + latLng.latitude + " , Longitude = " + latLng.longitude);
             }
         });
@@ -79,8 +88,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             @Override
             public boolean onMarkerClick(@NonNull Marker marker) {
                 Intent si = new Intent(getApplicationContext(), ViewParkAd.class);
-                si.putExtra("lat",marker.getPosition().latitude);
-                si.putExtra("long",marker.getPosition().longitude);
+                si.putExtra("lat", marker.getPosition().latitude);
+                si.putExtra("long", marker.getPosition().longitude);
                 startActivity(si);
                 return true;
             }
@@ -94,6 +103,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         AdsDB.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                parkAdMarkerOptions = new ArrayList<>();
+                parkAdMarkers = new ArrayList<>();
                 parkAds.clear();
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     ParkAd parkAd = snapshot1.getValue(ParkAd.class);
@@ -101,19 +112,31 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     System.out.println("PARK AD ADDED");
                 }
 
+                BitmapDescriptor blueMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
                 CustomInfoWindowAdapter customInfoWindow = new CustomInfoWindowAdapter(context);
                 mMap.setInfoWindowAdapter(customInfoWindow);
+
                 for (ParkAd parkAd : parkAds) {
                     LatLng location = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
-                    MarkerOptions markerOptions = new MarkerOptions()
+                    MarkerOptions markerOptions = new MarkerOptions().icon(blueMarkerIcon)
                             .position(location)
                             .title(parkAd.getHourlyRate().toString());
                     // Add the marker to the map
                     Marker marker = mMap.addMarker(markerOptions);
+                    customInfoWindow.getInfoContents(marker);
                     marker.showInfoWindow();
+                    parkAdMarkerOptions.add(markerOptions);
+                    parkAdMarkers.add(marker);
                     System.out.println("LOCATION = " + location);
                     System.out.println("ADDress = " + parkAd.getAddress());
                 }
+
+//                for (int i = 0; i < parkAdMarkers.size(); i++) {
+//                    final Marker marker = parkAdMarkers.get(i);
+//                    marker.setTag(i);
+//                    marker.showInfoWindow();
+//                }
+
 
             }
 
