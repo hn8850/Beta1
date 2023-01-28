@@ -19,6 +19,13 @@
         android:theme="@style/Theme.Beta1"
         tools:targetApi="31">
         <activity
+            android:name=".ViewUser"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
             android:name=".ViewParkAd"
             android:exported="false">
             <meta-data
@@ -59,7 +66,7 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" />
+            android:value="bla" />
 
         <activity
             android:name=".Navi"

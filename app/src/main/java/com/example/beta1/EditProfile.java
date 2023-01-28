@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Switch;
@@ -48,6 +49,7 @@ public class EditProfile extends AppCompatActivity {
     TextInputEditText IDEt, NameEt, DateEt, PhoneEt;
     Switch sw;
 
+
     String userName, name, date, phone, picUrl;
     int active;
     String UID;
@@ -65,6 +67,7 @@ public class EditProfile extends AppCompatActivity {
     UploadTask uploadTask;
 
     boolean signedIn;
+    boolean changedPic = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,6 +145,8 @@ public class EditProfile extends AppCompatActivity {
 
             }
         });
+
+
     }
 
 
@@ -157,37 +162,47 @@ public class EditProfile extends AppCompatActivity {
                     if (sw.isChecked()) active = 0;
                     else active = 1;
 
+                    if (changedPic) {
+                        StorageReference refStorage = mStorage.getReference("UserPics");
+                        StorageReference refPic = refStorage.child(UID);
+                        uploadTask = refPic.putFile(imageUri);
+                        uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                                double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                                System.out.println("Upload is " + progress + "% done");
+                            }
+                        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                refPic.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        picUrl = uri.toString();
+                                        System.out.println("SYSURL = " + imageUri);
 
-                    StorageReference refStorage = mStorage.getReference("UserPics");
-                    StorageReference refPic = refStorage.child(UID);
-                    uploadTask = refPic.putFile(imageUri);
-                    uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                            System.out.println("Upload is " + progress + "% done");
-                        }
-                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            refPic.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri uri) {
-                                    picUrl = uri.toString();
-                                    System.out.println("SYSURL = " + imageUri);
+                                        DatabaseReference userDB = mDb.getReference("Users").child(UID);
+                                        userDB.child("userName").setValue(userName);
+                                        userDB.child("name").setValue(name);
+                                        userDB.child("dateOfBirth").setValue(date);
+                                        userDB.child("phoneNumber").setValue(phone);
+                                        userDB.child("profilePicURL").setValue(picUrl);
+                                        userDB.child("active").setValue(active);
+                                    }
+                                });
 
-                                    DatabaseReference userDB = mDb.getReference("Users").child(UID);
-                                    userDB.child("userName").setValue(userName);
-                                    userDB.child("name").setValue(name);
-                                    userDB.child("dateOfBirth").setValue(date);
-                                    userDB.child("phoneNumber").setValue(phone);
-                                    userDB.child("profilePicURL").setValue(picUrl);
-                                    userDB.child("active").setValue(active);
-                                }
-                            });
+                            }
+                        });
+                    }
+                    else {
+                        DatabaseReference userDB = mDb.getReference("Users").child(UID);
+                        userDB.child("userName").setValue(userName);
+                        userDB.child("name").setValue(name);
+                        userDB.child("dateOfBirth").setValue(date);
+                        userDB.child("phoneNumber").setValue(phone);
+                        userDB.child("active").setValue(active);
+                    }
 
-                        }
-                    });
 
                 }
             }
@@ -262,6 +277,7 @@ public class EditProfile extends AppCompatActivity {
                 imageUri = data.getData();
                 iv.setImageURI(imageUri);
                 picUrl = imageUri.toString();
+                changedPic = true;
             }
         }
     }
