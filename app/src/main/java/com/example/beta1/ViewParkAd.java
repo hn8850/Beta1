@@ -96,6 +96,7 @@ public class ViewParkAd extends AppCompatActivity {
                         addressTv.setText("Address: " + parkAd.getAddress());
                         priceTv.setText("Price for hour: " + parkAd.getHourlyRate());
                         descTv.setText("Description: " + parkAd.getDescription());
+
                         picURL = parkAd.getPictureUrl().get(0);
                         downloadImage(picURL, getApplicationContext(), 0);
                     }
@@ -116,15 +117,6 @@ public class ViewParkAd extends AppCompatActivity {
         });
     }
 
-
-    private View.OnClickListener ProfilePicClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            Intent si = new Intent(getApplicationContext(),ViewUser.class);
-            si.putExtra("UserID",userID);
-            startActivity(si);
-        }
-    };
 
 
 
@@ -191,4 +183,20 @@ public class ViewParkAd extends AppCompatActivity {
     }
 
 
+    public void GoToMakeOrder(View view) {
+        Intent si = new Intent(this,HourSelect.class);
+        si.putExtra("beginHour",parkAd.getBeginHour());
+        si.putExtra("endHour",parkAd.getFinishHour());
+        si.putExtra("parkAdID",parkAdID);
+        startActivity(si);
+    }
+
+    private View.OnClickListener ProfilePicClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            Intent si = new Intent(getApplicationContext(),ViewUser.class);
+            si.putExtra("UserID",userID);
+            startActivity(si);
+        }
+    };
 }

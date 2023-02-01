@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Locale;
 
 
-public class test extends AppCompatActivity {
+public class test1 extends AppCompatActivity {
 
     private EditText mEditTextAddress;
     private TextView mTextViewLatitude;
@@ -37,6 +37,9 @@ public class test extends AppCompatActivity {
         mTextViewLatitude = findViewById(R.id.text_view_latitude);
         mTextViewLongitude = findViewById(R.id.text_view_longitude);
         mButtonTranslate = findViewById(R.id.button_translate);
+        Order order = new Order("nani","nani","22/22/2222","28/01/2023","12:00","19:00",200);
+        mEditTextAddress.setText(order.isActive() + " ");
+
 
         mButtonTranslate.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -45,7 +48,7 @@ public class test extends AppCompatActivity {
                 String address = mEditTextAddress.getText().toString();
 
                 // translate the address and display the latitude and longitude
-                double[] latLng = getLatLngFromAddress(test.this, address);
+                double[] latLng = getLatLngFromAddress(test1.this, address);
                 if (latLng != null) {
                     double latitude = latLng[0];
                     double longitude = latLng[1];

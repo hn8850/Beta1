@@ -17,11 +17,12 @@ public class ParkAd {
     String Description;
     String Address;
 
-    public ParkAd()
-    {
+
+    public ParkAd() {
 
     }
-    public ParkAd(String latitude,String longitude,String userID, int active,String date, String beginHour, String finishHour, Double hourlyRate,ArrayList<String> pictureUrl, String description, String address) {
+
+    public ParkAd(String latitude, String longitude, String userID, int active, String date, String beginHour, String finishHour, Double hourlyRate, ArrayList<String> pictureUrl, String description, String address) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.userID = userID;
@@ -122,6 +123,7 @@ public class ParkAd {
     public void setDescription(String description) {
         Description = description;
     }
+
 
 
     /**

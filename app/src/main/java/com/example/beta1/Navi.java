@@ -18,8 +18,10 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.example.beta1.databinding.ActivityNaviBinding;
+import com.example.beta1.databinding.Navi2Binding;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -39,8 +41,9 @@ import java.util.List;
 
 public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
+
     private GoogleMap mMap;
-    private ActivityNaviBinding binding;
+    private Navi2Binding binding;
     private final static int LOCATION_PERMISSION_CODE = 101;
     FirebaseDatabase fbDB;
     ArrayList<ParkAd> parkAds = new ArrayList<>();
@@ -50,7 +53,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityNaviBinding.inflate(getLayoutInflater());
+        binding = Navi2Binding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         if (isLocationPermissionGranted()) {
@@ -61,6 +64,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         } else {
             requestLocationPermission();
         }
+
+
     }
 
     public void onMapReady(GoogleMap googleMap) {
