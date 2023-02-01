@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
@@ -16,25 +17,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TimeBarView extends View {
-    private float mMaxValue = 0;
-    private float mMinValue = 24;
-    private float mBarWidth = (float) 100;
+    private float mMaxValue;
+    private float mMinValue;
+    private float mBarWidth = 70;
     private Paint mPaint;
     public List<Segment> mSegments = new ArrayList<>();
 
     public TimeBarView(Context context) {
         super(context);
+        init();
     }
 
     public TimeBarView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        mPaint = new Paint();
-        mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setColor(Color.BLUE);
+        init();
     }
 
     public TimeBarView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
+        mPaint = new Paint();
+        mPaint.setStyle(Paint.Style.FILL);
+        mPaint.setColor(Color.BLUE);
     }
 
     @Override
@@ -44,29 +51,32 @@ public class TimeBarView extends View {
         int width = getWidth();
 
         canvas.drawRect(0, 0, width, height, mPaint);
-        mPaint.setColor(Color.RED);
+         Paint segPaint = new Paint();
+        segPaint.setColor(Color.RED);
+        Paint textPaint = new Paint();
+        textPaint.setTextSize(mBarWidth / 2);
+        textPaint.setColor(Color.BLACK);
+
+
         for (Segment segment : mSegments) {
-            float startY = convertValueToYCoordinate(segment.start);
-            float endY = convertValueToYCoordinate(segment.end);
-            canvas.drawRect(0, startY, getWidth(), endY, mPaint);
-
-            Paint textPaint = new Paint();
-            textPaint.setTextSize(mBarWidth / 2);
-            textPaint.setColor(Color.BLACK);
-
+            float startY = convertValueToYCoordinate(segment.getDoubleFromTimeString(segment.getBeginHour()));
+            float endY = convertValueToYCoordinate(segment.getDoubleFromTimeString(segment.getEndHour()));
+            canvas.drawRect(0, startY, getWidth(), endY, segPaint);
             float startTextPos = startY + (mBarWidth / 2);
             canvas.drawText(segment.getBeginHour(), 0, startTextPos, textPaint);
 
             float endTextPos = endY + (mBarWidth / 2) - 50;
             canvas.drawText(segment.getEndHour(), 0, endTextPos, textPaint);
-
         }
+
+
+
     }
 
-    private float convertValueToYCoordinate(float value) {
+    private float convertValueToYCoordinate(double value) {
         float height = getHeight();
         float range = mMaxValue - mMinValue;
-        float ratio = (value - mMinValue) / range;
+        float ratio = (float) (value - mMinValue) / range;
         return height * (1 - ratio);
     }
 
@@ -87,16 +97,12 @@ public class TimeBarView extends View {
     }
 
     public static class Segment {
-        public float start;
-        public float end;
+
         public String endHour;
         public String beginHour;
-        public Paint paint = new Paint();
 
-        public Segment(double start, double end, int color, String beginH, String endH) {
-            this.start = (float) start;
-            this.end = (float) end;
-            paint.setColor(color);
+        public Segment( String beginH, String endH) {
+
             endHour = endH;
             beginHour = beginH;
         }
@@ -110,18 +116,32 @@ public class TimeBarView extends View {
             return beginHour;
         }
 
-        private String hoursToText(float param) {
-            String time = "";
-            String hour, minutes;
-            float fraction = param - (float) Math.floor(param);
-            hour = String.valueOf((int) param);
-            minutes = String.valueOf((int) (fraction * 60));
-            if (Integer.valueOf(hour) < 10) hour = "0" + hour;
-            if (Integer.valueOf(minutes) < 10) minutes = "0" + minutes;
-            time = hour + ":" + minutes;
-
-            return time;
+        public double getDoubleFromTimeString(String timeStr) {
+            String[] timeComponents = timeStr.split(":");
+            int hour = Integer.parseInt(timeComponents[0]);
+            int minute = Integer.parseInt(timeComponents[1]);
+            double minuteFactor = 0;
+            switch (minute) {
+                case 0:
+                    minuteFactor = 0;
+                    break;
+                case 15:
+                    minuteFactor = 0.25;
+                    break;
+                case 30:
+                    minuteFactor = 0.5;
+                    break;
+                case 45:
+                    minuteFactor = 0.75;
+                    break;
+                default:
+                    minuteFactor = 0;
+            }
+            return hour + minuteFactor;
         }
 
+
     }
+
 }
+

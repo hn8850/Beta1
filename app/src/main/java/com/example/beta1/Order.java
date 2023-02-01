@@ -16,6 +16,10 @@ public class Order {
     boolean isComplete;
     boolean isCanceled;
 
+    public Order() {
+
+    }
+
     public Order(String parkAdID, String renterID, String confirmDate, String parkDate, String beginHour, String endHour, double hourlyRate) {
         this.parkAdID = parkAdID;
         this.renterID = renterID;
@@ -24,7 +28,7 @@ public class Order {
         this.beginHour = beginHour;
         this.endHour = endHour;
         this.hourlyRate = hourlyRate;
-        this.isCanceled  = false;
+        this.isCanceled = false;
         this.isComplete = false;
     }
 
