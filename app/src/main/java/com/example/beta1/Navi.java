@@ -44,6 +44,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private Navi2Binding binding;
+    private ActivityNaviBinding binding2;
     private final static int LOCATION_PERMISSION_CODE = 101;
     FirebaseDatabase fbDB;
     ArrayList<ParkAd> parkAds = new ArrayList<>();
@@ -53,8 +54,11 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = Navi2Binding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+//        binding = Navi2Binding.inflate(getLayoutInflater());
+//        setContentView(binding.getRoot());
+
+        binding2 = ActivityNaviBinding.inflate(getLayoutInflater());
+        setContentView(binding2.getRoot());
 
         if (isLocationPermissionGranted()) {
             // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -71,8 +75,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         MapsInitializer.initialize(this);
         mMap = googleMap;
-        SetParkAdMarkers(this);
         animateCamera();
+        SetParkAdMarkers(this);
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(@NonNull LatLng latLng) {
@@ -136,11 +140,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     System.out.println("ADDress = " + parkAd.getAddress());
                 }
 
-//                for (int i = 0; i < parkAdMarkers.size(); i++) {
-//                    final Marker marker = parkAdMarkers.get(i);
-//                    marker.setTag(i);
-//                    marker.showInfoWindow();
-//                }
+
 
 
             }

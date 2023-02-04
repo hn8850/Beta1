@@ -1,19 +1,15 @@
 package com.example.beta1;
 
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.fragment.app.Fragment;
-
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.InputFilter;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +18,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
+import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -34,29 +34,35 @@ import com.google.firebase.storage.ListResult;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
+import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class InfoFrag extends Fragment {
 
     EditText descEditText;
-    Button upload, save, finishButton;
+    Button upload, save, finishButton, clear;
     String desc;
     View view;
     int[] imageViewIds;
     ImageView[] imageViews;
     Uri[] imageUris;
     String[] StringURIs;
+    Uri imageUri;
+    File photoFile;
 
 
     private static final int RESULT_OK = -1;
     private final int PICK_IMAGES_REQUEST_CODE = 1;
+    private static final int REQUEST_IMAGE_CAPTURE = 2;
+    private static final int MAX_IMAGES = 5;
+    private int imagesCounter = 0;
 
     Calendar calendar = Calendar.getInstance();
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -64,6 +70,7 @@ public class InfoFrag extends Fragment {
 
     private final String PREFS_NAME = "ParkAd" + formattedDate;
     private static final int PREFS_MODE = Context.MODE_PRIVATE;
+
 
     private SharedPreferences sharedPrefs;
 
@@ -80,7 +87,8 @@ public class InfoFrag extends Fragment {
         upload.setOnClickListener(uploadButtonListener);
         save = view.findViewById(R.id.save3);
         save.setOnClickListener(saveButtonClickListener3);
-
+        clear = view.findViewById(R.id.clear);
+        clear.setOnClickListener(clearButtonListener);
         finishButton = view.findViewById(R.id.finish4);
         finishButton.setOnClickListener(finishButtonClickListener);
 
@@ -139,6 +147,7 @@ public class InfoFrag extends Fragment {
 
         mDb = FirebaseDatabase.getInstance();
         mStorage = FirebaseStorage.getInstance();
+        imageUris = new Uri[MAX_IMAGES];
 
         return view;
     }
@@ -201,7 +210,6 @@ public class InfoFrag extends Fragment {
                 }
             }
             System.out.println("SIZE = " + imageUris.size());
-            ArrayList<UploadTask> tasks = new ArrayList<>();
             for (int i = 0; i < imageUris.size(); i++) {
                 Uri imageUri = Uri.parse(imageUris.get(i));
                 System.out.println("URI + = " + imageUri.toString());
@@ -245,6 +253,8 @@ public class InfoFrag extends Fragment {
 
     public void uploadAd(ArrayList<String> imageURLS) {
 
+        imagesCounter = 0;
+
         sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
 
         String latitude = sharedPrefs.getString("latitude", "0");
@@ -269,7 +279,6 @@ public class InfoFrag extends Fragment {
         sharedPrefs.edit().clear().apply();
 
     }
-
 
 
     public void ReCreateFolder(String path) {
@@ -334,55 +343,145 @@ public class InfoFrag extends Fragment {
     View.OnClickListener uploadButtonListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            Intent intent = new Intent(Intent.ACTION_PICK);
-            intent.setType("image/*");
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-            startActivityForResult(intent, PICK_IMAGES_REQUEST_CODE);
+            if (imagesCounter >=5) {
+                Toast.makeText(getActivity().getApplicationContext(), "You can only select up to 5 images", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
+            CharSequence options[] = new CharSequence[]{"Take Photo", "Choose from Gallery"};
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setTitle("Select Option");
+            builder.setItems(options, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if (which == 0) {
+                        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        photoFile = null;
+                        try {
+                            photoFile = createImageFile();
+                        } catch (IOException ex) {
+                            // Error occurred while creating the File
+                        }
+                        if (photoFile!=null){
+                            imageUri = FileProvider.getUriForFile(getActivity(), "com.mydomain.fileprovider", photoFile);
+                            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                            //takePictureIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                        }
+
+
+                    } else if (which == 1) {
+                        Intent pickGalleryIntent = new Intent(Intent.ACTION_PICK);
+                        pickGalleryIntent.setType("image/*");
+                        pickGalleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+
+                        startActivityForResult(pickGalleryIntent, PICK_IMAGES_REQUEST_CODE);
+
+                    }
+                }
+            });
+            builder.show();
         }
     };
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_IMAGES_REQUEST_CODE && resultCode == RESULT_OK) {
-            // Get the selected images from the intent
-            if (data.getClipData() != null) {
-                // Multiple images were selected
-                ClipData clipData = data.getClipData();
-                imageUris = new Uri[5];
-                int numImages = clipData.getItemCount();
-                if (numImages > 5) {
-                    // Show an error message
+        if (resultCode == RESULT_OK) {
+            if (requestCode == PICK_IMAGES_REQUEST_CODE) {
+                System.out.println("COUNTER =" + imagesCounter);
+                if (data.getClipData() != null) {
+                    // Multiple images were selected
+                    ClipData clipData = data.getClipData();
+                    int numImages = clipData.getItemCount();
+                    if (numImages + imagesCounter > MAX_IMAGES) {
+                        // Show an error message
+                        Toast.makeText(getActivity().getApplicationContext(), "You can only select up to 5 images", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    for (int i = 0; i < numImages; i++) {
+                        imageUris[i + imagesCounter] = (clipData.getItemAt(i).getUri());
+                    }
+                    imagesCounter = imagesCounter + numImages;
+
+                } else {
+                    // Only one image was selected
+                    imageUris[imagesCounter] = (data.getData());
+                    imagesCounter = imagesCounter + 1;
+                }
+                // Display the images in the ImageViews
+                for (int i = 0; i < imageUris.length; i++) {
+                    if (imageUris[i] != null) imageViews[i].setImageURI(imageUris[i]);
+
+                }
+                for (int i = 0; i < MAX_IMAGES; i++) {
+                    if (imageUris[i] != null) {
+                        StringURIs[i] = imageUris[i].toString();
+                    } else StringURIs[i] = "NONE";
+                }
+
+                Toast.makeText(getActivity().getApplicationContext(), "Upload Successful", Toast.LENGTH_SHORT).show();
+            } else if (requestCode == REQUEST_IMAGE_CAPTURE) {
+                if (imagesCounter>=5){
                     Toast.makeText(getActivity().getApplicationContext(), "You can only select up to 5 images", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                for (int i = 0; i < clipData.getItemCount(); i++) {
-                    imageUris[i] = (clipData.getItemAt(i).getUri());
+                else{
+                    imageUri = Uri.fromFile(photoFile);
+                    System.out.println("URI = " + imageUri.toString());
+                    imageUris[imagesCounter] = imageUri;
+                    imageViews[imagesCounter].setImageURI(imageUri);
+                    imagesCounter++;
+
+                    for (int i = 0; i < MAX_IMAGES; i++) {
+                        if (imageUris[i] != null) {
+                            StringURIs[i] = imageUris[i].toString();
+                        } else StringURIs[i] = "NONE";
+                    }
                 }
-            } else {
-                // Only one image was selected
-                imageUris[0] = (data.getData());
-            }
-
-
-            // Display the images in the ImageViews
-            for (int i = 0; i < imageUris.length; i++) {
-                if (imageUris[i] != null) imageViews[i].setImageURI(imageUris[i]);
 
             }
-            for (int i = 0; i < 5; i++) {
-                if (imageUris[i] != null) {
-                    StringURIs[i] = imageUris[i].toString();
-                } else StringURIs[i] = "NONE";
-            }
-
-
-            Toast.makeText(getActivity().getApplicationContext(), "Upload Successful", Toast.LENGTH_SHORT).show();
-
-
         }
+        // Get the selected images from the intent
+
+
     }
 
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+        return image;
+    }
+
+    View.OnClickListener clearButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            imageUris = new Uri[MAX_IMAGES];
+            StringURIs = new String[MAX_IMAGES];
+            imagesCounter = 0;
+            for (int i = 0; i < imageViews.length; i++) {
+                imageViews[i].setImageResource(R.drawable.dotsquare);
+            }
+            sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
+            SharedPreferences.Editor editor = sharedPrefs.edit();
+            editor.putString(getString(R.string.prefs_description_key), desc);
+            editor.putString(getString(R.string.prefs_URI1_key), StringURIs[0]);
+            editor.putString(getString(R.string.prefs_URI2_key), StringURIs[1]);
+            editor.putString(getString(R.string.prefs_URI3_key), StringURIs[2]);
+            editor.putString(getString(R.string.prefs_URI4_key), StringURIs[3]);
+            editor.putString(getString(R.string.prefs_URI5_key), StringURIs[4]);
+
+            editor.apply();
+
+        }
+    };
 
 }

@@ -208,6 +208,8 @@ public class HourSelect extends AppCompatActivity {
                 return false;
             }
         }
+        if (getDoubleFromTimeString(hour2)<=getDoubleFromTimeString(hour1)) return false;
+
         if (!isHourBetween(hour2, topHour, bottomHour)) {
             if (!(hour2.matches(bottomHour))) {
                 return false;
