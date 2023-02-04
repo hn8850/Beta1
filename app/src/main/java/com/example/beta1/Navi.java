@@ -6,11 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -270,23 +272,20 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     }
 
     private Location getLastKnownLocation() {
-        System.out.println("55555");
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        List<String> providers = locationManager.getProviders(true);
-        Location bestLocation = null;
-        for (String provider : providers) {
-            @SuppressLint("MissingPermission") Location l = locationManager.getLastKnownLocation(provider);
-            if (l == null) {
-                continue;
-            }
-            if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
-                System.out.println("666666");
-
-                // Found best last known location: %s", l);
-                bestLocation = l;
-            }
+        Criteria criteria = new Criteria();
+        String bestProvider = locationManager.getBestProvider(criteria, false);
+        Location location = locationManager.getLastKnownLocation(bestProvider);
+        if (location != null) {
+            Log.d("TAG", "Latitude: " + location.getLatitude() +
+                    " Longitude: " + location.getLongitude());
         }
-        return bestLocation;
+        try{
+            System.out.println(location.toString());
+        }catch (Exception e) {
+            System.out.println("WHYYY");
+        }
+        return location;
     }
 
 
