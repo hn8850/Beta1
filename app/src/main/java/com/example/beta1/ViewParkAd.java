@@ -35,7 +35,7 @@ import java.io.File;
 
 public class ViewParkAd extends AppCompatActivity {
 
-    TextView addressTv, priceTv, descTv, titleTv;
+    TextView addressTv,dateTv, priceTv, descTv, titleTv;
     ImageView iv, profilePic;
 
     Intent gi;
@@ -59,6 +59,7 @@ public class ViewParkAd extends AppCompatActivity {
         addressTv = findViewById(R.id.addressTv);
         priceTv = findViewById(R.id.priceTv);
         descTv = findViewById(R.id.descTv);
+        dateTv = findViewById(R.id.dateTv);
         iv = findViewById(R.id.imageView7);
         titleTv = findViewById(R.id.title_text);
         profilePic = findViewById(R.id.right_image);
@@ -96,6 +97,7 @@ public class ViewParkAd extends AppCompatActivity {
                         addressTv.setText("Address: " + parkAd.getAddress());
                         priceTv.setText("Price for hour: " + parkAd.getHourlyRate());
                         descTv.setText("Description: " + parkAd.getDescription());
+                        dateTv.setText("Date: "+ parkAd.getDate());
 
                         picURL = parkAd.getPictureUrl().get(0);
                         downloadImage(picURL, getApplicationContext(), 0);

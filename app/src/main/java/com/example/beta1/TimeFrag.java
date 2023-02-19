@@ -67,7 +67,7 @@ public class TimeFrag extends Fragment {
         String[] hours = new String[25];
         hours[0] = "Choose hour";
         for (int i = 1; i < 25; i++) {
-            hours[i] = String.valueOf(i);
+            hours[i] = String.valueOf(i-1);
         }
 
         String[] minutes = {"Choose minutes", "00", "15", "30", "45"};
@@ -194,7 +194,6 @@ public class TimeFrag extends Fragment {
     };
 
     public void uploadAd(ArrayList<String> imageURLS) {
-
         sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
 
         String latitude = sharedPrefs.getString("latitude", "0");
@@ -215,6 +214,8 @@ public class TimeFrag extends Fragment {
         ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, Date, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
         DatabaseReference adRef = mDb.getReference("ParkAds");
         adRef.child(path).setValue(ad);
+        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child("Active ParkAds").child(path);
+        userAdRef.setValue(ad);
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
 

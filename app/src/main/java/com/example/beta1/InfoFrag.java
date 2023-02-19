@@ -275,6 +275,8 @@ public class InfoFrag extends Fragment {
         ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, Date, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
         DatabaseReference adRef = mDb.getReference("ParkAds");
         adRef.child(path).setValue(ad);
+        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child("Active ParkAds").child(path);
+        userAdRef.setValue(ad);
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
 
@@ -429,7 +431,7 @@ public class InfoFrag extends Fragment {
                 }
                 else{
                     imageUri = Uri.fromFile(photoFile);
-                    System.out.println("URI = " + imageUri.toString());
+                    //System.out.println("URI = " + imageUri.toString());
                     imageUris[imagesCounter] = imageUri;
                     imageViews[imagesCounter].setImageURI(imageUri);
                     imagesCounter++;

@@ -1,5 +1,7 @@
 package com.example.beta1;
 
+import java.util.ArrayList;
+
 public class User {
 
     String userName;
@@ -8,6 +10,8 @@ public class User {
     String DateOfBirth;
     String PhoneNumber;
     String ProfilePicURL;
+    ArrayList<Order> orders;
+    ArrayList<ParkAd> parkAds;
 
     public User() {
     }
@@ -19,6 +23,9 @@ public class User {
         DateOfBirth = dateOfBirth;
         PhoneNumber = phoneNumber;
         ProfilePicURL = profilePicURL;
+        this.orders = new ArrayList<>();
+        this.parkAds = new ArrayList<>();
+
     }
 
 
@@ -71,6 +78,23 @@ public class User {
     public void setProfilePicURL(String profilePicURL) {
         ProfilePicURL = profilePicURL;
     }
+
+    public ArrayList<Order> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(ArrayList<Order> orders) {
+        this.orders = orders;
+    }
+
+    public ArrayList<ParkAd> getParkAds() {
+        return parkAds;
+    }
+
+    public void setParkAds(ArrayList<ParkAd> parkAds) {
+        this.parkAds = parkAds;
+    }
+
     //    Reviews ReviewsFromUser
 //    Reviews ReviewsAboutUser
 //    Order[] OrdersHistory

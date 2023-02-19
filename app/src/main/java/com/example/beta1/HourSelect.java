@@ -3,6 +3,8 @@ package com.example.beta1;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -124,7 +126,21 @@ public class HourSelect extends AppCompatActivity {
                 DatabaseReference ordersRef = fbDB.getReference("Orders");
                 String key = ordersRef.push().getKey();
                 ordersRef.child(key).setValue(order);
-                Toast.makeText(this, "Order Made!", Toast.LENGTH_SHORT).show();
+                DatabaseReference usersRef = fbDB.getReference("Users");
+                usersRef.child(userID).child("Orders").child("Active Orders").child(key).setValue(order);
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Order Made!");
+                double finalPrice = getPrice(beginFull,endFull,hourlyRate);
+                builder.setMessage("Final Price will be: " + finalPrice);
+                builder.setPositiveButton("Pay Up", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Launch Google Pay
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
 
 
             } else {
@@ -201,6 +217,20 @@ public class HourSelect extends AppCompatActivity {
         }
     };
 
+
+    public static double getPrice(String startTime, String endTime, double hourlyRate) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+            Date date1 = sdf.parse(startTime);
+            Date date2 = sdf.parse(endTime);
+            long diffInMilliseconds = date2.getTime() - date1.getTime();
+            double diffInMinutes = (Math.abs(diffInMilliseconds) / (1000 * 60));
+            return (diffInMinutes / 60) * hourlyRate;
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
 
     private boolean HourInBounds(String hour1, String hour2) {
         if (!isHourBetween(hour1, topHour, bottomHour)) {

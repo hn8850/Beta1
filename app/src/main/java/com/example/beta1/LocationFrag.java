@@ -263,8 +263,11 @@ public class LocationFrag extends Fragment {
         ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, Date, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
         DatabaseReference adRef = mDb.getReference("ParkAds");
         adRef.child(path).setValue(ad);
+        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child("Active ParkAds").child(path);
+        userAdRef.setValue(ad);
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
+
     }
 
 
