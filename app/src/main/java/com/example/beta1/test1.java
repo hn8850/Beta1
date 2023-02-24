@@ -37,8 +37,8 @@ public class test1 extends AppCompatActivity {
         mTextViewLatitude = findViewById(R.id.text_view_latitude);
         mTextViewLongitude = findViewById(R.id.text_view_longitude);
         mButtonTranslate = findViewById(R.id.button_translate);
-        Order order = new Order("nani","nani","22/22/2222","28/01/2023","12:00","19:00",200);
-        mEditTextAddress.setText(order.isActive() + " ");
+        //Order order = new Order("nani","nani","22/22/2222","28/01/2023","12:00","19:00",200);
+        //mEditTextAddress.setText(order.isActive() + " ");
 
 
         mButtonTranslate.setOnClickListener(new View.OnClickListener() {

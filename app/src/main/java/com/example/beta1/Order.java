@@ -13,6 +13,8 @@ public class Order {
     String beginHour;
     String endHour;
     double hourlyRate;
+    String sellerId;
+    String parkAddress;
     boolean isComplete;
     boolean isCanceled;
 
@@ -20,7 +22,7 @@ public class Order {
 
     }
 
-    public Order(String parkAdID, String renterID, String confirmDate, String parkDate, String beginHour, String endHour, double hourlyRate) {
+    public Order(String parkAdID, String renterID, String confirmDate, String parkDate, String beginHour, String endHour, double hourlyRate, String sellerId, String parkAddress) {
         this.parkAdID = parkAdID;
         this.renterID = renterID;
         this.confirmDate = confirmDate;
@@ -28,8 +30,9 @@ public class Order {
         this.beginHour = beginHour;
         this.endHour = endHour;
         this.hourlyRate = hourlyRate;
-        this.isCanceled = false;
-        this.isComplete = false;
+        this.sellerId = sellerId;
+        this.parkAddress = parkAddress;
+
     }
 
     public String getParkAdID() {
@@ -88,6 +91,23 @@ public class Order {
         this.hourlyRate = hourlyRate;
     }
 
+
+    public String getSellerId() {
+        return sellerId;
+    }
+
+    public void setSellerId(String sellerId) {
+        this.sellerId = sellerId;
+    }
+
+    public String getParkAddress() {
+        return parkAddress;
+    }
+
+    public void setParkAddress(String parkAddress) {
+        this.parkAddress = parkAddress;
+    }
+
     public boolean isComplete() {
         return isComplete;
     }
@@ -118,4 +138,19 @@ public class Order {
             return false;
         }
     }
+
+    public double getPrice() {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+            Date date1 = sdf.parse(beginHour);
+            Date date2 = sdf.parse(endHour);
+            long diffInMilliseconds = date2.getTime() - date1.getTime();
+            double diffInMinutes = (Math.abs(diffInMilliseconds) / (1000 * 60));
+            return (diffInMinutes / 60) * hourlyRate;
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
 }

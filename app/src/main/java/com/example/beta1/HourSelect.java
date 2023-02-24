@@ -67,7 +67,8 @@ public class HourSelect extends AppCompatActivity {
         String[] hours = new String[25];
         hours[0] = "Choose hour";
         for (int i = 1; i < 25; i++) {
-            hours[i] = String.valueOf(i);
+            if ((i-1)<10) hours[i] = "0" + (i - 1);
+            else hours[i] = String.valueOf(i-1);
         }
 
         String[] minutes = {"Choose minutes", "00", "15", "30", "45"};
@@ -117,20 +118,35 @@ public class HourSelect extends AppCompatActivity {
                 mAuth = FirebaseAuth.getInstance();
                 FirebaseUser CurrentUserAuth = FirebaseAuth.getInstance().getCurrentUser();
                 userID = CurrentUserAuth.getUid();
-                SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-                Date date = new Date();
-                String confirmDate = dateFormat.format(date);
+                String confirmDate = Services.getCurrentTimeFormatted();
                 String parkDate = parkAd.getDate();
                 double hourlyRate = parkAd.getHourlyRate();
-                Order order = new Order(parkAdID, userID, confirmDate, parkDate, beginFull, endFull, hourlyRate);
+                String sellerID = parkAd.getUserID();
+                String parkAddress = parkAd.getAddress();
+                Order order = new Order(parkAdID, userID, confirmDate, parkDate, beginFull, endFull, hourlyRate,sellerID,parkAddress);
                 DatabaseReference ordersRef = fbDB.getReference("Orders");
                 String key = ordersRef.push().getKey();
                 ordersRef.child(key).setValue(order);
                 DatabaseReference usersRef = fbDB.getReference("Users");
                 usersRef.child(userID).child("Orders").child("Active Orders").child(key).setValue(order);
+
+
+                String beginHourKey = "B" + parkAd.getBeginHour().substring(0, 2) + parkAd.getBeginHour().substring(3);
+                String endHourKey = "E" + parkAd.getFinishHour().substring(0, 2) + parkAd.getFinishHour().substring(3);
+                String hourRangeKey = beginHourKey + endHourKey;
+                String dateKey = Services.addLeadingZerosToDate(parkDate, false);
+                String latitude = parkAd.getLatitude();
+                String longitude = parkAd.getLongitude();
+                String path = (latitude + longitude).replace(".", "");
+                double finalPrice = order.getPrice();
+
+                Receipt receipt = new Receipt(sellerID,userID,path,dateKey,hourRangeKey,finalPrice,confirmDate);
+                DatabaseReference receiptRef = fbDB.getReference("Users").child(sellerID).child("Receipts");
+                key = receiptRef.push().getKey();
+                receiptRef.child(key).setValue(receipt);
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Order Made!");
-                double finalPrice = getPrice(beginFull,endFull,hourlyRate);
                 builder.setMessage("Final Price will be: " + finalPrice);
                 builder.setPositiveButton("Pay Up", new DialogInterface.OnClickListener() {
                     @Override

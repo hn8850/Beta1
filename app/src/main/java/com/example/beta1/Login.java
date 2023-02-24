@@ -157,6 +157,12 @@ public class Login extends AppCompatActivity {
             Intent si = new Intent(this, EditProfile.class);
             startActivity(si);
         }
+
+        if (st.equals("Settings")) {
+            Intent si = new Intent(this, Settings.class);
+            startActivity(si);
+        }
+
 /*
         if (st.equals("Notifications")){
             Intent si = new Intent(this, notifs.class);

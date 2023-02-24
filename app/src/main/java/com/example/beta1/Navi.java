@@ -162,7 +162,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
                         if (current.isAfter(parkAdDate)) {
                             System.out.println("Bad!");
-
                             UpdateOrderCompleted(orderSnap.getKey()); //OrderDate has passed,hence its completed
                         } else if (current.toString().equals(parkAdDate.toString())) {
                             System.out.println("good!");
@@ -268,43 +267,49 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                         .toFormatter();
 
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
-                    ParkAd parkAd = snapshot1.getValue(ParkAd.class);
-                    String currentDate = sdf.format(new Date());
-                    String parkAdDateStr = parkAd.getDate();
-                    try {
-                        LocalDate current = LocalDate.parse(currentDate, formatter);
-                        LocalDate parkAdDate = LocalDate.parse(parkAdDateStr, formatter);
+                    for (DataSnapshot snapshot2 : snapshot1.getChildren())
+                    {
+                        for (DataSnapshot snapshot3 : snapshot2.getChildren()){
+                            ParkAd parkAd = snapshot3.getValue(ParkAd.class);
+                            String currentDate = sdf.format(new Date());
+                            String parkAdDateStr = parkAd.getDate();
+                            try {
+                                LocalDate current = LocalDate.parse(currentDate, formatter);
+                                LocalDate parkAdDate = LocalDate.parse(parkAdDateStr, formatter);
 
-                        System.out.println("current2 = " + current.toString() + " parkDate2 = " + parkAdDate.toString());
+                                System.out.println("current2 = " + current.toString() + " parkDate2 = " + parkAdDate.toString());
 
 
-                        if (current.isAfter(parkAdDate)) {
-                            UpdateParkAdCompleted(snapshot1.getKey()); //parkDate has passed,hence its completed
-                            System.out.println("Bad2!");
-                        } else if (current.toString().equals(parkAdDate.toString())) {
-                            System.out.println("good2!");
-                            long currentTimeMillis = System.currentTimeMillis();
-                            Date current2 = new Date(currentTimeMillis);
-                            String currentHour = sdf2.format(current2);
-                            if (!isHourBetween(currentHour, parkAd.getBeginHour(), parkAd.getFinishHour()) && !isFirstTimeBeforeSecond(currentHour, parkAd.getBeginHour())) {
-                                UpdateParkAdCompleted(snapshot1.getKey()); //ParkHour has passed,hence its completed
-                            } else {
-                                System.out.println("great2!");
-                                parkAds.add(parkAd);
-                                parkAdIDs.add(snapshot1.getKey());
-                                System.out.println("PARK AD ADDED2");
+                                if (current.isAfter(parkAdDate)) {
+                                    UpdateParkAdCompleted(snapshot3.getKey()); //parkDate has passed,hence its completed
+                                    System.out.println("Bad2!");
+                                } else if (current.toString().equals(parkAdDate.toString())) {
+                                    System.out.println("good2!");
+                                    long currentTimeMillis = System.currentTimeMillis();
+                                    Date current2 = new Date(currentTimeMillis);
+                                    String currentHour = sdf2.format(current2);
+                                    if (!isHourBetween(currentHour, parkAd.getBeginHour(), parkAd.getFinishHour()) && !isFirstTimeBeforeSecond(currentHour, parkAd.getBeginHour())) {
+                                        UpdateParkAdCompleted(snapshot3.getKey()); //ParkHour has passed,hence its completed
+                                    } else {
+                                        System.out.println("great2!");
+                                        parkAds.add(parkAd);
+                                        parkAdIDs.add(snapshot3.getKey());
+                                        System.out.println("PARK AD ADDED2");
+                                    }
+
+
+                                } else {
+                                    System.out.println("great2!");
+                                    parkAds.add(parkAd);
+                                    parkAdIDs.add(snapshot3.getKey());
+                                    System.out.println("PARK AD ADDED2");
+                                }
+                            } catch (Error e) {
+                                System.out.println("CHECK THIS");
                             }
-
-
-                        } else {
-                            System.out.println("great2!");
-                            parkAds.add(parkAd);
-                            parkAdIDs.add(snapshot1.getKey());
-                            System.out.println("PARK AD ADDED2");
                         }
-                    } catch (Error e) {
-                        System.out.println("CHECK THIS");
                     }
+
 
 
                 }
@@ -346,14 +351,22 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         ExpiredAd.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                ParkAd completeAd = snapshot.getValue(ParkAd.class);
-                DatabaseReference completeBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds").child("Completed ParkAds");
-                String key = completeBranch.push().getKey();
-                completeBranch.child(key).setValue(completeAd);
-                System.out.println("GOOODDD");
-                DatabaseReference activeAdBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds").child("Active ParkAds").child(ParkAdID);
-                activeAdBranch.setValue(null);
-                ExpiredAd.setValue(null);
+                for (DataSnapshot snapshot1 : snapshot.getChildren()){
+                    String dateKey = snapshot1.getKey();
+                    for (DataSnapshot snapshot2 : snapshot1.getChildren()){
+                        String hourRangeKey = snapshot2.getKey();
+                        ParkAd completeAd = snapshot2.getValue(ParkAd.class);
+                        DatabaseReference completeBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds").child("Completed ParkAds");
+                        String key = completeBranch.push().getKey();
+                        completeBranch.child(key).setValue(completeAd);
+                        System.out.println("GOOODDD");
+                        DatabaseReference activeAdBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds").child("Active ParkAds").child(ParkAdID);
+                        activeAdBranch.setValue(null);
+                        ExpiredAd.setValue(null);
+                    }
+
+                }
+
 
             }
 

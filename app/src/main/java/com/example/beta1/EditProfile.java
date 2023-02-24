@@ -89,18 +89,21 @@ public class EditProfile extends AppCompatActivity {
         mDb = FirebaseDatabase.getInstance();
         mStorage = FirebaseStorage.getInstance();
         CurrentUserAuth = FirebaseAuth.getInstance().getCurrentUser();
-        signedIn = false;
-        if (CurrentUserAuth != null) {
-            for (UserInfo userInfo : CurrentUserAuth.getProviderData()) {
-                if (userInfo.getProviderId().equals("password")) {
-                    UID = CurrentUserAuth.getUid();
-                    signedIn = true;
-                    readUser();
-                }
-            }
-            if (!signedIn) Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
-
-        } else Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
+        Intent gi = getIntent();
+        UID = gi.getStringExtra("UID");
+        readUser();
+//        signedIn = false;
+//        if (CurrentUserAuth != null) {
+//            for (UserInfo userInfo : CurrentUserAuth.getProviderData()) {
+//                if (userInfo.getProviderId().equals("password")) {
+//                    UID = CurrentUserAuth.getUid();
+//                    signedIn = true;
+//                    readUser();
+//                }
+//            }
+//            if (!signedIn) Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
+//
+//        } else Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
 
 
     }
@@ -151,64 +154,54 @@ public class EditProfile extends AppCompatActivity {
 
 
     public void update(View view) {
-        if (CurrentUserAuth != null) {
-            for (UserInfo userInfo : CurrentUserAuth.getProviderData()) {
-                if (userInfo.getProviderId().equals("password")) {
-                    userName = IDEt.getText().toString();
-                    name = NameEt.getText().toString();
-                    date = DateEt.getText().toString();
-                    phone = PhoneEt.getText().toString();
-                    if (userName.isEmpty()) userName = "lmao";
-                    if (sw.isChecked()) active = 0;
-                    else active = 1;
 
-                    if (changedPic) {
-                        StorageReference refStorage = mStorage.getReference("UserPics");
-                        StorageReference refPic = refStorage.child(UID);
-                        uploadTask = refPic.putFile(imageUri);
-                        uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                            @Override
-                            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                                double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                                System.out.println("Upload is " + progress + "% done");
-                            }
-                        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                            @Override
-                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                refPic.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                    @Override
-                                    public void onSuccess(Uri uri) {
-                                        picUrl = uri.toString();
-                                        System.out.println("SYSURL = " + imageUri);
+        userName = IDEt.getText().toString();
+        name = NameEt.getText().toString();
+        date = DateEt.getText().toString();
+        phone = PhoneEt.getText().toString();
+        if (userName.isEmpty()) userName = "lmao";
+        if (sw.isChecked()) active = 0;
+        else active = 1;
 
-                                        DatabaseReference userDB = mDb.getReference("Users").child(UID);
-                                        userDB.child("userName").setValue(userName);
-                                        userDB.child("name").setValue(name);
-                                        userDB.child("dateOfBirth").setValue(date);
-                                        userDB.child("phoneNumber").setValue(phone);
-                                        userDB.child("profilePicURL").setValue(picUrl);
-                                        userDB.child("active").setValue(active);
-                                    }
-                                });
+        if (changedPic) {
+            StorageReference refStorage = mStorage.getReference("UserPics");
+            StorageReference refPic = refStorage.child(UID);
+            uploadTask = refPic.putFile(imageUri);
+            uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                    double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                    System.out.println("Upload is " + progress + "% done");
+                }
+            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    refPic.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            picUrl = uri.toString();
+                            System.out.println("SYSURL = " + imageUri);
 
-                            }
-                        });
-                    }
-                    else {
-                        DatabaseReference userDB = mDb.getReference("Users").child(UID);
-                        userDB.child("userName").setValue(userName);
-                        userDB.child("name").setValue(name);
-                        userDB.child("dateOfBirth").setValue(date);
-                        userDB.child("phoneNumber").setValue(phone);
-                        userDB.child("active").setValue(active);
-                    }
-
+                            DatabaseReference userDB = mDb.getReference("Users").child(UID);
+                            userDB.child("userName").setValue(userName);
+                            userDB.child("name").setValue(name);
+                            userDB.child("dateOfBirth").setValue(date);
+                            userDB.child("phoneNumber").setValue(phone);
+                            userDB.child("profilePicURL").setValue(picUrl);
+                            userDB.child("active").setValue(active);
+                        }
+                    });
 
                 }
-            }
-            if (!signedIn) Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
-
-        } else Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            DatabaseReference userDB = mDb.getReference("Users").child(UID);
+            userDB.child("userName").setValue(userName);
+            userDB.child("name").setValue(name);
+            userDB.child("dateOfBirth").setValue(date);
+            userDB.child("phoneNumber").setValue(phone);
+            userDB.child("active").setValue(active);
+        }
 
 
     }

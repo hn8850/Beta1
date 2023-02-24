@@ -242,7 +242,6 @@ public class LocationFrag extends Fragment {
     };
 
     public void uploadAd(ArrayList<String> imageURLS) {
-
         sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
 
         String latitude = sharedPrefs.getString("latitude", "0");
@@ -254,19 +253,25 @@ public class LocationFrag extends Fragment {
         String userUid = newUser.getUid();
         int Active = 1;
         String Date = sharedPrefs.getString("Date", "0");
+        String dateParam = Services.addLeadingZerosToDate(Date, true);
         String BeginHour = sharedPrefs.getString("BeginHour", "0");
         String FinishHour = sharedPrefs.getString("FinishHour", "0");
         Double HourlyRate = Double.valueOf(sharedPrefs.getString("HourlyRate", "0"));
         String Description = sharedPrefs.getString("Description", "No desc");
         String Address = sharedPrefs.getString("address", "0");
 
-        ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, Date, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
+        String beginHourKey = "B" + BeginHour.substring(0, 2) + BeginHour.substring(3);
+        String endHourKey = "E" + FinishHour.substring(0, 2) + FinishHour.substring(3);
+        String hourRangeKey = beginHourKey + endHourKey;
+        String dateKey = Services.addLeadingZerosToDate(Date, false);
+        ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, dateParam, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
         DatabaseReference adRef = mDb.getReference("ParkAds");
-        adRef.child(path).setValue(ad);
-        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child("Active ParkAds").child(path);
+        adRef.child(path).child(dateKey).child(hourRangeKey).setValue(ad);
+        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child("Active ParkAds").child(path).child(dateKey).child(hourRangeKey);
         userAdRef.setValue(ad);
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
+
 
     }
 
