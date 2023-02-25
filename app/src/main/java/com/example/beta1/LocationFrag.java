@@ -260,14 +260,17 @@ public class LocationFrag extends Fragment {
         String Description = sharedPrefs.getString("Description", "No desc");
         String Address = sharedPrefs.getString("address", "0");
 
+
         String beginHourKey = "B" + BeginHour.substring(0, 2) + BeginHour.substring(3);
         String endHourKey = "E" + FinishHour.substring(0, 2) + FinishHour.substring(3);
         String hourRangeKey = beginHourKey + endHourKey;
-        String dateKey = Services.addLeadingZerosToDate(Date, false);
+        String dateKey = "D" + Services.addLeadingZerosToDate(Date, false);
+        String parkAdKey = path + dateKey + hourRangeKey;
+
         ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, dateParam, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
         DatabaseReference adRef = mDb.getReference("ParkAds");
-        adRef.child(path).child(dateKey).child(hourRangeKey).setValue(ad);
-        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child("Active ParkAds").child(path).child(dateKey).child(hourRangeKey);
+        adRef.child(parkAdKey).setValue(ad);
+        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child(parkAdKey);
         userAdRef.setValue(ad);
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();

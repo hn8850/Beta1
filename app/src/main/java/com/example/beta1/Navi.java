@@ -3,6 +3,7 @@ package com.example.beta1;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -15,6 +16,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -53,11 +62,16 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 
 public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
+    Button filter;
+    ImageButton search;
+    EditText searchBar;
 
     private GoogleMap mMap;
     private Navi2Binding binding;
@@ -68,6 +82,12 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     List<MarkerOptions> parkAdMarkerOptions = new ArrayList<>();
     List<Marker> parkAdMarkers;
     ArrayList<String> parkAdIDs;
+    ArrayList<ParkAd> sortedAds = new ArrayList<>();
+    ArrayList<String> sortedIDs = new ArrayList<>();
+    List<MarkerOptions> sortedParkAdMarkerOptions = new ArrayList<>();
+    List<Marker> sortedParkAdMarkers = new ArrayList<>();
+
+    HashMap<String, String> query = new HashMap<>();
 
     FirebaseAuth mAuth;
     String currUserID;
@@ -76,11 +96,11 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        binding = Navi2Binding.inflate(getLayoutInflater());
-//        setContentView(binding.getRoot());
+        binding = Navi2Binding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        binding2 = ActivityNaviBinding.inflate(getLayoutInflater());
-        setContentView(binding2.getRoot());
+//        binding2 = ActivityNaviBinding.inflate(getLayoutInflater());
+//        setContentView(binding2.getRoot());
         fbDB = FirebaseDatabase.getInstance();
 
 
@@ -99,73 +119,157 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         MapsInitializer.initialize(this);
         mMap = googleMap;
+        query.put("date1", "NONE");
+        query.put("date2", "NONE");
         animateCamera();
         SetParkAdMarkers(this);
+        filter = findViewById(R.id.filter);
+        filter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                createFilterDialog();
+            }
+        });
+        searchBar = findViewById(R.id.searchBar);
+        search = findViewById(R.id.search);
+        search.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                searchQuery();
+            }
+        });
+
+
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(@NonNull LatLng latLng) {
-                mMap.clear();
-                for (MarkerOptions specificMarker : parkAdMarkerOptions) {
-                    Marker marker = mMap.addMarker(specificMarker);
-                    marker.showInfoWindow();
-                }
                 MarkerOptions marker = new MarkerOptions().position(latLng).draggable(false);
                 mMap.addMarker(marker);
                 NaviToMarker(latLng);
 
-                System.out.println("onMapClick: Latitude = " + latLng.latitude + " , Longitude = " + latLng.longitude);
             }
         });
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(@NonNull Marker marker) {
-                Intent si = new Intent(getApplicationContext(), ViewParkAd.class);
-                si.putExtra("lat", marker.getPosition().latitude);
-                si.putExtra("long", marker.getPosition().longitude);
+                Intent si = new Intent(getApplicationContext(), ParkAdQueryListView.class);
+                String latitude = String.valueOf(marker.getPosition().latitude);
+                String longitude = String.valueOf(marker.getPosition().longitude);
+                si.putExtra("lat", latitude);
+                si.putExtra("long", longitude);
+
                 startActivity(si);
                 return true;
             }
         });
-
-
     }
 
+    public void SetParkAdMarkers(Context context) {
+        DatabaseReference AdsDB = fbDB.getReference("ParkAds");
+        AdsDB.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                parkAdMarkerOptions = new ArrayList<>();
+                parkAdMarkers = new ArrayList<>();
+                parkAdIDs = new ArrayList<>();
+                parkAds.clear();
+                SimpleDateFormat dateFormat = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
+                SimpleDateFormat hourFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                for (DataSnapshot snapshot1 : snapshot.getChildren()) {
+                    ParkAd parkAd = snapshot1.getValue(ParkAd.class);
+
+                    String currentDate = dateFormat.format(new Date());
+                    currentDate = Services.addLeadingZerosToDate(currentDate, false);
+                    String parkAdDateStr = parkAd.getDate();
+                    parkAdDateStr = Services.addLeadingZerosToDate(parkAdDateStr, false);
+                    try {
+                        System.out.println("Dates: " + currentDate + "," + parkAdDateStr);
+                        //System.out.println("Dates: " + Integer.valueOf(currentDate) + "," + Integer.valueOf(parkAdDateStr));
+                        if (Integer.valueOf(currentDate) > Integer.valueOf(parkAdDateStr)) {
+                            UpdateParkAdCompleted(snapshot1.getKey()); //parkDate has passed,hence its completed
+                        } else if (parkAdDateStr.matches(currentDate)) {
+                            long currentTimeMillis = System.currentTimeMillis();
+                            Date current2 = new Date(currentTimeMillis);
+                            String currentHour = hourFormat.format(current2);
+                            System.out.println("HOURS: " + currentHour + "," + parkAd.getBeginHour() + "," + parkAd.getFinishHour());
+                            if (!isFirstTimeBeforeSecond(currentHour, parkAd.getFinishHour())) {
+                                UpdateParkAdCompleted(snapshot1.getKey()); //ParkHour has passed,hence its completed
+                            } else if (isHourBetween(currentHour, parkAd.getBeginHour(), parkAd.getFinishHour())) {
+                                parkAds.add(parkAd);
+                                parkAdIDs.add(snapshot1.getKey());
+                            }
+                        } else {
+                            parkAds.add(parkAd);
+                            parkAdIDs.add(snapshot1.getKey());
+                        }
+                    } catch (Error e) {
+                        System.out.println("CHECK THIS");
+                    }
+                }
+                BitmapDescriptor blueMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
+                CustomInfoWindowAdapter customInfoWindow = new CustomInfoWindowAdapter(context);
+                mMap.setInfoWindowAdapter(customInfoWindow);
+
+                for (ParkAd parkAd : parkAds) {
+                    LatLng location = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
+                    MarkerOptions markerOptions = new MarkerOptions().icon(blueMarkerIcon)
+                            .position(location)
+                            .title(parkAd.getHourlyRate().toString());
+                    Marker marker = mMap.addMarker(markerOptions);
+                    customInfoWindow.getInfoContents(marker);
+                    marker.showInfoWindow();
+                    parkAdMarkerOptions.add(markerOptions);
+                    parkAdMarkers.add(marker);
+                    sortedAds.add(parkAd);
+                    sortedIDs.add(parkAdIDs.get(parkAds.indexOf(parkAd)));
+                    sortedParkAdMarkerOptions.add(markerOptions);
+                    sortedParkAdMarkers.add(marker);
+                }
+                System.out.println("Count of Parks = + " + parkAds.size());
+                System.out.println("Count of Markers = + " + parkAdMarkers.size());
+                CheckDateOfOrders();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
 
     public void CheckDateOfOrders() {
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser CurrentUserAuth = FirebaseAuth.getInstance().getCurrentUser();
         currUserID = CurrentUserAuth.getUid();
-        DatabaseReference userOrders = fbDB.getReference("Users").child(currUserID).child("Orders").child("Active Orders");
+        DatabaseReference userOrders = fbDB.getReference("Users").child(currUserID).child("Orders");
         userOrders.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 SimpleDateFormat sdf = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
                 SimpleDateFormat sdf2 = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                        .appendPattern("d/M/yyyy")
-                        .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-                        .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
-                        .toFormatter();
                 for (DataSnapshot orderSnap : snapshot.getChildren()) {
+                    System.out.println("WORK");
                     Order order = orderSnap.getValue(Order.class);
                     String currentDate = sdf.format(new Date());
                     String parkAdDateStr = order.getParkDate();
                     System.out.println("THIS IS DATE = " + parkAdDateStr);
-
+                    DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                            .appendPattern("d/M/yyyy")
+                            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+                            .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
+                            .toFormatter();
                     try {
 //                        Date current2 = sdf.parse(currentDate);
 //                        Date parkAdDate = sdf.parse(parkAdDateStr.trim());
                         LocalDate current = LocalDate.parse(currentDate, formatter);
                         LocalDate parkAdDate = LocalDate.parse(parkAdDateStr, formatter);
                         System.out.println("current = " + current.toString() + " parkDate = " + parkAdDate.toString());
-
                         if (current.isAfter(parkAdDate)) {
                             System.out.println("Bad!");
                             UpdateOrderCompleted(orderSnap.getKey()); //OrderDate has passed,hence its completed
                         } else if (current.toString().equals(parkAdDate.toString())) {
                             System.out.println("good!");
-
                             long currentTimeMillis = System.currentTimeMillis();
                             Date current2 = new Date(currentTimeMillis);
                             String currentHour = sdf2.format(current2);
@@ -175,15 +279,12 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                                     UpdateOrderActive(order.getParkAdID());
                                 } else {
                                     UpdateOrderCompleted(orderSnap.getKey()); //OrderHour has passed,hence its completed
-
                                 }
                             }
-
                         }
                     } catch (Error e) {
                         e.printStackTrace();
                     }
-
                 }
             }
 
@@ -195,39 +296,41 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     }
 
     public void UpdateOrderCompleted(String OrderID) {
-        DatabaseReference finishedOrder = fbDB.getReference("Users").child(currUserID).child("Orders").child("Active Orders").child(OrderID);
-        System.out.println("USER = " + currUserID);
-        System.out.println("Order = " + OrderID);
-        finishedOrder.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Order completeOrd = snapshot.getValue(Order.class);
-                System.out.println(completeOrd.toString());
-                DatabaseReference completeBranch = fbDB.getReference("Users").child(currUserID).child("Orders").child("Completed Orders").child(OrderID);
-                completeBranch.setValue(completeOrd);
-                System.out.println("GOOODDD");
-                DatabaseReference orderBranch = fbDB.getReference("Orders").child(OrderID);
-                orderBranch.setValue(null);
-                finishedOrder.setValue(null);
+        DatabaseReference finishedOrder = fbDB.getReference("Users").child(currUserID).child("Orders").child(OrderID);
+        finishedOrder.child("complete").setValue(true);
+        DatabaseReference orderBranch = fbDB.getReference("Orders").child(OrderID);
+        orderBranch.setValue(null);
 
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
+//        DatabaseReference finishedOrder = fbDB.getReference("Users").child(currUserID).child("Orders").child(OrderID);
+//        finishedOrder.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                Order completeOrd = snapshot.getValue(Order.class);
+//                completeOrd.setComplete(true);
+//                System.out.println(completeOrd.toString());
+//                DatabaseReference completeBranch = fbDB.getReference("Users").child(currUserID).child("Orders").child("Completed Orders").child(OrderID);
+//                completeBranch.setValue(completeOrd);
+//                DatabaseReference orderBranch = fbDB.getReference("Orders").child(OrderID);
+//                orderBranch.setValue(null);
+//                finishedOrder.setValue(null);
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError error) {
+//
+//            }
+//        });
 
     }
-
 
     public void UpdateOrderActive(String ParkAdID) {
 
         int pos = -1;
-        for (String parkAdIDtemp : parkAdIDs) {
-            if (parkAdIDtemp.matches(ParkAdID)) pos = parkAdIDs.indexOf(parkAdIDtemp);
+        for (String parkAdIDtemp : sortedIDs) {
+            if (parkAdIDtemp.matches(ParkAdID)) pos = sortedIDs.indexOf(parkAdIDtemp);
         }
-        Marker activeMarker = parkAdMarkers.get(pos);
+        Marker activeMarker = sortedParkAdMarkers.get(pos);
         activeMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -249,91 +352,20 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         builder.show();
     }
 
-    public void SetParkAdMarkers(Context context) {
-        DatabaseReference AdsDB = fbDB.getReference("ParkAds");
-        AdsDB.addListenerForSingleValueEvent(new ValueEventListener() {
+    public void UpdateParkAdCompleted(String ParkAdID) {
+        DatabaseReference ExpiredAd = fbDB.getReference("ParkAds").child(ParkAdID);
+
+        ExpiredAd.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                parkAdMarkerOptions = new ArrayList<>();
-                parkAdMarkers = new ArrayList<>();
-                parkAdIDs = new ArrayList<>();
-                parkAds.clear();
-                SimpleDateFormat sdf = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
-                SimpleDateFormat sdf2 = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                        .appendPattern("d/M/yyyy")
-                        .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-                        .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
-                        .toFormatter();
-
-                for (DataSnapshot snapshot1 : snapshot.getChildren()) {
-                    for (DataSnapshot snapshot2 : snapshot1.getChildren())
-                    {
-                        for (DataSnapshot snapshot3 : snapshot2.getChildren()){
-                            ParkAd parkAd = snapshot3.getValue(ParkAd.class);
-                            String currentDate = sdf.format(new Date());
-                            String parkAdDateStr = parkAd.getDate();
-                            try {
-                                LocalDate current = LocalDate.parse(currentDate, formatter);
-                                LocalDate parkAdDate = LocalDate.parse(parkAdDateStr, formatter);
-
-                                System.out.println("current2 = " + current.toString() + " parkDate2 = " + parkAdDate.toString());
-
-
-                                if (current.isAfter(parkAdDate)) {
-                                    UpdateParkAdCompleted(snapshot3.getKey()); //parkDate has passed,hence its completed
-                                    System.out.println("Bad2!");
-                                } else if (current.toString().equals(parkAdDate.toString())) {
-                                    System.out.println("good2!");
-                                    long currentTimeMillis = System.currentTimeMillis();
-                                    Date current2 = new Date(currentTimeMillis);
-                                    String currentHour = sdf2.format(current2);
-                                    if (!isHourBetween(currentHour, parkAd.getBeginHour(), parkAd.getFinishHour()) && !isFirstTimeBeforeSecond(currentHour, parkAd.getBeginHour())) {
-                                        UpdateParkAdCompleted(snapshot3.getKey()); //ParkHour has passed,hence its completed
-                                    } else {
-                                        System.out.println("great2!");
-                                        parkAds.add(parkAd);
-                                        parkAdIDs.add(snapshot3.getKey());
-                                        System.out.println("PARK AD ADDED2");
-                                    }
-
-
-                                } else {
-                                    System.out.println("great2!");
-                                    parkAds.add(parkAd);
-                                    parkAdIDs.add(snapshot3.getKey());
-                                    System.out.println("PARK AD ADDED2");
-                                }
-                            } catch (Error e) {
-                                System.out.println("CHECK THIS");
-                            }
-                        }
-                    }
-
-
-
-                }
-
-                BitmapDescriptor blueMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
-                CustomInfoWindowAdapter customInfoWindow = new CustomInfoWindowAdapter(context);
-                mMap.setInfoWindowAdapter(customInfoWindow);
-
-                for (ParkAd parkAd : parkAds) {
-                    LatLng location = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
-                    MarkerOptions markerOptions = new MarkerOptions().icon(blueMarkerIcon)
-                            .position(location)
-                            .title(parkAd.getHourlyRate().toString());
-                    // Add the marker to the map
-                    Marker marker = mMap.addMarker(markerOptions);
-                    customInfoWindow.getInfoContents(marker);
-                    marker.showInfoWindow();
-                    parkAdMarkerOptions.add(markerOptions);
-                    parkAdMarkers.add(marker);
-                    System.out.println("LOCATION = " + location);
-                    System.out.println("ADDress = " + parkAd.getAddress());
-                }
-
-                CheckDateOfOrders();
+                ParkAd completeAd = snapshot.getValue(ParkAd.class);
+                completeAd.setActive(0);
+                DatabaseReference completeBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds");
+                String key = completeBranch.push().getKey();
+                completeBranch.child(key).setValue(completeAd);
+                DatabaseReference activeAdBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds").child(ParkAdID);
+                activeAdBranch.setValue(null);
+                ExpiredAd.setValue(null);
             }
 
             @Override
@@ -344,38 +376,150 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
     }
 
-    public void UpdateParkAdCompleted(String ParkAdID) {
-        DatabaseReference ExpiredAd = fbDB.getReference("ParkAds").child(ParkAdID);
-//        System.out.println("USER = " + currUserID);
-//        System.out.println("Order = " + OrderID);
-        ExpiredAd.addListenerForSingleValueEvent(new ValueEventListener() {
+    public void createFilterDialog() {
+        final Dialog dialog = new Dialog(Navi.this);
+        dialog.setContentView(R.layout.query_dialog_box);
+
+        // Get references to the EditText fields
+        final EditText editTextDD1 = dialog.findViewById(R.id.edit_text_dd_1);
+        final EditText editTextMM1 = dialog.findViewById(R.id.edit_text_mm_1);
+        final EditText editTextYYYY1 = dialog.findViewById(R.id.edit_text_yyyy_1);
+        final EditText editTextDD2 = dialog.findViewById(R.id.edit_text_dd_2);
+        final EditText editTextMM2 = dialog.findViewById(R.id.edit_text_mm_2);
+        final EditText editTextYYYY2 = dialog.findViewById(R.id.edit_text_yyyy_2);
+
+        // Get a reference to the "Submit" button
+        Button submitButton = dialog.findViewById(R.id.dialog_button);
+
+        submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot snapshot1 : snapshot.getChildren()){
-                    String dateKey = snapshot1.getKey();
-                    for (DataSnapshot snapshot2 : snapshot1.getChildren()){
-                        String hourRangeKey = snapshot2.getKey();
-                        ParkAd completeAd = snapshot2.getValue(ParkAd.class);
-                        DatabaseReference completeBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds").child("Completed ParkAds");
-                        String key = completeBranch.push().getKey();
-                        completeBranch.child(key).setValue(completeAd);
-                        System.out.println("GOOODDD");
-                        DatabaseReference activeAdBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds").child("Active ParkAds").child(ParkAdID);
-                        activeAdBranch.setValue(null);
-                        ExpiredAd.setValue(null);
+            public void onClick(View v) {
+                // Get the user input
+                try {
+                    String date1 = editTextDD1.getText().toString() + "/" +
+                            editTextMM1.getText().toString() + "/" +
+                            editTextYYYY1.getText().toString();
+
+                    String date2 = editTextDD2.getText().toString() + "/" +
+                            editTextMM2.getText().toString() + "/" +
+                            editTextYYYY2.getText().toString();
+
+                    date1 = Services.addLeadingZerosToDate(date1, true);
+                    date2 = Services.addLeadingZerosToDate(date2, true);
+
+
+                    if (Services.isValidDate2(date1) && Services.isValidDate2(date2)) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                        Date Date1 = sdf.parse(date1);
+                        Date Date2 = sdf.parse(date2);
+                        if (Date2.after(Date1)) {
+                            query.put("date1", date1);
+                            query.put("date2", date2);
+                            sortParkAds();
+                        } else {
+                            Toast.makeText(Navi.this, "Dates must be in order!", Toast.LENGTH_SHORT).show();
+
+                        }
+                    } else {
+                        Toast.makeText(Navi.this, "Enter Valid Dates!", Toast.LENGTH_SHORT).show();
+
                     }
 
+                } catch (Exception e) {
+                    query.put("date1", "NONE");
+                    query.put("date2", "NONE");
+                    Toast.makeText(Navi.this, "DateFilter Reset", Toast.LENGTH_SHORT).show();
+
                 }
-
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
+                dialog.dismiss();
 
             }
         });
 
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+            layoutParams.copyFrom(window.getAttributes());
+            layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+            layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+            window.setAttributes(layoutParams);
+            window.setGravity(Gravity.CENTER);
+        }
+        // Show the dialog
+        dialog.show();
+
+    }
+
+    public void sortParkAds() {
+        mMap.clear();
+        sortedAds.clear();
+        sortedIDs.clear();
+        sortedParkAdMarkers.clear();
+        sortedParkAdMarkerOptions.clear();
+        int pos;
+        String adDate;
+        for (ParkAd parkAd : parkAds) {
+            adDate = parkAd.getDate();
+            if (!query.get("date1").matches("NONE")) {
+                if (Services.isDateBetween(adDate, query.get("date1"), query.get("date2"))) {
+                    pos = parkAds.indexOf(parkAd);
+                    sortedAds.add(parkAd);
+                    sortedIDs.add(parkAdIDs.get(pos));
+                    sortedParkAdMarkers.add(parkAdMarkers.get(pos));
+                    sortedParkAdMarkerOptions.add(parkAdMarkerOptions.get(pos));
+                }
+            }
+        }
+
+        BitmapDescriptor blueMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
+        CustomInfoWindowAdapter customInfoWindow = new CustomInfoWindowAdapter(this);
+        mMap.setInfoWindowAdapter(customInfoWindow);
+
+        for (ParkAd parkAd : sortedAds) {
+            LatLng location = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
+            MarkerOptions markerOptions = new MarkerOptions().icon(blueMarkerIcon)
+                    .position(location)
+                    .title(parkAd.getHourlyRate().toString());
+            Marker marker = mMap.addMarker(markerOptions);
+            customInfoWindow.getInfoContents(marker);
+            marker.showInfoWindow();
+            parkAdMarkerOptions.add(markerOptions);
+            parkAdMarkers.add(marker);
+        }
+
+    }
+
+    public void searchQuery() {
+
+        for (Marker marker : sortedParkAdMarkers) {
+            marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+        }
+        String searchQuery;
+        try {
+            searchQuery = searchBar.getText().toString();
+        } catch (Exception e) {
+            Toast.makeText(Navi.this, "Enter Valid Address", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String[] addressComponents;
+        int pos;
+        for (ParkAd parkAd : sortedAds) {
+            System.out.println("Address" + parkAd.getAddress());
+            System.out.println("comp" + (parkAd.getAddress().split(","))[1]);
+
+            pos = sortedAds.indexOf(parkAd);
+            addressComponents = parkAd.getAddress().split(",");
+            if (searchQuery.matches(parkAd.getAddress())) {
+                Marker marker = sortedParkAdMarkers.get(pos);
+                marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+            }
+            for (String component : addressComponents) {
+                if ((searchQuery.toLowerCase(Locale.ROOT)).matches(component.toLowerCase(Locale.ROOT))) {
+                    Marker marker = sortedParkAdMarkers.get(pos);
+                    marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                }
+            }
+        }
     }
 
     public void NaviToMarker(@NonNull LatLng latLng) {
@@ -496,10 +640,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
  */
     @SuppressLint("MissingPermission")
     private void animateCamera() {
-        System.out.println("00000");
         Location location = getLastKnownLocation();
         if (location != null) {
-            System.out.println("11111");
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
                 //    ActivityCompat#requestPermissions
@@ -508,10 +650,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 //                                          int[] grantResults)
                 // to handle the case where the user grants the permission. See the documentation
                 // for ActivityCompat#requestPermissions for more details.
-                System.out.println("22222");
                 return;
             }
-            System.out.println("333333");
             mMap.setMyLocationEnabled(true);
             mMap.getUiSettings().setMyLocationButtonEnabled(true);
             mMap.getUiSettings().setAllGesturesEnabled(true);
@@ -520,7 +660,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    System.out.println("444444");
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 10));
 
                 }
@@ -540,7 +679,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         try {
             System.out.println(location.toString());
         } catch (Exception e) {
-            System.out.println("WHYYY");
         }
         return location;
     }

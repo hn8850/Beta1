@@ -35,7 +35,6 @@ public class HourSelect extends AppCompatActivity {
     ParkAd parkAd;
     TextView startTv, endTv;
     String beginHour, beginMinute, endHour, endMinute;
-    boolean makeOrder;
 
     Spinner SpinBeginHour, SpinBeginMinute, SpinEndHour, SpinEndMinute;
 
@@ -67,8 +66,8 @@ public class HourSelect extends AppCompatActivity {
         String[] hours = new String[25];
         hours[0] = "Choose hour";
         for (int i = 1; i < 25; i++) {
-            if ((i-1)<10) hours[i] = "0" + (i - 1);
-            else hours[i] = String.valueOf(i-1);
+            if ((i - 1) < 10) hours[i] = "0" + (i - 1);
+            else hours[i] = String.valueOf(i - 1);
         }
 
         String[] minutes = {"Choose minutes", "00", "15", "30", "45"};
@@ -93,7 +92,6 @@ public class HourSelect extends AppCompatActivity {
         SpinBeginMinute.setAdapter(minuteAdapter);
         SpinEndMinute.setAdapter(minuteAdapter);
 
-        makeOrder = false;
         readParkAd();
         setTimeBar();
 
@@ -111,7 +109,9 @@ public class HourSelect extends AppCompatActivity {
     }
 
     public void makeOrder(View view) {
-        if (makeOrder) {
+        if (SpinEndHour.getSelectedItemPosition() == 0 || SpinBeginHour.getSelectedItemPosition() == 0 || SpinBeginMinute.getSelectedItemPosition() == 0 || SpinEndMinute.getSelectedItemPosition() == 0) {
+            Toast.makeText(this, "CHOOSE VALID TIMES", Toast.LENGTH_SHORT).show();
+        } else {
             String beginFull = beginHour + ":" + beginMinute;
             String endFull = endHour + ":" + endMinute;
             if (HourInBounds(beginFull, endFull) && !beginFull.matches(endFull)) {
@@ -123,27 +123,19 @@ public class HourSelect extends AppCompatActivity {
                 double hourlyRate = parkAd.getHourlyRate();
                 String sellerID = parkAd.getUserID();
                 String parkAddress = parkAd.getAddress();
-                Order order = new Order(parkAdID, userID, confirmDate, parkDate, beginFull, endFull, hourlyRate,sellerID,parkAddress);
+                Order order = new Order(parkAdID, userID, confirmDate, parkDate, beginFull, endFull, hourlyRate, sellerID, parkAddress);
                 DatabaseReference ordersRef = fbDB.getReference("Orders");
-                String key = ordersRef.push().getKey();
-                ordersRef.child(key).setValue(order);
+                String Orderkey = ordersRef.push().getKey();
+                ordersRef.child(Orderkey).setValue(order);
                 DatabaseReference usersRef = fbDB.getReference("Users");
-                usersRef.child(userID).child("Orders").child("Active Orders").child(key).setValue(order);
+                usersRef.child(userID).child("Orders").child(Orderkey).setValue(order);
 
-
-                String beginHourKey = "B" + parkAd.getBeginHour().substring(0, 2) + parkAd.getBeginHour().substring(3);
-                String endHourKey = "E" + parkAd.getFinishHour().substring(0, 2) + parkAd.getFinishHour().substring(3);
-                String hourRangeKey = beginHourKey + endHourKey;
-                String dateKey = Services.addLeadingZerosToDate(parkDate, false);
-                String latitude = parkAd.getLatitude();
-                String longitude = parkAd.getLongitude();
-                String path = (latitude + longitude).replace(".", "");
                 double finalPrice = order.getPrice();
-
-                Receipt receipt = new Receipt(sellerID,userID,path,dateKey,hourRangeKey,finalPrice,confirmDate);
+                Receipt receipt = new Receipt(sellerID, userID, parkAdID,Orderkey, finalPrice, confirmDate);
                 DatabaseReference receiptRef = fbDB.getReference("Users").child(sellerID).child("Receipts");
-                key = receiptRef.push().getKey();
-                receiptRef.child(key).setValue(receipt);
+                String reciptKey = receiptRef.push().getKey();
+                receiptRef.child(reciptKey).setValue(receipt);
+
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Order Made!");
@@ -162,7 +154,7 @@ public class HourSelect extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Select Hour in Available Range", Toast.LENGTH_SHORT).show();
             }
-        } else Toast.makeText(this, "CHOOSE VALID TIMES", Toast.LENGTH_SHORT).show();
+        }
     }
 
 
@@ -223,8 +215,6 @@ public class HourSelect extends AppCompatActivity {
                 endMinute = adapterView.getItemAtPosition(i).toString();
             }
 
-            if (i == 0) makeOrder = false;
-            else makeOrder = true;
         }
 
         @Override
@@ -234,19 +224,19 @@ public class HourSelect extends AppCompatActivity {
     };
 
 
-    public static double getPrice(String startTime, String endTime, double hourlyRate) {
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-            Date date1 = sdf.parse(startTime);
-            Date date2 = sdf.parse(endTime);
-            long diffInMilliseconds = date2.getTime() - date1.getTime();
-            double diffInMinutes = (Math.abs(diffInMilliseconds) / (1000 * 60));
-            return (diffInMinutes / 60) * hourlyRate;
-        } catch (ParseException e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }
+//    public static double getPrice(String startTime, String endTime, double hourlyRate) {
+//        try {
+//            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+//            Date date1 = sdf.parse(startTime);
+//            Date date2 = sdf.parse(endTime);
+//            long diffInMilliseconds = date2.getTime() - date1.getTime();
+//            double diffInMinutes = (Math.abs(diffInMilliseconds) / (1000 * 60));
+//            return (diffInMinutes / 60) * hourlyRate;
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//            return -1;
+//        }
+//    }
 
     private boolean HourInBounds(String hour1, String hour2) {
         if (!isHourBetween(hour1, topHour, bottomHour)) {
@@ -254,7 +244,7 @@ public class HourSelect extends AppCompatActivity {
                 return false;
             }
         }
-        if (getDoubleFromTimeString(hour2)<=getDoubleFromTimeString(hour1)) return false;
+        if (getDoubleFromTimeString(hour2) <= getDoubleFromTimeString(hour1)) return false;
 
         if (!isHourBetween(hour2, topHour, bottomHour)) {
             if (!(hour2.matches(bottomHour))) {

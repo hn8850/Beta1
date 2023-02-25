@@ -1,0 +1,103 @@
+package com.example.beta1;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class ParkAdQueryListView extends AppCompatActivity {
+
+    ListView listView;
+    String lat, lan;
+    FirebaseDatabase fbDB;
+    String beginHour, endHour, date, price;
+    ArrayList<HashMap<String, String>> parkAdsDataList = new ArrayList<>();
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_park_ad_query_list_view);
+        listView = findViewById(R.id.listview);
+        fbDB = FirebaseDatabase.getInstance();
+
+        Intent gi = getIntent();
+        lat = gi.getStringExtra("lat");
+        lan = gi.getStringExtra("long");
+//        System.out.println("Original Lan = " + lan);
+//        System.out.println("Original Lat = " + lat);
+        SetParkAdsDataList();
+
+        //System.out.println("Check: " + parkAdsDataList.get(0).toString());
+
+
+    }
+
+    public void SetParkAdsDataList() {
+        DatabaseReference parkAdsBranch = fbDB.getReference("ParkAds");
+        parkAdsBranch.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot snapshot1 : snapshot.getChildren()) {
+                    ParkAd parkAd = snapshot1.getValue(ParkAd.class);
+                    HashMap<String, String> data = new HashMap<>();
+                    if (parkAd.getLatitude().matches(lat) && parkAd.getLongitude().matches(lan)) {
+//                        System.out.println("Lan = " + parkAd.getLongitude());
+//                        System.out.println("Lat = " + parkAd.getLatitude());
+
+                        data.put("date", parkAd.getDate());
+                        data.put("begin", parkAd.getBeginHour());
+                        data.put("end", parkAd.getFinishHour());
+                        data.put("price", String.valueOf(parkAd.getHourlyRate()));
+                        parkAdsDataList.add(data);
+                    }
+                }
+                CustomParkAdListAdapter adapter = new CustomParkAdListAdapter(parkAdsDataList);
+                listView.setAdapter(adapter);
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                        HashMap<String,String> itemData = parkAdsDataList.get(i);
+                        beginHour = itemData.get("begin");
+                        beginHour = "B" + beginHour.substring(0, 2) + beginHour.substring(3);
+                        endHour = itemData.get("end");
+                        endHour ="E" + endHour.substring(0, 2) + endHour.substring(3);
+                        date = itemData.get("date");
+                        date = "D" + Services.addLeadingZerosToDate(date, false);
+                        String locationKey = (lat + lan).replace(".", "");
+                        String parkAdPath = locationKey + date + beginHour + endHour;
+                        Intent si = new Intent(getApplicationContext(),ViewParkAd.class);
+                        si.putExtra("path",parkAdPath);
+                        startActivity(si);
+
+                    }
+                });
+                System.out.println("SIZE = " + parkAdsDataList.size());
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+
+}

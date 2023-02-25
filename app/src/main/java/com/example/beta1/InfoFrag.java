@@ -252,8 +252,8 @@ public class InfoFrag extends Fragment {
     };
 
     public void uploadAd(ArrayList<String> imageURLS) {
-
         imagesCounter = 0;
+
         sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
 
         String latitude = sharedPrefs.getString("latitude", "0");
@@ -265,24 +265,29 @@ public class InfoFrag extends Fragment {
         String userUid = newUser.getUid();
         int Active = 1;
         String Date = sharedPrefs.getString("Date", "0");
-        Date = Services.addLeadingZerosToDate(Date, true);
+        String dateParam = Services.addLeadingZerosToDate(Date, true);
         String BeginHour = sharedPrefs.getString("BeginHour", "0");
         String FinishHour = sharedPrefs.getString("FinishHour", "0");
         Double HourlyRate = Double.valueOf(sharedPrefs.getString("HourlyRate", "0"));
         String Description = sharedPrefs.getString("Description", "No desc");
         String Address = sharedPrefs.getString("address", "0");
 
+
         String beginHourKey = "B" + BeginHour.substring(0, 2) + BeginHour.substring(3);
         String endHourKey = "E" + FinishHour.substring(0, 2) + FinishHour.substring(3);
         String hourRangeKey = beginHourKey + endHourKey;
-        String DateKey = Services.addLeadingZerosToDate(Date, false);
-        ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, Date, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
+        String dateKey = "D" + Services.addLeadingZerosToDate(Date, false);
+        String parkAdKey = path + dateKey + hourRangeKey;
+
+        ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, dateParam, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
         DatabaseReference adRef = mDb.getReference("ParkAds");
-        adRef.child(path).child(DateKey).child(hourRangeKey).setValue(ad);
-        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child("Active ParkAds").child(path).child(DateKey).child(hourRangeKey);
+        adRef.child(parkAdKey).setValue(ad);
+        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child(parkAdKey);
         userAdRef.setValue(ad);
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
+
+
     }
 
 
@@ -348,7 +353,7 @@ public class InfoFrag extends Fragment {
     View.OnClickListener uploadButtonListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if (imagesCounter >=5) {
+            if (imagesCounter >= 5) {
                 Toast.makeText(getActivity().getApplicationContext(), "You can only select up to 5 images", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -368,7 +373,7 @@ public class InfoFrag extends Fragment {
                         } catch (IOException ex) {
                             // Error occurred while creating the File
                         }
-                        if (photoFile!=null){
+                        if (photoFile != null) {
                             imageUri = FileProvider.getUriForFile(getActivity(), "com.mydomain.fileprovider", photoFile);
                             takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
                             //takePictureIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
@@ -428,11 +433,10 @@ public class InfoFrag extends Fragment {
 
                 Toast.makeText(getActivity().getApplicationContext(), "Upload Successful", Toast.LENGTH_SHORT).show();
             } else if (requestCode == REQUEST_IMAGE_CAPTURE) {
-                if (imagesCounter>=5){
+                if (imagesCounter >= 5) {
                     Toast.makeText(getActivity().getApplicationContext(), "You can only select up to 5 images", Toast.LENGTH_SHORT).show();
                     return;
-                }
-                else{
+                } else {
                     imageUri = Uri.fromFile(photoFile);
                     //System.out.println("URI = " + imageUri.toString());
                     imageUris[imagesCounter] = imageUri;

@@ -67,10 +67,7 @@ public class ViewParkAd extends AppCompatActivity {
 
 
         gi = getIntent();
-        String latitude = String.valueOf(gi.getDoubleExtra("lat", 0));
-        String longitude = String.valueOf(gi.getDoubleExtra("long", 0));
-        parkAdID = (latitude + longitude).replace(".", "");
-        parkAdID.replace(".", "");
+        parkAdID = gi.getStringExtra("path");
 
         fbDB = FirebaseDatabase.getInstance();
         storage = FirebaseStorage.getInstance();
