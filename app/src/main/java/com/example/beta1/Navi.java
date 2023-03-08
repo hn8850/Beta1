@@ -158,6 +158,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 String longitude = String.valueOf(marker.getPosition().longitude);
                 si.putExtra("lat", latitude);
                 si.putExtra("long", longitude);
+                si.putExtra("date1", query.get("date1"));
+                si.putExtra("date2", query.get("date2"));
 
                 startActivity(si);
                 return true;
@@ -174,10 +176,12 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 parkAdMarkers = new ArrayList<>();
                 parkAdIDs = new ArrayList<>();
                 parkAds.clear();
+                System.out.println("check");
                 SimpleDateFormat dateFormat = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
                 SimpleDateFormat hourFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     ParkAd parkAd = snapshot1.getValue(ParkAd.class);
+                    System.out.println("yes");
 
                     String currentDate = dateFormat.format(new Date());
                     currentDate = Services.addLeadingZerosToDate(currentDate, false);
@@ -298,6 +302,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     public void UpdateOrderCompleted(String OrderID) {
         DatabaseReference finishedOrder = fbDB.getReference("Users").child(currUserID).child("Orders").child(OrderID);
         finishedOrder.child("complete").setValue(true);
+        finishedOrder.child("active").setValue(false);
         DatabaseReference orderBranch = fbDB.getReference("Orders").child(OrderID);
         orderBranch.setValue(null);
 
@@ -354,17 +359,13 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
     public void UpdateParkAdCompleted(String ParkAdID) {
         DatabaseReference ExpiredAd = fbDB.getReference("ParkAds").child(ParkAdID);
-
         ExpiredAd.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 ParkAd completeAd = snapshot.getValue(ParkAd.class);
                 completeAd.setActive(0);
                 DatabaseReference completeBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds");
-                String key = completeBranch.push().getKey();
-                completeBranch.child(key).setValue(completeAd);
-                DatabaseReference activeAdBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds").child(ParkAdID);
-                activeAdBranch.setValue(null);
+                completeBranch.child(ParkAdID).setValue(completeAd);
                 ExpiredAd.setValue(null);
             }
 
@@ -415,7 +416,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                         if (Date2.after(Date1)) {
                             query.put("date1", date1);
                             query.put("date2", date2);
-                            sortParkAds();
                         } else {
                             Toast.makeText(Navi.this, "Dates must be in order!", Toast.LENGTH_SHORT).show();
 
@@ -432,9 +432,10 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
                 }
                 dialog.dismiss();
-
             }
         });
+
+        sortParkAds();
 
         Window window = dialog.getWindow();
         if (window != null) {
@@ -468,6 +469,13 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     sortedParkAdMarkers.add(parkAdMarkers.get(pos));
                     sortedParkAdMarkerOptions.add(parkAdMarkerOptions.get(pos));
                 }
+            }
+            else{
+                pos = parkAds.indexOf(parkAd);
+                sortedAds.add(parkAd);
+                sortedIDs.add(parkAdIDs.get(pos));
+                sortedParkAdMarkers.add(parkAdMarkers.get(pos));
+                sortedParkAdMarkerOptions.add(parkAdMarkerOptions.get(pos));
             }
         }
 

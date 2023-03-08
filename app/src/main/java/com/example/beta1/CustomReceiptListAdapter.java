@@ -1,6 +1,5 @@
 package com.example.beta1;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,10 +9,11 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class CustomParkAdListAdapter extends BaseAdapter {
+public class CustomReceiptListAdapter extends BaseAdapter {
     private ArrayList<HashMap<String, String>> dataList;
 
-    public CustomParkAdListAdapter(ArrayList<HashMap<String, String>> dataList) {
+
+    public CustomReceiptListAdapter(ArrayList<HashMap<String, String>> dataList) {
         this.dataList = dataList;
     }
 
@@ -36,29 +36,23 @@ public class CustomParkAdListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
-            convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.park_ad_desc, parent, false);
+            convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.receipt_desc, parent, false);
         }
 
         // get the data for the current position
         HashMap<String, String> data = (HashMap<String, String>) getItem(position);
 
-        // set the data to the views in the layout
-        TextView dateView = convertView.findViewById(R.id.dateTextView);
-        dateView.setText("Date: " + data.get("date"));
 
-        TextView fromToView = convertView.findViewById(R.id.fromTextView);
-        fromToView.setText("From: " + data.get("begin") + "   To: " + data.get("end"));
+        TextView buyerView = convertView.findViewById(R.id.buyerTextView);
+        buyerView.setText("Buyer: " + data.get("buyer"));
 
         TextView priceView = convertView.findViewById(R.id.priceTextView);
-        if (data.get("price").matches("NONE"))
-            priceView.setText("Address: " + data.get("address"));
-        else {
-            priceView.setText("Price: " + data.get("price"));
-        }
+        priceView.setText("Final Price: " + data.get("price") );
+
+        TextView confirmDateTv = convertView.findViewById(R.id.dateOfConfirmTextView);
+        confirmDateTv.setText("Confirm Date: " + data.get("confirm"));
+
 
         return convertView;
     }
 }
-
-
-

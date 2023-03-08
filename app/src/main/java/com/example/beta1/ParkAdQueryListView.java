@@ -27,7 +27,7 @@ public class ParkAdQueryListView extends AppCompatActivity {
     ListView listView;
     String lat, lan;
     FirebaseDatabase fbDB;
-    String beginHour, endHour, date, price;
+    String beginHour, endHour, date, queryDate1, queryDate2;
     ArrayList<HashMap<String, String>> parkAdsDataList = new ArrayList<>();
 
 
@@ -41,8 +41,15 @@ public class ParkAdQueryListView extends AppCompatActivity {
         Intent gi = getIntent();
         lat = gi.getStringExtra("lat");
         lan = gi.getStringExtra("long");
-//        System.out.println("Original Lan = " + lan);
-//        System.out.println("Original Lat = " + lat);
+        if (!gi.getStringExtra("date1").matches("NONE")) {
+            queryDate1 = gi.getStringExtra("date1");
+            queryDate2 = gi.getStringExtra("date2");
+        }
+        else{
+            queryDate1 = "1/1/1970";
+            queryDate2 = "12/12/3000";
+        }
+
         SetParkAdsDataList();
 
         //System.out.println("Check: " + parkAdsDataList.get(0).toString());
@@ -57,16 +64,18 @@ public class ParkAdQueryListView extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     ParkAd parkAd = snapshot1.getValue(ParkAd.class);
-                    HashMap<String, String> data = new HashMap<>();
+                    System.out.println("123");
                     if (parkAd.getLatitude().matches(lat) && parkAd.getLongitude().matches(lan)) {
-//                        System.out.println("Lan = " + parkAd.getLongitude());
-//                        System.out.println("Lat = " + parkAd.getLatitude());
+                        if (Services.isDateBetween(parkAd.getDate(), queryDate1, queryDate2)) {
+                            HashMap<String, String> data = new HashMap<>();
+                            data.put("date", parkAd.getDate());
+                            data.put("begin", parkAd.getBeginHour());
+                            data.put("end", parkAd.getFinishHour());
+                            data.put("price", String.valueOf(parkAd.getHourlyRate()));
+                            parkAdsDataList.add(data);
+                        }
 
-                        data.put("date", parkAd.getDate());
-                        data.put("begin", parkAd.getBeginHour());
-                        data.put("end", parkAd.getFinishHour());
-                        data.put("price", String.valueOf(parkAd.getHourlyRate()));
-                        parkAdsDataList.add(data);
+
                     }
                 }
                 CustomParkAdListAdapter adapter = new CustomParkAdListAdapter(parkAdsDataList);
@@ -74,17 +83,17 @@ public class ParkAdQueryListView extends AppCompatActivity {
                 listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                        HashMap<String,String> itemData = parkAdsDataList.get(i);
+                        HashMap<String, String> itemData = parkAdsDataList.get(i);
                         beginHour = itemData.get("begin");
                         beginHour = "B" + beginHour.substring(0, 2) + beginHour.substring(3);
                         endHour = itemData.get("end");
-                        endHour ="E" + endHour.substring(0, 2) + endHour.substring(3);
+                        endHour = "E" + endHour.substring(0, 2) + endHour.substring(3);
                         date = itemData.get("date");
                         date = "D" + Services.addLeadingZerosToDate(date, false);
                         String locationKey = (lat + lan).replace(".", "");
                         String parkAdPath = locationKey + date + beginHour + endHour;
-                        Intent si = new Intent(getApplicationContext(),ViewParkAd.class);
-                        si.putExtra("path",parkAdPath);
+                        Intent si = new Intent(getApplicationContext(), ViewParkAd.class);
+                        si.putExtra("path", parkAdPath);
                         startActivity(si);
 
                     }

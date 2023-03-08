@@ -108,6 +108,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:onClick="goToOrderHistory"
                 app:srcCompat="@drawable/test" />
 
             <ImageButton
@@ -117,6 +118,15 @@
                 android:layout_weight="1"
                 android:onClick="goToParkAdHistory"
                 app:srcCompat="@drawable/parkadhistory" />
+
+            <ImageButton
+                android:id="@+id/imageButton2"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:onClick="goToReceiptHistory"
+                app:srcCompat="@drawable/receipthistory" />
+
 
         </LinearLayout>
 

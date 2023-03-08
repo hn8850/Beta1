@@ -8,12 +8,10 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -34,7 +32,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 
@@ -180,5 +177,17 @@ public class Settings extends AppCompatActivity {
         si.putExtra("UID",UID);
         startActivity(si);
 
+    }
+
+    public void goToOrderHistory(View view) {
+        Intent si = new Intent(this,OrderHistory.class);
+        si.putExtra("UID",UID);
+        startActivity(si);
+    }
+
+    public void goToReceiptHistory(View view) {
+        Intent si = new Intent(this,ReceiptHistory.class);
+        si.putExtra("UID",UID);
+        startActivity(si);
     }
 }
