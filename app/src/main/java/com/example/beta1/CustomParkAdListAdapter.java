@@ -1,6 +1,5 @@
 package com.example.beta1;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;

@@ -306,6 +306,20 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         DatabaseReference orderBranch = fbDB.getReference("Orders").child(OrderID);
         orderBranch.setValue(null);
 
+        AlertDialog.Builder adb = new AlertDialog.Builder(this);
+        adb.setTitle("Order Completed!");
+        adb.setMessage("Want to leave a Review?");
+        adb.setPositiveButton("Yes!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Intent si = new Intent(getApplicationContext(),WriteReview.class);
+                si.putExtra("OrderID",OrderID);
+                si.putExtra("UID",currUserID);
+                startActivity(si);
+            }
+        });
+
+
 //        DatabaseReference finishedOrder = fbDB.getReference("Users").child(currUserID).child("Orders").child(OrderID);
 //        finishedOrder.addListenerForSingleValueEvent(new ValueEventListener() {
 //            @Override

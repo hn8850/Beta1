@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -26,16 +27,18 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
+import java.util.ArrayList;
 
 public class ViewUser extends AppCompatActivity {
 
     TextInputEditText IDEt, NameEt, DateEt, PhoneEt;
+    ImageView iv;
+    TextView tVactive,rating;
+
     String  picUrl;
     int active;
     String UID;
-    ImageView iv;
     Uri imageUri;
-    TextView tVactive;
 
     FirebaseDatabase mDb;
     FirebaseStorage mStorage;
@@ -53,6 +56,8 @@ public class ViewUser extends AppCompatActivity {
         iv = findViewById(R.id.imageView);
 
         tVactive = findViewById(R.id.ActiveTv);
+
+        rating = findViewById(R.id.rating);
 
         mDb = FirebaseDatabase.getInstance();
         mStorage = FirebaseStorage.getInstance();
@@ -92,6 +97,26 @@ public class ViewUser extends AppCompatActivity {
                     tVactive.setText("Not Active");
                 }
 
+                DataSnapshot reviewsSnapshot = snapshot.child("Reviews");
+
+
+                int sumOfStars = 0;
+                int count = 0;
+                for (DataSnapshot reviewSnapshot : reviewsSnapshot.getChildren()) {
+                    Review review = reviewSnapshot.getValue(Review.class);
+                    sumOfStars = sumOfStars + review.getStars();
+                    count++;
+                }
+
+                if (count == 0){
+                    rating.setText("No Reviews Yet!");
+                }
+                else{
+                    double average = sumOfStars/count;
+                    rating.setText("Average Ratings: " + average);
+                }
+
+
 
             }
 
@@ -124,5 +149,12 @@ public class ViewUser extends AppCompatActivity {
             }
         });
     }
+
+    public void goToReviewHistory(View view) {
+        Intent si = new Intent(this,ReviewHistory.class);
+        si.putExtra("UID",UID);
+        startActivity(si);
+    }
+
 
 }

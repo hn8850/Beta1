@@ -190,4 +190,10 @@ public class Settings extends AppCompatActivity {
         si.putExtra("UID",UID);
         startActivity(si);
     }
+
+    public void goToReviewHistory(View view) {
+        Intent si = new Intent(this,ReviewHistory.class);
+        si.putExtra("UID",UID);
+        startActivity(si);
+    }
 }

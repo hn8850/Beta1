@@ -12,6 +12,8 @@ public class User {
     String ProfilePicURL;
     ArrayList<Order> orders;
     ArrayList<ParkAd> parkAds;
+    ArrayList<Receipt> receipts;
+    ArrayList<Review> reviews;
 
     public User() {
     }
@@ -25,6 +27,8 @@ public class User {
         ProfilePicURL = profilePicURL;
         this.orders = new ArrayList<>();
         this.parkAds = new ArrayList<>();
+        this.receipts = new ArrayList<>();
+        this.reviews = new ArrayList<>();
 
     }
 
@@ -95,10 +99,19 @@ public class User {
         this.parkAds = parkAds;
     }
 
-    //    Reviews ReviewsFromUser
-//    Reviews ReviewsAboutUser
-//    Order[] OrdersHistory
-//    Order[] RentalHistory
+    public ArrayList<Receipt> getReceipts() {
+        return receipts;
+    }
 
+    public void setReceipts(ArrayList<Receipt> receipts) {
+        this.receipts = receipts;
+    }
 
+    public ArrayList<Review> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(ArrayList<Review> reviews) {
+        this.reviews = reviews;
+    }
 }

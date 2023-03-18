@@ -144,7 +144,7 @@ public class Login extends AppCompatActivity {
             startActivity(si);
         }
         if (st.equals("test")) {
-            Intent si = new Intent(this, HourSelect.class);
+            Intent si = new Intent(this, WriteReview.class);
             startActivity(si);
         }
 
