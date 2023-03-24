@@ -63,6 +63,7 @@ public class TimeFrag extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_time, container, false);
+        System.out.println("THIS IS IT");
 
         String[] hours = new String[25];
         hours[0] = "Choose hour";

@@ -20,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
@@ -82,7 +83,6 @@ public class InfoFrag extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_info, container, false);
-
         upload = view.findViewById(R.id.upload);
         upload.setOnClickListener(uploadButtonListener);
         save = view.findViewById(R.id.save3);
@@ -108,6 +108,7 @@ public class InfoFrag extends Fragment {
         for (int i = 0; i < imageViewIds.length; i++) {
             imageViews[i] = view.findViewById(imageViewIds[i]);
         }
+
 
         StringURIs = new String[5];
         sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
@@ -149,8 +150,13 @@ public class InfoFrag extends Fragment {
         mStorage = FirebaseStorage.getInstance();
         imageUris = new Uri[MAX_IMAGES];
 
+        sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
+        SharedPreferences.Editor editor = sharedPrefs.edit();
+        editor.putString("TAB3", "EXISTS");
         return view;
     }
+
+
 
 
     private View.OnClickListener saveButtonClickListener3 = new View.OnClickListener() {

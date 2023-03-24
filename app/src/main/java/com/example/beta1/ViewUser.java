@@ -98,8 +98,7 @@ public class ViewUser extends AppCompatActivity {
                 }
 
                 DataSnapshot reviewsSnapshot = snapshot.child("Reviews");
-
-
+                
                 int sumOfStars = 0;
                 int count = 0;
                 for (DataSnapshot reviewSnapshot : reviewsSnapshot.getChildren()) {

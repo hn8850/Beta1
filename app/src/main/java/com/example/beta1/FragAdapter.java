@@ -13,8 +13,8 @@ public class FragAdapter extends FragmentPagerAdapter {
     private final ArrayList<Fragment> frags = new ArrayList<>();
     private final ArrayList<String> titles = new ArrayList<>();
 
-    public FragAdapter(@NonNull FragmentManager fm, int behavior) {
-        super(fm, behavior);
+    public FragAdapter(@NonNull FragmentManager fm) {
+        super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
     }
 
     @NonNull

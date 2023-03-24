@@ -22,10 +22,10 @@ public class UploadAd extends AppCompatActivity {
 
         tabLayout.setupWithViewPager(viewPager);
 
-        FragAdapter fragAdapter = new FragAdapter(getSupportFragmentManager(), FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
+        FragAdapter fragAdapter = new FragAdapter(getSupportFragmentManager());
         fragAdapter.addFrag(new LocationFrag(),"Location");
-        fragAdapter.addFrag(new TimeFrag(),"Time + Price");
         fragAdapter.addFrag(new InfoFrag(),"Info");
+        fragAdapter.addFrag(new TimeFrag(),"Time + Price");
         viewPager.setAdapter(fragAdapter);
     }
 }
