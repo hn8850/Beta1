@@ -71,6 +71,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:backgroundTint="#1663E8"
+                    android:drawableLeft="@drawable/ic_baseline_edit_24"
                     android:drawableRight="@drawable/ic_baseline_arrow_forward_24"
                     android:fontFamily="sans-serif"
                     android:onClick="goToEditProfile"
@@ -82,6 +83,50 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="4" />
+
+        </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/textView15"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Manage"
+            android:textColor="#3F51B5"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/button11"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:backgroundTint="#FFFFFF"
+                android:drawableLeft="@drawable/ic_baseline_local_atm_24"
+                android:drawableRight="@drawable/ic_baseline_arrow_forward_24"
+                android:onClick="goToActiveOrders"
+                android:text="Active Orders"
+                android:textColor="#000000" />
+
+            <Button
+                android:id="@+id/button12"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:backgroundTint="#FFFFFF"
+                android:drawableLeft="@drawable/ic_baseline_car_crash_24"
+                android:drawableRight="@drawable/ic_baseline_arrow_forward_24"
+                android:onClick="goToActiveParkAds"
+                android:text="Active ParkAds"
+                android:textColor="#000000" />
 
         </LinearLayout>
 

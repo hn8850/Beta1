@@ -196,4 +196,16 @@ public class Settings extends AppCompatActivity {
         si.putExtra("UID",UID);
         startActivity(si);
     }
+
+    public void goToActiveOrders(View view) {
+        Intent si = new Intent(this,ActiveOrders.class);
+        si.putExtra("UID",UID);
+        startActivity(si);
+    }
+
+    public void goToActiveParkAds(View view) {
+        Intent si = new Intent(this,ActiveParkAds.class);
+        si.putExtra("UID",UID);
+        startActivity(si);
+    }
 }

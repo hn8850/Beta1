@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ReviewHistory">
+    tools:context=".ActiveOrders">
 
     <Space
         android:layout_width="0dp"
@@ -23,18 +23,18 @@
             android:layout_weight="0.5" />
 
         <TextView
-            android:id="@+id/textView9"
+            android:id="@+id/textView8"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="ReviewHistory"
+            android:text="Active/Future Orders"
             android:textColor="#E91E63"
             android:textSize="30sp"
             android:textStyle="bold" />
 
         <ListView
-            android:id="@+id/listview1"
+            android:id="@+id/listview5"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="8">

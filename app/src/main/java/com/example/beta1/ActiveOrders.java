@@ -1,18 +1,18 @@
 package com.example.beta1;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -30,20 +30,49 @@ import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 
-public class OrderHistory extends AppCompatActivity {
+public class ActiveOrders extends AppCompatActivity {
     String currUserID;
     FirebaseDatabase fbDB;
     ListView listView;
-    ArrayList<HashMap<String, String>> orderHistoryDataList = new ArrayList<>();
+    ArrayList<HashMap<String, String>> activeOrdersDataList = new ArrayList<>();
+    ArrayList<String> orderIDs = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_order_history);
-        listView = findViewById(R.id.listview3);
+        setContentView(R.layout.activity_active_orders);
+        listView = findViewById(R.id.listview5);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
+                AlertDialog.Builder adb = new AlertDialog.Builder(ActiveOrders.this);
+                adb.setTitle("You Have Selected an Order");
+                adb.setNeutralButton("Go Back", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                });
+                adb.setNegativeButton("Cancel Order", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        System.out.println("INDEX:" + i);
+                        String canceledOrderID = orderIDs.get(pos);
+                        DatabaseReference canceledOrderRef = fbDB.getReference("Users").child(currUserID).child("Orders").child(canceledOrderID);
+                        canceledOrderRef.child("canceled").setValue(true);
+                        Toast.makeText(ActiveOrders.this,"Order Canceled",Toast.LENGTH_SHORT);
+                        activeOrdersDataList.remove(pos);
+                        CustomOrderListAdapter adapter = new CustomOrderListAdapter(activeOrdersDataList);
+                        listView.setAdapter(adapter);
+                    }
+                });
+                AlertDialog dialog = adb.create();
+                dialog.show();
+            }
+        });
+
 
         Intent gi = getIntent();
         currUserID = gi.getStringExtra("UID");
@@ -51,9 +80,6 @@ public class OrderHistory extends AppCompatActivity {
         fbDB = FirebaseDatabase.getInstance();
         VerifyDateOfOrders();
     }
-
-
-
 
     public void VerifyDateOfOrders() {
         DatabaseReference userOrders = fbDB.getReference("Users").child(currUserID).child("Orders");
@@ -97,7 +123,7 @@ public class OrderHistory extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 }
-                readOrderHistory();
+                readActiveOrders();
             }
 
             @Override
@@ -115,14 +141,16 @@ public class OrderHistory extends AppCompatActivity {
         orderBranch.setValue(null);
     }
 
-    public void readOrderHistory() {
+    public void readActiveOrders() {
         DatabaseReference userAds = fbDB.getReference("Users").child(currUserID).child("Orders");
         userAds.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     Order order = snapshot1.getValue(Order.class);
-                    if (order.isComplete() || order.isCanceled()) {
+                    if (!(order.isComplete()) && !(order.isCanceled())) {
+                        orderIDs.add(snapshot1.getKey());
+                        System.out.println("KEY:" + snapshot1.getKey());
                         String sellerId = order.getSellerId();
                         DatabaseReference sellerRef = fbDB.getReference("Users").child(sellerId);
                         sellerRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -132,7 +160,7 @@ public class OrderHistory extends AppCompatActivity {
                                 saveStringToSharedPref("seller", seller.getName());
                                 System.out.println("name = " + seller.getName());
                                 ContinueReading(order);
-                                CustomOrderListAdapter adapter = new CustomOrderListAdapter(orderHistoryDataList);
+                                CustomOrderListAdapter adapter = new CustomOrderListAdapter(activeOrdersDataList);
                                 listView.setAdapter(adapter);
                             }
 
@@ -166,11 +194,11 @@ public class OrderHistory extends AppCompatActivity {
         data.put("end", order.getEndHour());
         data.put("address", order.getParkAddress());
         data.put("price", String.valueOf(order.getPrice()));
-        if (order.isComplete()) data.put("status", "Complete");
-        else data.put("status", "Canceled");
+        if (order.isActive()) data.put("status", "Active");
+        else data.put("status", "Future Order");
         data.put("confirm", order.getConfirmDate());
         System.out.println("data =" + data.toString());
-        orderHistoryDataList.add(data);
+        activeOrdersDataList.add(data);
     }
 
 
