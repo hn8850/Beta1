@@ -7,18 +7,20 @@ public class Receipt {
     String orderKey;
     double finalPrice;
     String dateOfConfirm;
+    String paymentID;
 
     public Receipt() {
 
     }
 
-    public Receipt(String sellerUserID, String buyerUserID, String parkAdPath, String orderKey, double finalPrice, String dateOfConfirm) {
+    public Receipt(String sellerUserID, String buyerUserID, String parkAdPath, String orderKey, double finalPrice, String dateOfConfirm, String paymentID) {
         this.sellerUserID = sellerUserID;
         this.buyerUserID = buyerUserID;
         this.parkAdPath = parkAdPath;
         this.orderKey = orderKey;
         this.finalPrice = finalPrice;
         this.dateOfConfirm = dateOfConfirm;
+        this.paymentID = paymentID;
     }
 
     public String getSellerUserID() {
@@ -69,7 +71,13 @@ public class Receipt {
         this.orderKey = orderKey;
     }
 
+    public String getPaymentID() {
+        return paymentID;
+    }
 
+    public void setPaymentID(String paymentID) {
+        this.paymentID = paymentID;
+    }
 }
 
 

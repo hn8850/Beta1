@@ -27,7 +27,7 @@ public class ReviewHistory extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_review_history);
-        listView = findViewById(R.id.listview4);
+        listView = findViewById(R.id.listview1);
 
         Intent gi = getIntent();
         currUserID = gi.getStringExtra("UID");

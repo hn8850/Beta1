@@ -79,12 +79,33 @@ public class Services {
 
     }
 
+    public static String roundToNextQuarterHour(String timeString) {
+        String[] parts = timeString.split(":");
+        int hour = Integer.parseInt(parts[0]);
+        int minute = Integer.parseInt(parts[1]);
 
+        // Check if the current minute is greater than or equal to 45.
+        // If so, we need to round to the next hour.
+        if (minute >= 45) {
+            hour += 1;
+            minute = 0;
+        }
+        // Otherwise, round to the next quarter of an hour.
+        else {
+            int minuteRounded = (int) Math.ceil(minute / 15.0) * 15;
+            if (minuteRounded == 60) {
+                hour += 1;
+                minuteRounded = 0;
+            }
+            minute = minuteRounded;
+        }
 
-
-    public String keyToTime(String parkAdKey, String param) {
-        return "";
+        return String.format("%02d:%02d", hour, minute);
     }
+
+
+
+
 
 
 }

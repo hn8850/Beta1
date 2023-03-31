@@ -23,15 +23,19 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.example.beta1.databinding.ActivityNaviBinding;
 import com.example.beta1.databinding.Navi2Binding;
+
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -43,6 +47,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -70,7 +75,7 @@ import java.util.Locale;
 public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
     Button filter;
-    ImageButton search;
+    Button search;
     EditText searchBar;
 
     private GoogleMap mMap;
@@ -78,8 +83,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     private ActivityNaviBinding binding2;
     private final static int LOCATION_PERMISSION_CODE = 101;
     FirebaseDatabase fbDB;
-    ArrayList<ParkAd> parkAds = new ArrayList<>();
-    List<MarkerOptions> parkAdMarkerOptions = new ArrayList<>();
+    ArrayList<ParkAd> parkAds;
+    List<MarkerOptions> parkAdMarkerOptions;
     List<Marker> parkAdMarkers;
     ArrayList<String> parkAdIDs;
     ArrayList<ParkAd> sortedAds = new ArrayList<>();
@@ -119,10 +124,11 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         MapsInitializer.initialize(this);
         mMap = googleMap;
+        mMap.setMyLocationEnabled(true);
         query.put("date1", "NONE");
         query.put("date2", "NONE");
         animateCamera();
-        SetParkAdMarkers(this);
+        SetParkAdMarkers();
         filter = findViewById(R.id.filter);
         filter.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -131,14 +137,13 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             }
         });
         searchBar = findViewById(R.id.searchBar);
-        search = findViewById(R.id.search);
+        search = findViewById(R.id.search2);
         search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 searchQuery();
             }
         });
-
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
@@ -165,17 +170,37 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 return true;
             }
         });
+
+        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Nullable
+            @Override
+            public View getInfoContents(@NonNull Marker marker) {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public View getInfoWindow(@NonNull Marker marker) {
+                View view = getLayoutInflater().inflate(R.layout.custom_info_window, null);
+                TextView priceTv = view.findViewById(R.id.title);
+                priceTv.setText(String.valueOf(marker.getTitle()));
+                System.out.println("Price2:" +marker.getTitle());
+                return view;
+
+            }
+        });
     }
 
-    public void SetParkAdMarkers(Context context) {
+    public void SetParkAdMarkers() {
         DatabaseReference AdsDB = fbDB.getReference("ParkAds");
+        System.out.println("WHATS GOING ON");
         AdsDB.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 parkAdMarkerOptions = new ArrayList<>();
                 parkAdMarkers = new ArrayList<>();
                 parkAdIDs = new ArrayList<>();
-                parkAds.clear();
+                parkAds = new ArrayList<>();
                 System.out.println("check");
                 SimpleDateFormat dateFormat = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
                 SimpleDateFormat hourFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
@@ -212,17 +237,18 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     }
                 }
                 BitmapDescriptor blueMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
-                CustomInfoWindowAdapter customInfoWindow = new CustomInfoWindowAdapter(context);
-                mMap.setInfoWindowAdapter(customInfoWindow);
-
+//                CustomInfoWindowAdapter customInfoWindow = new CustomInfoWindowAdapter(context);
+//                mMap.setInfoWindowAdapter(customInfoWindow);
                 for (ParkAd parkAd : parkAds) {
                     LatLng location = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
                     MarkerOptions markerOptions = new MarkerOptions().icon(blueMarkerIcon)
                             .position(location)
                             .title(parkAd.getHourlyRate().toString());
                     Marker marker = mMap.addMarker(markerOptions);
-                    customInfoWindow.getInfoContents(marker);
+//                    customInfoWindow.getInfoContents(marker);
                     marker.showInfoWindow();
+
+
                     parkAdMarkerOptions.add(markerOptions);
                     parkAdMarkers.add(marker);
                     sortedAds.add(parkAd);
@@ -312,9 +338,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         adb.setPositiveButton("Yes!", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                Intent si = new Intent(getApplicationContext(),WriteReview.class);
-                si.putExtra("OrderID",OrderID);
-                si.putExtra("UID",currUserID);
+                Intent si = new Intent(getApplicationContext(), WriteReview.class);
+                si.putExtra("OrderID", OrderID);
+                si.putExtra("UID", currUserID);
                 startActivity(si);
             }
         });
@@ -483,8 +509,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     sortedParkAdMarkers.add(parkAdMarkers.get(pos));
                     sortedParkAdMarkerOptions.add(parkAdMarkerOptions.get(pos));
                 }
-            }
-            else{
+            } else {
                 pos = parkAds.indexOf(parkAd);
                 sortedAds.add(parkAd);
                 sortedIDs.add(parkAdIDs.get(pos));
@@ -494,17 +519,20 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         }
 
         BitmapDescriptor blueMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
-        CustomInfoWindowAdapter customInfoWindow = new CustomInfoWindowAdapter(this);
-        mMap.setInfoWindowAdapter(customInfoWindow);
+//        CustomInfoWindowAdapter customInfoWindow = new CustomInfoWindowAdapter(this);
+//        mMap.setInfoWindowAdapter(customInfoWindow);
 
         for (ParkAd parkAd : sortedAds) {
             LatLng location = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
             MarkerOptions markerOptions = new MarkerOptions().icon(blueMarkerIcon)
                     .position(location)
-                    .title(parkAd.getHourlyRate().toString());
+                    .title(parkAd.getHourlyRate().toString())
+                    .snippet(String.valueOf(parkAd.getHourlyRate()));
             Marker marker = mMap.addMarker(markerOptions);
-            customInfoWindow.getInfoContents(marker);
             marker.showInfoWindow();
+
+//            customInfoWindow.getInfoContents(marker);
+//            marker.showInfoWindow();
             parkAdMarkerOptions.add(markerOptions);
             parkAdMarkers.add(marker);
         }
@@ -688,6 +716,31 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             }, 2000);
         }
     }
+
+//    public void animateZoomToCurrentLocation() {
+//        // Check if the user has granted location permission
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+//                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            // Request location permission if it hasn't been granted
+//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},LOCATION_PERMISSION_CODE);
+//            return;
+//        }
+//
+//        // Get the user's current location
+//        FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+//        fusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
+//            @Override
+//            public void onSuccess(Location location) {
+//                if (location != null) {
+//                    // Animate the camera to zoom in on the user's current location
+//                    LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+//                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15f);
+//                    mMap.animateCamera(cameraUpdate);
+//                }
+//            }
+//        });
+//    }
+
 
     private Location getLastKnownLocation() {
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);

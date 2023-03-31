@@ -15,7 +15,6 @@
         android:layout_gravity="center"
         android:layout_marginTop="25dp"
         android:clickable="false"
-        android:onClick="ProfilePic"
         android:src="@drawable/login" />
 
     <LinearLayout
@@ -28,22 +27,26 @@
 
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/text1"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="2">
+
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRegID"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clickable="false"
+                android:editable="false"
                 android:hint="UserName"
                 android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/text2"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -54,12 +57,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clickable="false"
+                android:editable="false"
                 android:hint="Name"
                 android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/text3"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -70,12 +75,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clickable="false"
+                android:editable="false"
                 android:hint="Date of Birth"
                 android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/text4"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -86,6 +93,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clickable="false"
+                android:editable="false"
                 android:hint="Phone Number"
                 android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>

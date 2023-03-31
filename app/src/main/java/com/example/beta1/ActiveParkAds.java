@@ -58,8 +58,10 @@ public class ActiveParkAds extends AppCompatActivity {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         System.out.println("INDEX:" + pos);
                         String canceledParkAdID = activeParkAdIDs.get(pos);
-                        DatabaseReference canceledParkAdRef = fbDB.getReference("Users").child(currUserID).child("ParkAds").child(canceledParkAdID);
-                        canceledParkAdRef.child("active").setValue(0);
+                        DatabaseReference canceledParkAdRef4User = fbDB.getReference("Users").child(currUserID).child("ParkAds").child(canceledParkAdID);
+                        canceledParkAdRef4User.child("active").setValue(0);
+                        DatabaseReference canceledParkAdRefGeneral = fbDB.getReference("ParkAds").child(canceledParkAdID);
+                        canceledParkAdRefGeneral.setValue(null);
                         Toast.makeText(ActiveParkAds.this, "ParkAd removed", Toast.LENGTH_SHORT);
                         activeParkAdDataList.remove(pos);
                         CustomParkAdListAdapter adapter = new CustomParkAdListAdapter(activeParkAdDataList);

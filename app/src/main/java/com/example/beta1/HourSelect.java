@@ -3,10 +3,13 @@ package com.example.beta1;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -14,6 +17,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.common.api.Status;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -26,7 +31,9 @@ import com.google.firebase.database.ValueEventListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Locale;
 
 public class HourSelect extends AppCompatActivity {
 
@@ -42,8 +49,12 @@ public class HourSelect extends AppCompatActivity {
 
     FirebaseDatabase fbDB;
     FirebaseAuth mAuth;
+    private static final int LOAD_PAYMENT_DATA_REQUEST_CODE = 1234;
 
-    ArrayList<TimeBarView.Segment> segments;
+    ArrayList<TimeBarView.Segment> segments = new ArrayList<>();
+    ;
+
+    Receipt receipt;
 
 
     @Override
@@ -131,20 +142,17 @@ public class HourSelect extends AppCompatActivity {
                 usersRef.child(userID).child("Orders").child(Orderkey).setValue(order);
 
                 double finalPrice = order.getPrice();
-                Receipt receipt = new Receipt(sellerID, userID, parkAdID,Orderkey, finalPrice, confirmDate);
-                DatabaseReference receiptRef = fbDB.getReference("Users").child(sellerID).child("Receipts");
-                String reciptKey = receiptRef.push().getKey();
-                receiptRef.child(reciptKey).setValue(receipt);
+                receipt = new Receipt(sellerID, userID, parkAdID, Orderkey, finalPrice, confirmDate, "");
 
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Order Made!");
+                builder.setTitle("Nearly Finished!");
                 builder.setMessage("Final Price will be: " + finalPrice);
                 builder.setPositiveButton("Pay Up", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // Launch Google Pay
-                        dialog.cancel();
+
                     }
                 });
 
@@ -158,8 +166,48 @@ public class HourSelect extends AppCompatActivity {
     }
 
 
+//    private void handlePaymentSuccess(PaymentData paymentData) {
+//        // Perform post-payment tasks, such as updating the order status, sending a confirmation email, etc.
+//        String paymentId = paymentData.getPaymentMethodToken().getToken();
+//        DatabaseReference receiptRef = fbDB.getReference("Users").child(receipt.getSellerUserID()).child("Receipts");
+//        String reciptKey = receiptRef.push().getKey();
+//        receipt.setPaymentID(paymentId);
+//        receiptRef.child(reciptKey).setValue(receipt);
+//
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setTitle("Order Made!");
+//        builder.setPositiveButton("Return to Home", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                Intent si = new Intent(getApplicationContext(), Navi.class);
+//                startActivity(si);
+//            }
+//        });
+//
+//        builder.show();
+//
+//    }
+//
+//    private void handlePaymentError(Status status) {
+//        // Handle the error appropriately
+//        int statusCode = status.getStatusCode();
+//        String errorMessage = status.getStatusMessage();
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setTitle("uh oh! an error has occurred");
+//        builder.setMessage("Error code:" + statusCode + ",Error Message:" + errorMessage);
+//        builder.setPositiveButton("Try Again", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                Intent si = new Intent(getApplicationContext(), HourSelect.class);
+//                startActivity(si);
+//            }
+//        });
+//
+//        builder.show();
+//    }
+
+
     private void getSegments() {
-        segments = new ArrayList<>();
         DatabaseReference ordersRef = fbDB.getReference("Orders");
         ordersRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -183,7 +231,6 @@ public class HourSelect extends AppCompatActivity {
             }
         });
 
-
     }
 
     public void readParkAd() {
@@ -192,6 +239,27 @@ public class HourSelect extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 parkAd = snapshot.getValue(ParkAd.class);
+                SimpleDateFormat dateFormat = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
+                SimpleDateFormat hourFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                String currentDate = dateFormat.format(new Date());
+                currentDate = Services.addLeadingZerosToDate(currentDate, false);
+                String parkAdDateStr = parkAd.getDate();
+                parkAdDateStr = Services.addLeadingZerosToDate(parkAdDateStr, false);
+                System.out.println("Curreent1=" + currentDate);
+                System.out.println("date1=" + parkAdDateStr);
+
+                if (parkAdDateStr.matches(currentDate)) {
+                    System.out.println("Curreent1=" + currentDate);
+                    long currentTimeMillis = System.currentTimeMillis();
+                    Date current2 = new Date(currentTimeMillis);
+                    String currentHour = hourFormat.format(current2);
+                    if (isHourBetween(currentHour, parkAd.getBeginHour(), parkAd.getFinishHour())) {
+                        System.out.println("gg");
+                        TimeBarView.Segment segment = new TimeBarView.Segment(parkAd.getBeginHour(),Services.roundToNextQuarterHour(currentHour));
+                        segments.add(segment);
+                        timeBarView.addSegment(segment);
+                    }
+                }
             }
 
             @Override

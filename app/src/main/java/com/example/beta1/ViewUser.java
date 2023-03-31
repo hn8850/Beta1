@@ -9,6 +9,7 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -18,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,9 +33,10 @@ import java.util.ArrayList;
 
 public class ViewUser extends AppCompatActivity {
 
-    TextInputEditText IDEt, NameEt, DateEt, PhoneEt;
+    TextView IDEt, NameEt, DateEt, PhoneEt;
     ImageView iv;
     TextView tVactive,rating;
+
 
     String  picUrl;
     int active;
@@ -53,6 +56,18 @@ public class ViewUser extends AppCompatActivity {
         NameEt = findViewById(R.id.etRegName);
         DateEt = findViewById(R.id.etRegDateofBirth);
         PhoneEt = findViewById(R.id.etRegPhone);
+
+        TextInputLayout textInputLayout;
+        EditText editText;
+        int[] textInputLayoutIDs = {R.id.text1,R.id.text2,R.id.text3,R.id.text4};
+        for (int i=0;i<textInputLayoutIDs.length;i++){
+            textInputLayout = findViewById(textInputLayoutIDs[i]);
+            editText = textInputLayout.getEditText();
+            editText.setTextColor(Color.BLACK);
+            editText.setEnabled(false);
+        }
+
+
         iv = findViewById(R.id.imageView);
 
         tVactive = findViewById(R.id.ActiveTv);
