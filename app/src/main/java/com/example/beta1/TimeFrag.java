@@ -1,8 +1,11 @@
 package com.example.beta1;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -33,19 +36,23 @@ import com.google.firebase.storage.UploadTask;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 public class TimeFrag extends Fragment {
-    EditText DateEditText, PriceEditText;
+    EditText dayET, monthET, yearET, PriceEditText;
     Button saveButton, finishButton;
     Spinner SpinBeginHour, SpinBeginMinute, SpinEndHour, SpinEndMinute;
     String beginHour, beginMinute, endHour, endMinute;
     String Date, Price;
+    String beginTime, endTime;
+
 
     Calendar calendar = Calendar.getInstance();
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -85,9 +92,10 @@ public class TimeFrag extends Fragment {
         finishButton.setOnClickListener(finishButtonClickListener);
         saveButton = view.findViewById(R.id.next2);
         saveButton.setOnClickListener(saveButtonClickListener);
-        DateEditText = view.findViewById(R.id.date);
+        dayET = view.findViewById(R.id.day);
+        monthET = view.findViewById(R.id.month);
+        yearET = view.findViewById(R.id.year);
         PriceEditText = view.findViewById(R.id.price);
-
 
         SpinBeginHour = view.findViewById(R.id.hour1);
         SpinEndHour = view.findViewById(R.id.hour2);
@@ -215,12 +223,11 @@ public class TimeFrag extends Fragment {
         String Address = sharedPrefs.getString("address", "0");
 
 
-
         String beginHourKey = "B" + BeginHour.substring(0, 2) + BeginHour.substring(3);
         String endHourKey = "E" + FinishHour.substring(0, 2) + FinishHour.substring(3);
         String hourRangeKey = beginHourKey + endHourKey;
         String dateKey = "D" + Services.addLeadingZerosToDate(Date, false);
-        String parkAdKey = path +dateKey + hourRangeKey;
+        String parkAdKey = path + dateKey + hourRangeKey;
 
         ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, dateParam, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
         DatabaseReference adRef = mDb.getReference("ParkAds");
@@ -318,20 +325,22 @@ public class TimeFrag extends Fragment {
         @Override
         public void onClick(View view) {
             try {
-                Date = DateEditText.getText().toString();
+                Date = dayET.getText().toString() + '/' + monthET.getText().toString() + '/' + yearET.getText().toString();
             } catch (Exception e) {
-                Toast.makeText(getActivity().getApplicationContext(), "ENTER VALID DATE", Toast.LENGTH_SHORT).show();
+                ErrorAlert("Fill out all of the fields!");
+                return;
             }
 
             try {
-                Price = PriceEditText.getText().toString();
             } catch (Exception e) {
-                Toast.makeText(getActivity().getApplicationContext(), "ENTER VALID PRICE", Toast.LENGTH_SHORT).show();
+                ErrorAlert("Fill out all of the fields!");
+                return;
             }
 
-            if (!ValidInfo()) {
-                Toast.makeText(getActivity().getApplicationContext(), "ENTER VALID INFO", Toast.LENGTH_SHORT).show();
-            } else {
+            Price = PriceEditText.getText().toString();
+            beginTime = beginHour + ":" + beginMinute;
+            endTime = endHour + ":" + endMinute;
+            if (ValidInfo()) {
                 sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
 
                 // Get a reference to the Shared Preferences editor
@@ -339,30 +348,27 @@ public class TimeFrag extends Fragment {
 
                 // Write the data to the Shared Preferences file
                 editor.putString(getString(R.string.prefs_date_key), Date);
-                editor.putString(getString(R.string.prefs_beginhour_key), beginHour + ":" + beginMinute);
-                editor.putString(getString(R.string.prefs_finishhour_key), endHour + ":" + endMinute);
+                editor.putString(getString(R.string.prefs_beginhour_key), beginTime);
+                editor.putString(getString(R.string.prefs_finishhour_key), endTime);
                 editor.putString(getString(R.string.prefs_hourlyrate_key), Price);
 
                 // Save the changes to the Shared Preferences file
                 editor.apply();
                 Toast.makeText(getActivity().getApplicationContext(), "TIME + PRICE SAVED!", Toast.LENGTH_SHORT).show();
-
-
             }
-
         }
-
-
     };
 
 
     public boolean ValidInfo() {
+        System.out.println("DATE Is: " + Date);
         if (beginHour.matches("Choose hour") || endHour.matches("Choose hour")) {
-            System.out.println(1);
+            ErrorAlert("Choose an actual hour!");
             return false;
         }
         if (beginMinute.matches("Choose minutes") || endMinute.matches("Choose minutes")) {
-            System.out.println(2);
+            ErrorAlert("Choose an actual hour!");
+
             return false;
         }
 
@@ -370,25 +376,63 @@ public class TimeFrag extends Fragment {
         Pattern r = Pattern.compile(pattern);
         Matcher m = r.matcher(Date);
         if (!m.find()) {
-            System.out.println(3);
+            ErrorAlert("Choose an actual date!");
+
             return false;
         }
 
+        SimpleDateFormat dateFormat = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
+        String currentDate = dateFormat.format(new Date());
+        currentDate = Services.addLeadingZerosToDate(currentDate, false);
+        Date = Services.addLeadingZerosToDate(Date, false);
+        if (Integer.valueOf(Date) - Integer.valueOf(currentDate) < 0) {
+            ErrorAlert("That date has passed!");
+            return false;
+        }
+
+
         if (SpinEndHour.getSelectedItemPosition() < SpinBeginHour.getSelectedItemPosition()) {
-            System.out.println(4);
+            ErrorAlert("BeginHour cant be after EndHour");
             return false;
         }
         if (SpinEndHour.getSelectedItemPosition() == SpinBeginHour.getSelectedItemPosition()) {
             if (SpinEndMinute.getSelectedItemPosition() <= SpinBeginMinute.getSelectedItemPosition()) {
-                System.out.println(5);
+                ErrorAlert("BeginHour cant be after EndHour");
                 return false;
             }
         }
 
+        System.out.println("Start;" + beginTime);
+        System.out.println("end;" + endTime);
+        if (Integer.valueOf(Date) - Integer.valueOf(currentDate) == 0) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (!Services.isTimeRangeAfterCurrentHour(beginTime, endTime)) {
+                    ErrorAlert("That TimeRange has passed");
+                    return false;
+                }
+            }
+        }
+
         if (Price.isEmpty() || Double.valueOf(Price) <= 0) {
+            ErrorAlert("Price per hour cant be zero!");
             return false;
         }
         return true;
+    }
+
+    public void ErrorAlert(String message) {
+        AlertDialog.Builder adb = new AlertDialog.Builder(getContext());
+        adb.setTitle("An error occurred when saving your info!");
+        adb.setMessage(message);
+        adb.setNeutralButton("Return", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog dialog = adb.create();
+        dialog.show();
+
     }
 
 

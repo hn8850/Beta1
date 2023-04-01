@@ -1,8 +1,14 @@
 package com.example.beta1;
 
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -36,22 +42,17 @@ public class Services {
         return formattedDate;
     }
 
-    public static boolean isValidDate(String dd, String mm, String yyyy) {
-        if (dd == null || mm == null | yyyy == null) return false;
-        try {
-            int day = Integer.parseInt(dd);
-            int month = Integer.parseInt(mm);
-            int year = Integer.parseInt(yyyy);
-            if (day < 0) return false;
-            if (day > 31) return false;
-            if (month < 0) return false;
-            if (month > 12) return false;
-            //year will be addressed later
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static boolean isTimeRangeAfterCurrentHour(String startTime, String endTime) {
+        // Get the current time as a LocalTime object
+        LocalTime currentTime = LocalTime.now();
+        // Parse the input start and end times as LocalTime objects
+        LocalTime startTimeLocal = LocalTime.parse(startTime);
+        LocalTime endTimeLocal = LocalTime.parse(endTime);
+        // Check if the time range between the input start and end times is after the current time
+        return endTimeLocal.isAfter(currentTime) && startTimeLocal.isAfter(currentTime);
     }
+
 
     public static boolean isValidDate2(String date) {
         String pattern = "^(3[01]|[12][0-9]|0?[1-9])/(1[0-2]|0?[1-9])/[0-9]{4}$";
@@ -102,10 +103,6 @@ public class Services {
 
         return String.format("%02d:%02d", hour, minute);
     }
-
-
-
-
 
 
 }
