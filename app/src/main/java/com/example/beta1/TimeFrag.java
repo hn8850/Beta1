@@ -384,8 +384,8 @@ public class TimeFrag extends Fragment {
         SimpleDateFormat dateFormat = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
         String currentDate = dateFormat.format(new Date());
         currentDate = Services.addLeadingZerosToDate(currentDate, false);
-        Date = Services.addLeadingZerosToDate(Date, false);
-        if (Integer.valueOf(Date) - Integer.valueOf(currentDate) < 0) {
+        String DateTemp = Services.addLeadingZerosToDate(Date, false);
+        if (Integer.valueOf(DateTemp) - Integer.valueOf(currentDate) < 0) {
             ErrorAlert("That date has passed!");
             return false;
         }
@@ -404,7 +404,7 @@ public class TimeFrag extends Fragment {
 
         System.out.println("Start;" + beginTime);
         System.out.println("end;" + endTime);
-        if (Integer.valueOf(Date) - Integer.valueOf(currentDate) == 0) {
+        if (Integer.valueOf(DateTemp) - Integer.valueOf(currentDate) == 0) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (!Services.isTimeRangeAfterCurrentHour(beginTime, endTime)) {
                     ErrorAlert("That TimeRange has passed");

@@ -81,7 +81,9 @@ public class Register extends AppCompatActivity {
         });
 
         tvLoginHere.setOnClickListener(view -> {
-            startActivity(new Intent(Register.this, Login.class));
+            Intent si = new Intent(this, Login.class);
+            si.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(si);
         });
     }
 
@@ -145,8 +147,9 @@ public class Register extends AppCompatActivity {
                         });
 
                         Toast.makeText(Register.this, "User registered successfully", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(Register.this, Login.class));
-                    } else {
+                        Intent si = new Intent(Register.this, Login.class);
+                        si.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(si);                    } else {
                         Toast.makeText(Register.this, "Registration Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }

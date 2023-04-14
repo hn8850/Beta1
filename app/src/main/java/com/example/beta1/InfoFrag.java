@@ -271,6 +271,7 @@ public class InfoFrag extends Fragment {
         String userUid = newUser.getUid();
         int Active = 1;
         String Date = sharedPrefs.getString("Date", "0");
+        System.out.println("DateCrash:" + Date);
         String dateParam = Services.addLeadingZerosToDate(Date, true);
         String BeginHour = sharedPrefs.getString("BeginHour", "0");
         String FinishHour = sharedPrefs.getString("FinishHour", "0");

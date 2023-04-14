@@ -77,6 +77,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     Button filter;
     Button search;
     EditText searchBar;
+    ImageButton postAdButton,profileButton;
 
     private GoogleMap mMap;
     private Navi2Binding binding;
@@ -98,6 +99,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     String currUserID;
 
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,16 +110,13 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 //        binding2 = ActivityNaviBinding.inflate(getLayoutInflater());
 //        setContentView(binding2.getRoot());
         fbDB = FirebaseDatabase.getInstance();
-
-
-        if (isLocationPermissionGranted()) {
-            // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                    .findFragmentById(R.id.map);
-            mapFragment.getMapAsync(this);
-        } else {
-            requestLocationPermission();
-        }
+        parkAdMarkerOptions = new ArrayList<>();
+        parkAdMarkers = new ArrayList<>();
+        parkAdIDs = new ArrayList<>();
+        parkAds = new ArrayList<>();
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
 
     }
@@ -124,10 +124,14 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         MapsInitializer.initialize(this);
         mMap = googleMap;
-        mMap.setMyLocationEnabled(true);
+        if (isLocationPermissionGranted()) {
+            mMap.setMyLocationEnabled(true);
+            animateCamera();
+        } else {
+            requestLocationPermission();
+        }
         query.put("date1", "NONE");
         query.put("date2", "NONE");
-        animateCamera();
         SetParkAdMarkers();
         filter = findViewById(R.id.filter);
         filter.setOnClickListener(new View.OnClickListener() {
@@ -142,6 +146,24 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             @Override
             public void onClick(View view) {
                 searchQuery();
+            }
+        });
+
+        postAdButton = findViewById(R.id.imageButton);
+        postAdButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent si = new Intent(Navi.this, UploadAd.class);
+                startActivity(si);
+            }
+        });
+
+        profileButton = findViewById(R.id.imageButton3);
+        profileButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent si = new Intent(Navi.this, Settings.class);
+                startActivity(si);
             }
         });
 
@@ -184,7 +206,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 View view = getLayoutInflater().inflate(R.layout.custom_info_window, null);
                 TextView priceTv = view.findViewById(R.id.title);
                 priceTv.setText(String.valueOf(marker.getTitle()));
-                System.out.println("Price2:" +marker.getTitle());
+                System.out.println("Price2:" + marker.getTitle());
                 return view;
 
             }
@@ -197,10 +219,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         AdsDB.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                parkAdMarkerOptions = new ArrayList<>();
-                parkAdMarkers = new ArrayList<>();
-                parkAdIDs = new ArrayList<>();
-                parkAds = new ArrayList<>();
+
                 System.out.println("check");
                 SimpleDateFormat dateFormat = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
                 SimpleDateFormat hourFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
@@ -223,12 +242,15 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                             String currentHour = hourFormat.format(current2);
                             System.out.println("HOURS: " + currentHour + "," + parkAd.getBeginHour() + "," + parkAd.getFinishHour());
                             if (!isFirstTimeBeforeSecond(currentHour, parkAd.getFinishHour())) {
+                                System.out.println("WHYTHO:" + parkAd.getFinishHour());
                                 UpdateParkAdCompleted(snapshot1.getKey()); //ParkHour has passed,hence its completed
-                            } else if (isHourBetween(currentHour, parkAd.getBeginHour(), parkAd.getFinishHour())) {
+                            } else {
+                                System.out.println("WHYTHO2:" + parkAd.getFinishHour());
                                 parkAds.add(parkAd);
                                 parkAdIDs.add(snapshot1.getKey());
                             }
-                        } else {
+                        }
+                        else {
                             parkAds.add(parkAd);
                             parkAdIDs.add(snapshot1.getKey());
                         }
@@ -766,6 +788,34 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     public void requestLocationPermission() {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_CODE);
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == LOCATION_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                mMap.setMyLocationEnabled(true);
+                animateCamera();
+            } else {
+                // Permission denied, show an explanation
+                new AlertDialog.Builder(this)
+                        .setTitle("Permission needed")
+                        .setMessage("This permission is needed to access your location.")
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        })
+                        .create()
+                        .show();
+
+            }
+        }
+    }
+
+
 
     /*
     public void NaviwithADB(@NonNull LatLng latLng) {

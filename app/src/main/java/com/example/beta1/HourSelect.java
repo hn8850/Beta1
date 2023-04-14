@@ -52,7 +52,7 @@ public class HourSelect extends AppCompatActivity {
     private static final int LOAD_PAYMENT_DATA_REQUEST_CODE = 1234;
 
     ArrayList<TimeBarView.Segment> segments = new ArrayList<>();
-    ;
+    
 
     Receipt receipt;
 
@@ -134,16 +134,9 @@ public class HourSelect extends AppCompatActivity {
                 double hourlyRate = parkAd.getHourlyRate();
                 String sellerID = parkAd.getUserID();
                 String parkAddress = parkAd.getAddress();
+
                 Order order = new Order(parkAdID, userID, confirmDate, parkDate, beginFull, endFull, hourlyRate, sellerID, parkAddress);
-                DatabaseReference ordersRef = fbDB.getReference("Orders");
-                String Orderkey = ordersRef.push().getKey();
-                ordersRef.child(Orderkey).setValue(order);
-                DatabaseReference usersRef = fbDB.getReference("Users");
-                usersRef.child(userID).child("Orders").child(Orderkey).setValue(order);
-
                 double finalPrice = order.getPrice();
-                receipt = new Receipt(sellerID, userID, parkAdID, Orderkey, finalPrice, confirmDate, "");
-
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Nearly Finished!");
@@ -151,6 +144,24 @@ public class HourSelect extends AppCompatActivity {
                 builder.setPositiveButton("Pay Up", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        DatabaseReference ordersRef = fbDB.getReference("Orders");
+                        String Orderkey = ordersRef.push().getKey();
+                        ordersRef.child(Orderkey).setValue(order);
+                        DatabaseReference usersRef = fbDB.getReference("Users");
+                        usersRef.child(userID).child("Orders").child(Orderkey).setValue(order);
+
+                        receipt = new Receipt(sellerID, userID, parkAdID, Orderkey, finalPrice, confirmDate, "");
+                        DatabaseReference receiptRef = fbDB.getReference("Users").child(sellerID).child("Receipts");
+                        String receiptKey = receiptRef.push().getKey();
+                        receiptRef.child(receiptKey).setValue(receipt);
+
+                        String[] beginHourParts = beginFull.split(":");
+                        beginHourParts[0] = String.valueOf(Integer.valueOf(beginHourParts[0]) - 1);
+                        String notiTime = beginHourParts[0] + ":" + beginHourParts[1]; //1 hour before Order Begin Time
+                        System.out.println("NOTITIME:" + notiTime);
+                        System.out.println("ENDFULL:" + endFull);
+                        NotificationScheduler.scheduleNotification(getApplicationContext(),"Spark Alert","The ParkAd you ordered at " + parkAddress + " will be available in an hour!", parkDate, notiTime,1); //Begin Noti
+                        NotificationScheduler.scheduleNotification(getApplicationContext(),"Spark Alert","Your time with the ParkAd at " + parkAddress + " has finished!", parkDate, endFull,2); //Ending Noti
                         // Launch Google Pay
 
                     }
@@ -255,7 +266,7 @@ public class HourSelect extends AppCompatActivity {
                     String currentHour = hourFormat.format(current2);
                     if (isHourBetween(currentHour, parkAd.getBeginHour(), parkAd.getFinishHour())) {
                         System.out.println("gg");
-                        TimeBarView.Segment segment = new TimeBarView.Segment(parkAd.getBeginHour(),Services.roundToNextQuarterHour(currentHour));
+                        TimeBarView.Segment segment = new TimeBarView.Segment(parkAd.getBeginHour(), Services.roundToNextQuarterHour(currentHour));
                         segments.add(segment);
                         timeBarView.addSegment(segment);
                     }
