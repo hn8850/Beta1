@@ -9,6 +9,14 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.0
+ * @since 25/2/2023
+ * This CustomAdapter is the ListView Item design used in the ParkAdHistory and
+ * ActiveParkAds Activities.
+ */
+
 public class CustomParkAdListAdapter extends BaseAdapter {
     private ArrayList<HashMap<String, String>> dataList;
 

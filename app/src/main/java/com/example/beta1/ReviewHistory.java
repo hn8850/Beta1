@@ -17,6 +17,13 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.0
+ * @since 18/3/2023
+ * This Activity is designed to show the user its Review history.
+ */
+
 public class ReviewHistory extends AppCompatActivity {
     String currUserID;
     FirebaseDatabase fbDB;
@@ -36,17 +43,21 @@ public class ReviewHistory extends AppCompatActivity {
         readReviewHistory();
     }
 
-    public void readReviewHistory(){
+    /**
+     * Method used to iterate through the Reviews Branch for the current user in the
+     * database, and populate the ListView with all of them.
+     */
+    public void readReviewHistory() {
         DatabaseReference reviewsRef = fbDB.getReference("Users").child(currUserID).child("Reviews");
         reviewsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot snapshot1 : snapshot.getChildren()){
+                for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     Review review = snapshot1.getValue(Review.class);
                     HashMap<String, String> data = new HashMap<>();
-                    data.put("submitter",review.getReviewerUserName());
-                    data.put("content",review.getMessage());
-                    data.put("pos",String.valueOf(review.getStars()));
+                    data.put("submitter", review.getReviewerUserName());
+                    data.put("content", review.getMessage());
+                    data.put("pos", String.valueOf(review.getStars()));
                     reviewHistoryDataList.add(data);
                 }
                 CustomReviewListAdapter adapter = new CustomReviewListAdapter(reviewHistoryDataList);

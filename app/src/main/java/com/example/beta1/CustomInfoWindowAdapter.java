@@ -8,6 +8,13 @@ import android.widget.TextView;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Marker;
 
+
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 2.1
+ * @since 28/1/2023
+ *  CURRENTLY NOT USED!
+ */
 public class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
     private Context context;
 

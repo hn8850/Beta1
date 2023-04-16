@@ -17,6 +17,14 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.0
+ * @since 8/3/2023
+ * This CustomAdapter is the ListView Item design used in the OrderHistory and
+ * ActiveOrders Activities.
+ */
+
 public class CustomOrderListAdapter extends BaseAdapter {
     private ArrayList<HashMap<String, String>> dataList;
 

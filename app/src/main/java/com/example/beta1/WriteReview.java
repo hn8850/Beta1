@@ -19,15 +19,23 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+/***
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.0
+ * @since 18/3/2023
+ * The WriteReview Activity.
+ * In this Activity, the user can submit a Review about another user.
+ */
+
 public class WriteReview extends AppCompatActivity {
-    ImageView star1,star2,star3,star4,star5;
+    ImageView star1, star2, star3, star4, star5;
     EditText messageEt;
     FirebaseDatabase fbDB;
 
 
     int clickedStarIndex = 0;
     String message = "No Additional Info";
-    String currUserUID,parkAdOwnerUID;
+    String currUserUID, parkAdOwnerUID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,10 +54,16 @@ public class WriteReview extends AppCompatActivity {
     }
 
 
+    /**
+     * OnClickMethod for all of the star ImageViews.
+     * Clicking a star will update the ImageView's colors to yellow (from left to right).
+     * This will also update the clickedStarIndex (which is basically the count of stars to be given
+     * in the review).
+     *
+     * @param view: All of the star ImageViews.
+     */
     public void onStarClick(View view) {
         ImageView clickedStar = (ImageView) view;
-
-
         // Set color of clicked star and stars to its left
         clickedStarIndex = Integer.parseInt(clickedStar.getTag().toString());
         for (int i = 1; i <= clickedStarIndex; i++) {
@@ -57,28 +71,33 @@ public class WriteReview extends AppCompatActivity {
             ImageView star = findViewById(starId);
             star.setColorFilter(Color.YELLOW);
         }
-        for (int i = clickedStarIndex+1; i <= 5; i++) {
+        for (int i = clickedStarIndex + 1; i <= 5; i++) {
             int starId = getResources().getIdentifier("star" + i, "id", getPackageName());
             ImageView star = findViewById(starId);
             star.setColorFilter(null);
         }
     }
 
+    /**
+     * OnClickMethod for the submit Button.
+     * Used to upload the review the user has wrote to the database.
+     *
+     * @param view: The submit Button.
+     */
     public void submit(View view) {
-        if (clickedStarIndex==0){
-            Toast.makeText(this,"Choose Some Stars",Toast.LENGTH_SHORT);
-        }
-        else{
+        if (clickedStarIndex == 0) {
+            Toast.makeText(this, "Choose Some Stars", Toast.LENGTH_SHORT);
+        } else {
             message = messageEt.getText().toString();
             DatabaseReference currUserPath = fbDB.getReference("Users").child(currUserUID);
             currUserPath.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     User currUser = snapshot.getValue(User.class);
-                    Review review = new Review(clickedStarIndex,message,currUser.getUserName());
+                    Review review = new Review(clickedStarIndex, message, currUser.getUserName());
                     DatabaseReference reviewPath = fbDB.getReference("Users").child(parkAdOwnerUID).child("Reviews").child(currUserUID);
                     reviewPath.setValue(review);
-                    Toast.makeText(getApplicationContext(),"Review Submitted",Toast.LENGTH_SHORT);
+                    Toast.makeText(getApplicationContext(), "Review Submitted", Toast.LENGTH_SHORT);
 
                 }
 

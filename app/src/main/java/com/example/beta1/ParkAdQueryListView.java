@@ -22,6 +22,13 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.0
+ * @since 25/2/2023
+ * This Activity is designed to show a list of different ParkAds for the same space.
+ */
+
 public class ParkAdQueryListView extends AppCompatActivity {
 
     ListView listView;
@@ -44,19 +51,18 @@ public class ParkAdQueryListView extends AppCompatActivity {
         if (!gi.getStringExtra("date1").matches("NONE")) {
             queryDate1 = gi.getStringExtra("date1");
             queryDate2 = gi.getStringExtra("date2");
-        }
-        else{
+        } else {
             queryDate1 = "1/1/1970";
             queryDate2 = "12/12/3000";
         }
-
         SetParkAdsDataList();
-
-        //System.out.println("Check: " + parkAdsDataList.get(0).toString());
-
-
     }
 
+    /**
+     * Method used to iterate through the general ParkAds branch and populate the ListView with any
+     * ParkAds that locations match the location of the ParkAd Marker pressed in the Navi Activity.
+     * The Method also takes into account the user's query from the Navi Activity.
+     */
     public void SetParkAdsDataList() {
         DatabaseReference parkAdsBranch = fbDB.getReference("ParkAds");
         parkAdsBranch.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -64,7 +70,6 @@ public class ParkAdQueryListView extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     ParkAd parkAd = snapshot1.getValue(ParkAd.class);
-                    System.out.println("123");
                     if (parkAd.getLatitude().matches(lat) && parkAd.getLongitude().matches(lan)) {
                         if (Services.isDateBetween(parkAd.getDate(), queryDate1, queryDate2)) {
                             HashMap<String, String> data = new HashMap<>();
@@ -98,7 +103,6 @@ public class ParkAdQueryListView extends AppCompatActivity {
 
                     }
                 });
-                System.out.println("SIZE = " + parkAdsDataList.size());
             }
 
             @Override

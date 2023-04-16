@@ -44,6 +44,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.2
+ * @since 27/12/2022
+ * This Fragment is part of the UploadAd Activity.
+ * This Fragment is responsible for collection of general information about the ParkAd (description
+ * and images).
+ */
 
 public class InfoFrag extends Fragment {
 
@@ -157,9 +165,12 @@ public class InfoFrag extends Fragment {
     }
 
 
-
-
     private View.OnClickListener saveButtonClickListener3 = new View.OnClickListener() {
+        /**
+         * OnClickMethod for the save Button.
+         * This method saves the information submitted by the user to a SharedPrefs file.
+         * @param view: The save Button.
+         */
         @Override
         public void onClick(View view) {
             desc = descEditText.getText().toString();
@@ -186,6 +197,13 @@ public class InfoFrag extends Fragment {
 
 
     private View.OnClickListener finishButtonClickListener = new View.OnClickListener() {
+        /**
+         * OnClickMethod for the finish Button.
+         * Only clickable and visible after all the necessary params for a ParkAd have been filled
+         * throughout all of the Fragments.
+         * Uploads all of the images selected to the Storage database and calls the UploadAd Method.
+         * @param view: The finish Button.
+         */
         @Override
         public void onClick(View view) {
             sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
@@ -209,38 +227,30 @@ public class InfoFrag extends Fragment {
             final AtomicInteger count = new AtomicInteger();
             ArrayList<String> imageURLS = new ArrayList<>();
             for (int i = 0; i < imageUris.size(); i++) {
-                System.out.println("TEST = " + i + " --> " + imageUris.get(i));
                 if ((imageUris.get(i)).matches("NONE")) {
                     imageUris.remove(i);
                     i--;
                 }
             }
-            System.out.println("SIZE = " + imageUris.size());
             for (int i = 0; i < imageUris.size(); i++) {
                 Uri imageUri = Uri.parse(imageUris.get(i));
-                System.out.println("URI + = " + imageUri.toString());
                 if (!((imageUri.toString()).matches("NONE"))) {
                     StorageReference imageRef = refPath.child("Image" + i);
                     imageRef.putFile(imageUri).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception exception) {
                             // Handle unsuccessful uploads
-                            System.out.println("ERROR = " + exception);
                         }
                     }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            System.out.println("WHATSTSTS");
                             imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                                 @Override
                                 public void onSuccess(Uri uri) {
                                     // URL of the uploaded image was successfully retrieved
                                     String imageUrl = uri.toString();
                                     imageURLS.add(imageUrl);
-                                    System.out.println("image url = " + imageUrl);
-
                                     int c = count.incrementAndGet();
-                                    System.out.println("C = " + c);
                                     // check if all images have been uploaded
                                     if (c == imageUris.size()) {
                                         // all images have been uploaded
@@ -257,6 +267,12 @@ public class InfoFrag extends Fragment {
         }
     };
 
+    /**
+     * Creates a ParkAd Object with all of the information from the SharedPrefs file, and then
+     * uploads the ParkAd to the database.
+     *
+     * @param imageURLS: ArrayList containing the String URL's for each image that was uploaded.
+     */
     public void uploadAd(ArrayList<String> imageURLS) {
         imagesCounter = 0;
 
@@ -266,12 +282,10 @@ public class InfoFrag extends Fragment {
         String longitude = sharedPrefs.getString("longitude", "0");
 
         String path = (latitude + longitude).replace(".", "");
-
         FirebaseUser newUser = FirebaseAuth.getInstance().getCurrentUser();
         String userUid = newUser.getUid();
         int Active = 1;
         String Date = sharedPrefs.getString("Date", "0");
-        System.out.println("DateCrash:" + Date);
         String dateParam = Services.addLeadingZerosToDate(Date, true);
         String BeginHour = sharedPrefs.getString("BeginHour", "0");
         String FinishHour = sharedPrefs.getString("FinishHour", "0");
@@ -294,40 +308,17 @@ public class InfoFrag extends Fragment {
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
 
-
-    }
-
-
-    public void ReCreateFolder(String path) {
-        StorageReference refStorage = mStorage.getReference("ParkAdPics");
-        StorageReference refPath = refStorage.child(path);
-
-// Call listAll() to get a list of all items in the folder
-        refPath.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
-            @Override
-            public void onSuccess(ListResult listResult) {
-                // Check if the folder exists by checking if it is present in the list
-                if (listResult.getItems().size() > 0) {
-                    // The folder exists, so you can do something here
-                    // For example, you can delete its contents by calling delete() on each of the items in the list
-                    for (StorageReference item : listResult.getItems()) {
-                        item.delete();
-                    }
-                } else {
-                    return;
-                }
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                // Handle errors
-            }
-        });
-
     }
 
 
     SharedPreferences.OnSharedPreferenceChangeListener prefsListener3 = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        /**
+         * SharedPrefsChange Listener. Used to verify that all of the required params for a ParkAd have
+         * been filled out and saved by the user.
+         * If so, the finish Button becomes visible and clickable.
+         * @param sharedPreferences: The SharedPrefs file.
+         * @param key:
+         */
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if (sharedPreferences.contains("address") && sharedPreferences.contains("latitude") && sharedPreferences.contains("longitude")) {
@@ -357,6 +348,45 @@ public class InfoFrag extends Fragment {
     };
 
 
+    /**
+     * Used to wipe an existing images folder in the Storage database for a ParkAd in order to
+     * upload new images.
+     *
+     * @param path: String containing the locationKey for the ParkAd.
+     */
+    public void ReCreateFolder(String path) {
+        StorageReference refStorage = mStorage.getReference("ParkAdPics");
+        StorageReference refPath = refStorage.child(path);
+
+// Call listAll() to get a list of all items in the folder
+        refPath.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
+            @Override
+            public void onSuccess(ListResult listResult) {
+                // Check if the folder exists by checking if it is present in the list
+                if (listResult.getItems().size() > 0) {
+                    // The folder exists, so you can do something here
+                    // For example, you can delete its contents by calling delete() on each of the items in the list
+                    for (StorageReference item : listResult.getItems()) {
+                        item.delete();
+                    }
+                } else {
+                    return;
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                // Handle errors
+            }
+        });
+
+    }
+
+
+    /**
+     * OnClickMethod for the upload Button.
+     * Used to allow the user to upload images of their ParkAd from their gallery/camera.
+     */
     View.OnClickListener uploadButtonListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -402,12 +432,20 @@ public class InfoFrag extends Fragment {
         }
     };
 
+    /**
+     * OnActivityResult Method for the UploadButtonListener.
+     * Handles the processing of the images selected by the user and updates the ImageViews
+     * accordingly.
+     *
+     * @param requestCode: The GalleryRequestCode String.
+     * @param resultCode:  The GalleryResultCode String.
+     * @param data:        The Intent containing the images the user has selected.
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             if (requestCode == PICK_IMAGES_REQUEST_CODE) {
-                System.out.println("COUNTER =" + imagesCounter);
                 if (data.getClipData() != null) {
                     // Multiple images were selected
                     ClipData clipData = data.getClipData();
@@ -445,7 +483,6 @@ public class InfoFrag extends Fragment {
                     return;
                 } else {
                     imageUri = Uri.fromFile(photoFile);
-                    //System.out.println("URI = " + imageUri.toString());
                     imageUris[imagesCounter] = imageUri;
                     imageViews[imagesCounter].setImageURI(imageUri);
                     imagesCounter++;
@@ -464,6 +501,13 @@ public class InfoFrag extends Fragment {
 
     }
 
+    /**
+     * SubMethod for the upload Button OnClickMethod.
+     * Used to create a File from any image selected (which will then be converted to a URI).
+     *
+     * @throws IOException
+     * @return: Image File.
+     */
     private File createImageFile() throws IOException {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -477,6 +521,10 @@ public class InfoFrag extends Fragment {
         return image;
     }
 
+    /**
+     * OnClickMethod for the clear Button.
+     * Used to reset the ImageViews and all the ArrayList's containing image data.
+     */
     View.OnClickListener clearButtonListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {

@@ -10,6 +10,14 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 
+
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.2
+ * @since 14/4/2023
+ * Used to create and customize notifications regarding order updates for the user.
+ */
+
 public class NotificationReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {

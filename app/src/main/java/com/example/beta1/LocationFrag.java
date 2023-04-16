@@ -44,6 +44,14 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.2
+ * @since 27/12/2022
+ * This Fragment is part of the UploadAd Activity.
+ * This Fragment is responsible for collection of location information about the ParkAd (complete
+ * address).
+ */
 
 public class LocationFrag extends Fragment {
     EditText countryEditText, cityEditText, streetEditText, houseNumberEditText;
@@ -88,12 +96,16 @@ public class LocationFrag extends Fragment {
         mDb = FirebaseDatabase.getInstance();
         mStorage = FirebaseStorage.getInstance();
 
-
         return view;
     }
 
 
     private View.OnClickListener saveButtonClickListener1 = new View.OnClickListener() {
+        /**
+         * OnClickMethod for the save Button.
+         * This method saves the information submitted by the user to a SharedPrefs file.
+         * @param view: The save Button.
+         */
         @Override
         public void onClick(View view) {
             String country = countryEditText.getText().toString();
@@ -139,7 +151,132 @@ public class LocationFrag extends Fragment {
 
     };
 
+
+    private View.OnClickListener finishButtonClickListener = new View.OnClickListener() {
+        /**
+         * OnClickMethod for the finish Button.
+         * Only clickable and visible after all the necessary params for a ParkAd have been filled
+         * throughout all of the Fragments.
+         * Uploads all of the images selected to the Storage database and calls the UploadAd Method.
+         * @param view: The finish Button.
+         */
+        @Override
+        public void onClick(View view) {
+            sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
+            String latitude = sharedPrefs.getString("latitude", "0");
+            String longitude = sharedPrefs.getString("longitude", "0");
+
+            List<String> imageUris = new ArrayList<>();
+            if (sharedPrefs.contains(getString(R.string.prefs_URI1_key))) {
+                imageUris.add(sharedPrefs.getString("URI1", null));
+                imageUris.add(sharedPrefs.getString("URI2", null));
+                imageUris.add(sharedPrefs.getString("URI3", null));
+                imageUris.add(sharedPrefs.getString("URI4", null));
+                imageUris.add(sharedPrefs.getString("URI5", null));
+            }
+
+            String path = (latitude + longitude).replace(".", "");
+            StorageReference refStorage = mStorage.getReference("ParkAdPics");
+            StorageReference refPath = refStorage.child(path);
+            ReCreateFolder(path);
+
+            final AtomicInteger count = new AtomicInteger();
+            ArrayList<String> imageURLS = new ArrayList<>();
+            for (int i = 0; i < imageUris.size(); i++) {
+                if ((imageUris.get(i)).matches("NONE")) {
+                    imageUris.remove(i);
+                    i--;
+                }
+            }
+            ArrayList<UploadTask> tasks = new ArrayList<>();
+            for (int i = 0; i < imageUris.size(); i++) {
+                Uri imageUri = Uri.parse(imageUris.get(i));
+                if (!((imageUri.toString()).matches("NONE"))) {
+                    StorageReference imageRef = refPath.child("Image" + i);
+                    imageRef.putFile(imageUri).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            // Handle unsuccessful uploads
+                        }
+                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    // URL of the uploaded image was successfully retrieved
+                                    String imageUrl = uri.toString();
+                                    imageURLS.add(imageUrl);
+
+                                    int c = count.incrementAndGet();
+                                    // check if all images have been uploaded
+                                    if (c == imageUris.size()) {
+                                        // all images have been uploaded
+                                        // execute the callback function
+                                        uploadAd(imageURLS);
+                                    }
+                                }
+                            });
+                        }
+                    });
+
+                }
+            }
+        }
+    };
+
+    /**
+     * Creates a ParkAd Object with all of the information from the SharedPrefs file, and then
+     * uploads the ParkAd to the database.
+     *
+     * @param imageURLS: ArrayList containing the String URL's for each image that was uploaded.
+     */
+    public void uploadAd(ArrayList<String> imageURLS) {
+        sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
+
+        String latitude = sharedPrefs.getString("latitude", "0");
+        String longitude = sharedPrefs.getString("longitude", "0");
+
+        String path = (latitude + longitude).replace(".", "");
+
+        FirebaseUser newUser = FirebaseAuth.getInstance().getCurrentUser();
+        String userUid = newUser.getUid();
+        int active = 1;
+        String Date = sharedPrefs.getString("Date", "0");
+        String dateParam = Services.addLeadingZerosToDate(Date, true);
+        String BeginHour = sharedPrefs.getString("BeginHour", "0");
+        String FinishHour = sharedPrefs.getString("FinishHour", "0");
+        Double HourlyRate = Double.valueOf(sharedPrefs.getString("HourlyRate", "0"));
+        String Description = sharedPrefs.getString("Description", "No desc");
+        String Address = sharedPrefs.getString("address", "0");
+
+        ParkAd ad = new ParkAd(latitude, longitude, userUid, active, dateParam, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
+
+        String beginHourKey = "B" + BeginHour.substring(0, 2) + BeginHour.substring(3);
+        String endHourKey = "E" + FinishHour.substring(0, 2) + FinishHour.substring(3);
+        String hourRangeKey = beginHourKey + endHourKey;
+        String dateKey = "D" + Services.addLeadingZerosToDate(Date, false);
+        String parkAdKey = path + dateKey + hourRangeKey;
+
+        DatabaseReference adRef = mDb.getReference("ParkAds");
+        adRef.child(parkAdKey).setValue(ad);
+        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child(parkAdKey);
+        userAdRef.setValue(ad);
+        Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
+        sharedPrefs.edit().clear().apply();
+
+
+    }
+
+
     SharedPreferences.OnSharedPreferenceChangeListener prefsListener1 = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        /**
+         * SharedPrefsChange Listener. Used to verify that all of the required params for a ParkAd have
+         * been filled out and saved by the user.
+         * If so, the finish Button becomes visible and clickable.
+         * @param sharedPreferences: The SharedPrefs file.
+         * @param key:
+         */
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if (sharedPreferences.contains("address") && sharedPreferences.contains("latitude") && sharedPreferences.contains("longitude")) {
@@ -168,117 +305,13 @@ public class LocationFrag extends Fragment {
         }
     };
 
-    private View.OnClickListener finishButtonClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
-            String latitude = sharedPrefs.getString("latitude", "0");
-            String longitude = sharedPrefs.getString("longitude", "0");
 
-            List<String> imageUris = new ArrayList<>();
-            if (sharedPrefs.contains(getString(R.string.prefs_URI1_key))) {
-                imageUris.add(sharedPrefs.getString("URI1", null));
-                imageUris.add(sharedPrefs.getString("URI2", null));
-                imageUris.add(sharedPrefs.getString("URI3", null));
-                imageUris.add(sharedPrefs.getString("URI4", null));
-                imageUris.add(sharedPrefs.getString("URI5", null));
-            }
-
-            String path = (latitude + longitude).replace(".", "");
-            StorageReference refStorage = mStorage.getReference("ParkAdPics");
-            StorageReference refPath = refStorage.child(path);
-            ReCreateFolder(path);
-
-            final AtomicInteger count = new AtomicInteger();
-            ArrayList<String> imageURLS = new ArrayList<>();
-            for (int i = 0; i < imageUris.size(); i++) {
-                System.out.println("TEST = " + i + " --> " + imageUris.get(i));
-                if ((imageUris.get(i)).matches("NONE")) {
-                    imageUris.remove(i);
-                    i--;
-                }
-            }
-            System.out.println("SIZE = " + imageUris.size());
-            ArrayList<UploadTask> tasks = new ArrayList<>();
-            for (int i = 0; i < imageUris.size(); i++) {
-                Uri imageUri = Uri.parse(imageUris.get(i));
-                System.out.println("URI + = " + imageUri.toString());
-                if (!((imageUri.toString()).matches("NONE"))) {
-                    StorageReference imageRef = refPath.child("Image" + i);
-                    imageRef.putFile(imageUri).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception exception) {
-                            // Handle unsuccessful uploads
-                            System.out.println("ERROR = " + exception);
-                        }
-                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            System.out.println("WHATSTSTS");
-                            imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri uri) {
-                                    // URL of the uploaded image was successfully retrieved
-                                    String imageUrl = uri.toString();
-                                    imageURLS.add(imageUrl);
-                                    System.out.println("image url = " + imageUrl);
-
-                                    int c = count.incrementAndGet();
-                                    System.out.println("C = " + c);
-                                    // check if all images have been uploaded
-                                    if (c == imageUris.size()) {
-                                        // all images have been uploaded
-                                        // execute the callback function
-                                        uploadAd(imageURLS);
-                                    }
-                                }
-                            });
-                        }
-                    });
-
-                }
-            }
-        }
-    };
-
-    public void uploadAd(ArrayList<String> imageURLS) {
-        sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
-
-        String latitude = sharedPrefs.getString("latitude", "0");
-        String longitude = sharedPrefs.getString("longitude", "0");
-
-        String path = (latitude + longitude).replace(".", "");
-
-        FirebaseUser newUser = FirebaseAuth.getInstance().getCurrentUser();
-        String userUid = newUser.getUid();
-        int Active = 1;
-        String Date = sharedPrefs.getString("Date", "0");
-        String dateParam = Services.addLeadingZerosToDate(Date, true);
-        String BeginHour = sharedPrefs.getString("BeginHour", "0");
-        String FinishHour = sharedPrefs.getString("FinishHour", "0");
-        Double HourlyRate = Double.valueOf(sharedPrefs.getString("HourlyRate", "0"));
-        String Description = sharedPrefs.getString("Description", "No desc");
-        String Address = sharedPrefs.getString("address", "0");
-
-
-        String beginHourKey = "B" + BeginHour.substring(0, 2) + BeginHour.substring(3);
-        String endHourKey = "E" + FinishHour.substring(0, 2) + FinishHour.substring(3);
-        String hourRangeKey = beginHourKey + endHourKey;
-        String dateKey = "D" + Services.addLeadingZerosToDate(Date, false);
-        String parkAdKey = path + dateKey + hourRangeKey;
-
-        ParkAd ad = new ParkAd(latitude, longitude, userUid, Active, dateParam, BeginHour, FinishHour, HourlyRate, imageURLS, Description, Address);
-        DatabaseReference adRef = mDb.getReference("ParkAds");
-        adRef.child(parkAdKey).setValue(ad);
-        DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child(parkAdKey);
-        userAdRef.setValue(ad);
-        Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
-        sharedPrefs.edit().clear().apply();
-
-
-    }
-
-
+    /**
+     * Used to wipe an existing images folder in the Storage database for a ParkAd in order to
+     * upload new images.
+     *
+     * @param path: String containing the locationKey for the ParkAd.
+     */
     public void ReCreateFolder(String path) {
         StorageReference refStorage = mStorage.getReference("ParkAdPics");
         StorageReference refPath = refStorage.child(path);
@@ -308,6 +341,13 @@ public class LocationFrag extends Fragment {
     }
 
 
+    /**
+     * Converts address to LatLan values.
+     *
+     * @param context: The Activity's Context.
+     * @param address: The address String.
+     * @return: double[] containing the longitude and latitude corresponding to the given address.
+     */
     public static double[] getLatLngFromAddress(Context context, String address) {
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
         List<Address> addresses;

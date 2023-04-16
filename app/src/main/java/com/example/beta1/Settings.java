@@ -35,6 +35,14 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 2.1
+ * @since 24/2/2023
+ * This Activity servers as a hub for Activities and processes regarding personal user information -
+ * (Activities such as the different histories and EditProfile).
+ */
+
 public class Settings extends AppCompatActivity {
 
     String picUrl;
@@ -82,6 +90,10 @@ public class Settings extends AppCompatActivity {
         readUser();
     }
 
+    /**
+     * The Method reads the current user's information from the database and sets the views in the
+     * Activity according to that information.
+     */
     public void readUser() {
         DatabaseReference userDB = mDb.getReference("Users").child(UID);
         userDB.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -93,12 +105,12 @@ public class Settings extends AppCompatActivity {
                     emailTv.setText(CurrentUserAuth.getEmail());
                     picUrl = currentUser.getProfilePicURL();
                     imageUri = Uri.parse(picUrl);
-                    System.out.println("WHAT = " + picUrl);
                     downloadImage(picUrl, getApplicationContext());
 
                 } else
                     Toast.makeText(getApplicationContext(), "LOG IN !!!", Toast.LENGTH_SHORT).show();
             }
+
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
 
@@ -107,6 +119,15 @@ public class Settings extends AppCompatActivity {
 
     }
 
+    /**
+     * SubMethod for the ReadUser Method.
+     * Used to download the user's profile picture from the Storage database and display it
+     * using an ImageView.
+     *
+     * @param imageUrl: The String containing the URL for the user's profile picture in the
+     *                  Storage database.
+     * @param context:  The Activity Context.
+     */
     private void downloadImage(String imageUrl, final Context context) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReferenceFromUrl(imageUrl);
@@ -128,11 +149,17 @@ public class Settings extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 // Handle any errors
-                System.out.println("Error occured while downloading image");
             }
         });
     }
 
+    /**
+     * SubMethod for the downloadImage Method.
+     * Used to display the user's profile picture inside of a circle.
+     *
+     * @param bitmap: Bitmap describing the user's profile picture.
+     * @return: The Method returns the circular version of the given Bitmap.
+     */
     public Bitmap getCircularBitmap(Bitmap bitmap) {
         Bitmap output;
 
@@ -166,46 +193,84 @@ public class Settings extends AppCompatActivity {
     }
 
 
-    public void goToParkAdHistory(View view) {
-        Intent si = new Intent(this,ParkAdHistory.class);
-        si.putExtra("UID",UID);
-        startActivity(si);
-    }
-
+    /**
+     * Launches the EditProfile Activity.
+     *
+     * @param view: The EditProfile Button.
+     */
     public void goToEditProfile(View view) {
-        Intent si = new Intent(this,EditProfile.class);
-        si.putExtra("UID",UID);
+        Intent si = new Intent(this, EditProfile.class);
+        si.putExtra("UID", UID);
         startActivity(si);
 
     }
 
-    public void goToOrderHistory(View view) {
-        Intent si = new Intent(this,OrderHistory.class);
-        si.putExtra("UID",UID);
-        startActivity(si);
-    }
-
-    public void goToReceiptHistory(View view) {
-        Intent si = new Intent(this,ReceiptHistory.class);
-        si.putExtra("UID",UID);
-        startActivity(si);
-    }
-
-    public void goToReviewHistory(View view) {
-        Intent si = new Intent(this,ReviewHistory.class);
-        si.putExtra("UID",UID);
-        startActivity(si);
-    }
-
+    /**
+     * Launches the ActiveOrders Activity.
+     *
+     * @param view: The ActiveOrders Button.
+     */
     public void goToActiveOrders(View view) {
-        Intent si = new Intent(this,ActiveOrders.class);
-        si.putExtra("UID",UID);
+        Intent si = new Intent(this, ActiveOrders.class);
+        si.putExtra("UID", UID);
         startActivity(si);
     }
 
+    /**
+     * Launches the ActiveParkAds Activity.
+     *
+     * @param view: The ActiveParkAds Button.
+     */
     public void goToActiveParkAds(View view) {
-        Intent si = new Intent(this,ActiveParkAds.class);
-        si.putExtra("UID",UID);
+        Intent si = new Intent(this, ActiveParkAds.class);
+        si.putExtra("UID", UID);
         startActivity(si);
     }
+
+    /**
+     * Launches the OrderHistory Activity.
+     *
+     * @param view: The OrderHistory Button.
+     */
+    public void goToOrderHistory(View view) {
+        Intent si = new Intent(this, OrderHistory.class);
+        si.putExtra("UID", UID);
+        startActivity(si);
+    }
+
+    /**
+     * Launches the ParkAdHistory Activity.
+     *
+     * @param view: The ParkAdHistory Button.
+     */
+    public void goToParkAdHistory(View view) {
+        Intent si = new Intent(this, ParkAdHistory.class);
+        si.putExtra("UID", UID);
+        startActivity(si);
+    }
+
+
+    /**
+     * Launches the ReceiptHistory Activity.
+     *
+     * @param view: The ReceiptHistory Button.
+     */
+    public void goToReceiptHistory(View view) {
+        Intent si = new Intent(this, ReceiptHistory.class);
+        si.putExtra("UID", UID);
+        startActivity(si);
+    }
+
+    /**
+     * Launches the ReviewHistory Activity.
+     *
+     * @param view: The ReviewHistory Button.
+     */
+    public void goToReviewHistory(View view) {
+        Intent si = new Intent(this, ReviewHistory.class);
+        si.putExtra("UID", UID);
+        startActivity(si);
+    }
+
+
 }

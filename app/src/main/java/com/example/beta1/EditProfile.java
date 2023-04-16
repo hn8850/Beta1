@@ -44,11 +44,17 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.1
+ * @since 30/12/2022
+ * This Activity is allow the user to edit their profile information.
+ */
+
 public class EditProfile extends AppCompatActivity {
 
     TextInputEditText IDEt, NameEt, DateEt, PhoneEt;
     Switch sw;
-
 
     String userName, name, date, phone, picUrl;
     int active;
@@ -92,23 +98,13 @@ public class EditProfile extends AppCompatActivity {
         Intent gi = getIntent();
         UID = gi.getStringExtra("UID");
         readUser();
-//        signedIn = false;
-//        if (CurrentUserAuth != null) {
-//            for (UserInfo userInfo : CurrentUserAuth.getProviderData()) {
-//                if (userInfo.getProviderId().equals("password")) {
-//                    UID = CurrentUserAuth.getUid();
-//                    signedIn = true;
-//                    readUser();
-//                }
-//            }
-//            if (!signedIn) Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
-//
-//        } else Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
-
-
     }
 
 
+    /**
+     * The Method reads the current user's information from the database and sets the views in the
+     * Activity according to that information.
+     */
     public void readUser() {
         DatabaseReference userDB = mDb.getReference("Users").child(UID);
         userDB.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -122,7 +118,6 @@ public class EditProfile extends AppCompatActivity {
                     PhoneEt.setText(currentUser.getPhoneNumber());
                     picUrl = currentUser.getProfilePicURL();
                     imageUri = Uri.parse(picUrl);
-                    System.out.println("WHAT = " + picUrl);
                     downloadImage(picUrl, getApplicationContext());
 
                     active = currentUser.getActive();
@@ -153,8 +148,13 @@ public class EditProfile extends AppCompatActivity {
     }
 
 
+    /**
+     * OnClickMethod for the Update Button.
+     * Used to update the existing information about the user in the database, with the new
+     * information submitted.
+     * @param view: The Update Button.
+     */
     public void update(View view) {
-
         userName = IDEt.getText().toString();
         name = NameEt.getText().toString();
         date = DateEt.getText().toString();
@@ -171,7 +171,6 @@ public class EditProfile extends AppCompatActivity {
                 @Override
                 public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                     double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                    System.out.println("Upload is " + progress + "% done");
                 }
             }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
@@ -180,8 +179,6 @@ public class EditProfile extends AppCompatActivity {
                         @Override
                         public void onSuccess(Uri uri) {
                             picUrl = uri.toString();
-                            System.out.println("SYSURL = " + imageUri);
-
                             DatabaseReference userDB = mDb.getReference("Users").child(UID);
                             userDB.child("userName").setValue(userName);
                             userDB.child("name").setValue(name);
@@ -207,6 +204,9 @@ public class EditProfile extends AppCompatActivity {
     }
 
 
+    /**
+     * Switch View Change Listener. Used to change between Active or Not Active User.
+     */
     public CompoundButton.OnCheckedChangeListener swListener = new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -232,6 +232,14 @@ public class EditProfile extends AppCompatActivity {
     };
 
 
+    /**
+     * SubMethod for the ReadUser Method.
+     * Used to download the user's profile picture from the Storage database and display it
+     * using an ImageView.
+     * @param imageUrl: The String containing the URL for the user's profile picture in the
+     *                Storage database.
+     * @param context: The Activity Context.
+     */
     private void downloadImage(String imageUrl, final Context context) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReferenceFromUrl(imageUrl);
@@ -250,18 +258,28 @@ public class EditProfile extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 // Handle any errors
-                System.out.println("Error occured while downloading image");
             }
         });
     }
 
 
+    /**
+     * OnClickMethod for the profile picture ImageView. Used to launch the gallery
+     * @param view: The profile picture ImageView.
+     */
     public void ProfilePic(View view) {
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType("image/*");
         startActivityForResult(intent, GALLERY_REQUEST_CODE);
     }
 
+    /**
+     * OnActivityResult Method for the ProfilePic Method. Used to update the profile picture
+     * ImageView with the newly selected picture.
+     * @param requestCode: The GalleryRequestCode.
+     * @param resultCode: The GalleryResultCode.
+     * @param data: The Intent containing the image URI.
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

@@ -8,6 +8,13 @@ import androidx.fragment.app.FragmentPagerAdapter;
 
 import java.util.ArrayList;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.0
+ * @since 27/12/2022
+ * This Class is used to manage the 3 different Fragments, which are part of the UploadAd Activity.
+ */
+
 public class FragAdapter extends FragmentPagerAdapter {
 
     private final ArrayList<Fragment> frags = new ArrayList<>();

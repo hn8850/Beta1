@@ -24,6 +24,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.2
+ * @since 23/12/2022
+ * This Activity is the first Activity a new user sees. Here the user can login and begin using the
+ * app!
+ */
 public class Login extends AppCompatActivity {
 
     TextInputEditText etLoginEmail;
@@ -43,9 +50,7 @@ public class Login extends AppCompatActivity {
         tvRegisterHere = findViewById(R.id.tvRegisterHere);
         btnLogin = findViewById(R.id.btnLogin);
 
-
         mAuth = FirebaseAuth.getInstance();
-        //mAuth.signOut();
 
         btnLogin.setOnClickListener(view -> {
             loginUser();
@@ -55,6 +60,10 @@ public class Login extends AppCompatActivity {
         });
     }
 
+    /**
+     * OnClickMethod for the login Button. Checks if the user credentials exist in the database and
+     * logs in accordingly.
+     */
     public void loginUser() {
         String email = etLoginEmail.getText().toString().trim();
         String password = etLoginPassword.getText().toString().trim();
@@ -84,6 +93,12 @@ public class Login extends AppCompatActivity {
     }
 
 
+    /**
+     * OnClickMethod for the 'forgot your password?' TextView.
+     * Sends a password reset email to the email the user has submitted.
+     *
+     * @param view: The 'forgot your password?' TextView.
+     */
     public void resetPass(View view) {
         String email = etLoginEmail.getText().toString();
         if (!(isValidEmail(email))) {
@@ -119,6 +134,12 @@ public class Login extends AppCompatActivity {
         }
     }
 
+    /**
+     * Boolean SubMethod for the LoginUser Method's data verification process.
+     *
+     * @param email: The email the user has inputted (String).
+     * @return: The Method will return true if the email given is a valid email. false otherwise.
+     */
     public static boolean isValidEmail(String email) {
         String check = "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" + "\\@" + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" + "("
                 + "\\." + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" + ")+";
@@ -166,22 +187,6 @@ public class Login extends AppCompatActivity {
             startActivity(si);
         }
 
-/*
-        if (st.equals("Notifications")){
-            Intent si = new Intent(this, notifs.class);
-            startActivity(si);
-        }
-
-        if (st.equals("Google Pay")) {
-            Intent si = new Intent(this, GooglePay.class);
-            startActivity(si);
-        }
-
-        if (st.equals("Maps")) {
-            Intent si = new Intent(this, mapa.class);
-            startActivity(si);
-        }
-         */
         return true;
     }
 

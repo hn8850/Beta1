@@ -1,6 +1,5 @@
 package com.example.beta1;
 
-import android.app.Application;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,12 +8,16 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.core.content.ContextCompat;
-import androidx.core.content.PackageManagerCompat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.0
+ * @since 8/3/2023
+ * This CustomAdapter is the ListView Item design used in the ReviewHistory Activity.
+ */
 public class CustomReviewListAdapter extends BaseAdapter {
     private ArrayList<HashMap<String, String>> dataList;
 

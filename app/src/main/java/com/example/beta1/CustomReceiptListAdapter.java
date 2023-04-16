@@ -9,6 +9,13 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.0
+ * @since 8/3/2023
+ * This CustomAdapter is the ListView Item design used in the ReceiptHistory Activity.
+ */
+
 public class CustomReceiptListAdapter extends BaseAdapter {
     private ArrayList<HashMap<String, String>> dataList;
 

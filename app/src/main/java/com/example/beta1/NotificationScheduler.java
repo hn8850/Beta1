@@ -16,6 +16,13 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.2
+ * @since 14/4/2023
+ * Used to schedule notifications regarding order updates for the user.
+ */
+
 public class NotificationScheduler {
 
     public static void scheduleNotification(Context context, String title, String message, String dateString, String timeString, int notificationId) {

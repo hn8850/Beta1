@@ -31,12 +31,20 @@ import com.google.firebase.storage.StorageReference;
 import java.io.File;
 import java.util.ArrayList;
 
+/***
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.4
+ * @since 28/1/2023
+ * The ViewUser Activity.
+ * In this Activity, the user can view more information about the seller of the ParkAd he selected
+ * in the ParkAdQueryListView Activity.
+ */
+
 public class ViewUser extends AppCompatActivity {
 
     TextView IDEt, NameEt, DateEt, PhoneEt;
     ImageView iv;
     TextView tVactive,rating;
-
 
     String  picUrl;
     int active;
@@ -47,7 +55,6 @@ public class ViewUser extends AppCompatActivity {
     FirebaseStorage mStorage;
 
     Intent gi;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,6 +89,10 @@ public class ViewUser extends AppCompatActivity {
         readUser();
     }
 
+    /**
+     * The Method reads the  user's information from the database and sets the views in the
+     * Activity according to that information.
+     */
     public void readUser() {
         DatabaseReference userDB = mDb.getReference("Users").child(UID);
         userDB.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -95,7 +106,6 @@ public class ViewUser extends AppCompatActivity {
                 PhoneEt.setText(currentUser.getPhoneNumber());
                 picUrl = currentUser.getProfilePicURL();
                 imageUri = Uri.parse(picUrl);
-                System.out.println("WHAT = " + picUrl);
                 downloadImage(picUrl, getApplicationContext());
 
                 active = currentUser.getActive();
@@ -113,7 +123,7 @@ public class ViewUser extends AppCompatActivity {
                 }
 
                 DataSnapshot reviewsSnapshot = snapshot.child("Reviews");
-                
+
                 int sumOfStars = 0;
                 int count = 0;
                 for (DataSnapshot reviewSnapshot : reviewsSnapshot.getChildren()) {
@@ -141,6 +151,14 @@ public class ViewUser extends AppCompatActivity {
         });
     }
 
+    /**
+     * SubMethod for the ReadUser Method.
+     * Used to download an image using the given URL, linked to the Storage database, and display it
+     * using an ImageView.
+     *
+     * @param imageUrl: The String containing the URL for the image in the Storage database.
+     * @param context:  The Activity Context.
+     */
     private void downloadImage(String imageUrl, final Context context) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReferenceFromUrl(imageUrl);
@@ -159,11 +177,15 @@ public class ViewUser extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 // Handle any errors
-                System.out.println("Error occured while downloading image");
             }
         });
     }
 
+    /**
+     * Launches the ReviewHistory Activity.
+     *
+     * @param view: The ReviewHistory Button.
+     */
     public void goToReviewHistory(View view) {
         Intent si = new Intent(this,ReviewHistory.class);
         si.putExtra("UID",UID);

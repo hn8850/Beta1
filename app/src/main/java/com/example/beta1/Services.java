@@ -15,6 +15,53 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Services {
+
+
+    /**
+     * Boolean Method that returns true if the time described by the firstTimeStr String is before
+     * the the time described by the secondTimeStr String.
+     *
+     * @param firstTimeStr:  The time String to be checked if its before the secondTimeStr String.
+     * @param secondTimeStr: The time String to be checked if its after the firstTimeStr String.
+     * @return
+     */
+    public static boolean isFirstTimeBeforeSecond(String firstTimeStr, String secondTimeStr) {
+        try {
+            // Format the input strings with leading zeros for single-digit hours
+            firstTimeStr = String.format("%02d", Integer.parseInt(firstTimeStr.substring(0, firstTimeStr.indexOf(":")))) + firstTimeStr.substring(firstTimeStr.indexOf(":"));
+            secondTimeStr = String.format("%02d", Integer.parseInt(secondTimeStr.substring(0, secondTimeStr.indexOf(":")))) + secondTimeStr.substring(secondTimeStr.indexOf(":"));
+
+            // Parse the time strings into LocalTime objects
+            LocalTime firstTime = LocalTime.parse(firstTimeStr);
+            LocalTime secondTime = LocalTime.parse(secondTimeStr);
+
+            // Compare the LocalTime objects and return the result
+            return firstTime.isBefore(secondTime);
+        } catch (Error e) {
+            // Handle any parse errors
+            System.err.println("Error parsing time string: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean isHourBetween(String checkHour, String beginHour, String endHour) {
+        try {
+            // Parse time strings into Date objects using SimpleDateFormat
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+            Date checkTime = sdf.parse(checkHour);
+            Date beginTime = sdf.parse(beginHour);
+            Date endTime = sdf.parse(endHour);
+
+            // Compare checkTime with beginTime and endTime
+            return checkTime.compareTo(beginTime) >= 0 && checkTime.compareTo(endTime) <= 0;
+        } catch (ParseException e) {
+            // Handle any parsing exceptions (e.g., invalid time format)
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
     public static String addLeadingZerosToDate(String dateString, boolean Slashes) {
         String[] dateParts = dateString.split("/");
         String day = dateParts[0];
@@ -77,7 +124,6 @@ public class Services {
         } catch (Exception e) {
             return false;
         }
-
     }
 
     public static String roundToNextQuarterHour(String timeString) {

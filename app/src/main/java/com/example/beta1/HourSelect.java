@@ -1,15 +1,8 @@
 package com.example.beta1;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -18,7 +11,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.api.Status;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -28,12 +22,20 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
+
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.3
+ * @since 1/2/2023
+ * This Activity is the final Activity for the process of making an order.
+ * In this Activity, the user selects the most suited hour range that they want to reserve
+ * the ParkAd space for.
+ */
+
 
 public class HourSelect extends AppCompatActivity {
 
@@ -49,10 +51,9 @@ public class HourSelect extends AppCompatActivity {
 
     FirebaseDatabase fbDB;
     FirebaseAuth mAuth;
-    private static final int LOAD_PAYMENT_DATA_REQUEST_CODE = 1234;
 
     ArrayList<TimeBarView.Segment> segments = new ArrayList<>();
-    
+
 
     Receipt receipt;
 
@@ -109,16 +110,57 @@ public class HourSelect extends AppCompatActivity {
 
     }
 
-
+    /**
+     * Defines the custom TimeBarView in the Activity.
+     * Used to show the user the which hour ranges are available for the ParkAd space and which
+     * are not.
+     */
     public void setTimeBar() {
         timeBarView = findViewById(R.id.time_bar_view);
-        timeBarView.setTopNumber(getDoubleFromTimeString(topHour));
-        timeBarView.setBottomNumber(getDoubleFromTimeString(bottomHour));
-        System.out.println("DOUBLE TIME = " + getDoubleFromTimeString(bottomHour));
+        timeBarView.setTopNumber(getHour(topHour));
+        timeBarView.setBottomNumber(getHour(bottomHour));
         getSegments();
 
     }
 
+    /**
+     * SubMethod for the setTimeBar Method.
+     * Used to fill out the TimeBarView with Custom Segments, each describing a time range in which
+     * the ParkAd space is already reserved for.
+     */
+    private void getSegments() {
+        DatabaseReference ordersRef = fbDB.getReference("Orders");
+        ordersRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot orderSnap : snapshot.getChildren()) {
+                    Order order = orderSnap.getValue(Order.class);
+                    if (order.getParkAdID().matches(parkAdID)) {
+                        String beginHourOrder = order.getBeginHour();
+                        String endHourOrder = order.getEndHour();
+                        TimeBarView.Segment segment = new TimeBarView.Segment(beginHourOrder, endHourOrder);
+                        timeBarView.addSegment(segment);
+                        segments.add(segment);
+                        timeBarView.invalidate();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+    }
+
+    /**
+     * The OnClick Method for the Order Button, which verifies that the time range the user has
+     * selected is available, and then creates and Order Object and uploads it to the database.
+     * Also launches GooglePay.
+     *
+     * @param view
+     */
     public void makeOrder(View view) {
         if (SpinEndHour.getSelectedItemPosition() == 0 || SpinBeginHour.getSelectedItemPosition() == 0 || SpinBeginMinute.getSelectedItemPosition() == 0 || SpinEndMinute.getSelectedItemPosition() == 0) {
             Toast.makeText(this, "CHOOSE VALID TIMES", Toast.LENGTH_SHORT).show();
@@ -158,10 +200,8 @@ public class HourSelect extends AppCompatActivity {
                         String[] beginHourParts = beginFull.split(":");
                         beginHourParts[0] = String.valueOf(Integer.valueOf(beginHourParts[0]) - 1);
                         String notiTime = beginHourParts[0] + ":" + beginHourParts[1]; //1 hour before Order Begin Time
-                        System.out.println("NOTITIME:" + notiTime);
-                        System.out.println("ENDFULL:" + endFull);
-                        NotificationScheduler.scheduleNotification(getApplicationContext(),"Spark Alert","The ParkAd you ordered at " + parkAddress + " will be available in an hour!", parkDate, notiTime,1); //Begin Noti
-                        NotificationScheduler.scheduleNotification(getApplicationContext(),"Spark Alert","Your time with the ParkAd at " + parkAddress + " has finished!", parkDate, endFull,2); //Ending Noti
+                        NotificationScheduler.scheduleNotification(getApplicationContext(), "Spark Alert", "The ParkAd you ordered at " + parkAddress + " will be available in an hour!", parkDate, notiTime, 1); //Begin Noti
+                        NotificationScheduler.scheduleNotification(getApplicationContext(), "Spark Alert", "Your time with the ParkAd at " + parkAddress + " has finished!", parkDate, endFull, 2); //Ending Noti
                         // Launch Google Pay
 
                     }
@@ -217,33 +257,12 @@ public class HourSelect extends AppCompatActivity {
 //        builder.show();
 //    }
 
-
-    private void getSegments() {
-        DatabaseReference ordersRef = fbDB.getReference("Orders");
-        ordersRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot orderSnap : snapshot.getChildren()) {
-                    Order order = orderSnap.getValue(Order.class);
-                    if (order.getParkAdID().matches(parkAdID)) {
-                        String beginHourOrder = order.getBeginHour();
-                        String endHourOrder = order.getEndHour();
-                        TimeBarView.Segment segment = new TimeBarView.Segment(beginHourOrder, endHourOrder);
-                        timeBarView.addSegment(segment);
-                        segments.add(segment);
-                        timeBarView.invalidate();
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-
-    }
-
+    /**
+     * SubMethod for the MakeOrder Method.
+     * Used to read the information of the current ParkAd and copy parameters to the Order Object.
+     * Also updates the TimeBarView with a Segment if the current date and the ParkAd date match.
+     * (In order to make sure orders can't pass for times that have already passed).
+     */
     public void readParkAd() {
         DatabaseReference parkAdref = fbDB.getReference("ParkAds").child(parkAdID);
         parkAdref.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -256,16 +275,12 @@ public class HourSelect extends AppCompatActivity {
                 currentDate = Services.addLeadingZerosToDate(currentDate, false);
                 String parkAdDateStr = parkAd.getDate();
                 parkAdDateStr = Services.addLeadingZerosToDate(parkAdDateStr, false);
-                System.out.println("Curreent1=" + currentDate);
-                System.out.println("date1=" + parkAdDateStr);
 
                 if (parkAdDateStr.matches(currentDate)) {
-                    System.out.println("Curreent1=" + currentDate);
                     long currentTimeMillis = System.currentTimeMillis();
                     Date current2 = new Date(currentTimeMillis);
                     String currentHour = hourFormat.format(current2);
-                    if (isHourBetween(currentHour, parkAd.getBeginHour(), parkAd.getFinishHour())) {
-                        System.out.println("gg");
+                    if (Services.isHourBetween(currentHour, parkAd.getBeginHour(), parkAd.getFinishHour())) {
                         TimeBarView.Segment segment = new TimeBarView.Segment(parkAd.getBeginHour(), Services.roundToNextQuarterHour(currentHour));
                         segments.add(segment);
                         timeBarView.addSegment(segment);
@@ -281,6 +296,10 @@ public class HourSelect extends AppCompatActivity {
     }
 
 
+    /**
+     * ItemSelectedListener for the hour/minute Spinners.
+     * Used to update the time String params for the Order.
+     */
     AdapterView.OnItemSelectedListener spinListener = new AdapterView.OnItemSelectedListener() {
         @Override
         public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -303,58 +322,52 @@ public class HourSelect extends AppCompatActivity {
     };
 
 
-//    public static double getPrice(String startTime, String endTime, double hourlyRate) {
-//        try {
-//            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-//            Date date1 = sdf.parse(startTime);
-//            Date date2 = sdf.parse(endTime);
-//            long diffInMilliseconds = date2.getTime() - date1.getTime();
-//            double diffInMinutes = (Math.abs(diffInMilliseconds) / (1000 * 60));
-//            return (diffInMinutes / 60) * hourlyRate;
-//        } catch (ParseException e) {
-//            e.printStackTrace();
-//            return -1;
-//        }
-//    }
 
+    /**
+     * Boolean SubMethod for the time verification process of the MakeOrder Method.
+     *
+     * @param hour1: Time String
+     * @param hour2: Time String
+     * @return: The Method returns true if the following conditions are met:
+     * 1.The time described in the hour1 String is before the time described in the hour2 String.
+     * 2.The time described in the hour1 String is between the The time described in the top and
+     * bottom hour String of the TimeBarView.
+     * 3.The time described in the hour3 String is between the The time described in the top and
+     * bottom hour String of the TimeBarView.
+     */
     private boolean HourInBounds(String hour1, String hour2) {
-        if (!isHourBetween(hour1, topHour, bottomHour)) {
+        if (!Services.isHourBetween(hour1, topHour, bottomHour)) {
             if (!(hour1.matches(topHour))) {
                 return false;
             }
         }
-        if (getDoubleFromTimeString(hour2) <= getDoubleFromTimeString(hour1)) return false;
+        if (getHour(hour2) <= getHour(hour1)) return false;
 
-        if (!isHourBetween(hour2, topHour, bottomHour)) {
+        if (!Services.isHourBetween(hour2, topHour, bottomHour)) {
             if (!(hour2.matches(bottomHour))) {
                 return false;
             }
         }
 
         for (TimeBarView.Segment segment : segments) {
-            System.out.println("RANGE1 = " + hour1 + " - " + hour2);
-            System.out.println("RANGE2 = " + segment.getBeginHour() + " - " + segment.getEndHour());
             if (checkOverlap(hour1, hour2, segment.getBeginHour(), segment.getEndHour()))
                 return false;
         }
         return true;
     }
 
-    private static boolean isHourBetween(String checkHour, String beginHour, String endHour) {
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
-        try {
-            Date check = formatter.parse(checkHour);
-            Date begin = formatter.parse(beginHour);
-            Date end = formatter.parse(endHour);
-            if (check.after(begin) && check.before(end)) {
-                return true;
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
 
+    /**
+     * Boolean SubMethod for the time verification process of the HourInBounds Method.
+     *
+     * @param beginHour: Time String
+     * @param endHour:   Time String
+     * @param limit1:    Time String
+     * @param limit2:    Time String
+     * @return: The Method returns true if the time range between the time range described in the
+     * beginHour and the endHour Strings overlaps with the time range between the time range
+     * described in the limit1 and limit2 Strings.
+     */
     public static boolean checkOverlap(String beginHour, String endHour, String limit1, String limit2) {
         double begin = getHour(beginHour);
         double end = getHour(endHour);
@@ -372,35 +385,17 @@ public class HourSelect extends AppCompatActivity {
         return (begin >= limitOne && begin < limitTwo) || (end > limitOne && end <= limitTwo) || (begin <= limitOne && end >= limitTwo);
     }
 
+    /**
+     * Double SubMethod for the time verification process of the CheckOverlap Method.
+     *
+     * @param time: Time String
+     * @return the double value of the given time String (e.g: the input "16:45" will return 1645).
+     */
     private static double getHour(String time) {
         String[] parts = time.split(":");
         int hour = Integer.parseInt(parts[0]);
         int minute = Integer.parseInt(parts[1]);
         return hour + minute / 60.0;
-    }
-
-    public static double getDoubleFromTimeString(String timeStr) {
-        String[] timeComponents = timeStr.split(":");
-        int hour = Integer.parseInt(timeComponents[0]);
-        int minute = Integer.parseInt(timeComponents[1]);
-        double minuteFactor = 0;
-        switch (minute) {
-            case 0:
-                minuteFactor = 0;
-                break;
-            case 15:
-                minuteFactor = 0.25;
-                break;
-            case 30:
-                minuteFactor = 0.5;
-                break;
-            case 45:
-                minuteFactor = 0.75;
-                break;
-            default:
-                minuteFactor = 0;
-        }
-        return hour + minuteFactor;
     }
 
 

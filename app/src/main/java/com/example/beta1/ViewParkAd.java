@@ -32,10 +32,18 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
 
+/***
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.4
+ * @since 28/1/2023
+ * The ViewParkAd Activity.
+ * In this Activity, the user can view more information about the ParkAd he selected in the
+ * ParkAdQueryListView Activity.
+ */
 
 public class ViewParkAd extends AppCompatActivity {
 
-    TextView addressTv,dateTv, priceTv, descTv, titleTv;
+    TextView addressTv, dateTv, priceTv, descTv, titleTv;
     ImageView iv, profilePic;
 
     Intent gi;
@@ -75,13 +83,17 @@ public class ViewParkAd extends AppCompatActivity {
 
     }
 
+    /**
+     * Used to read the information of the current ParkAd and set the Activity's Views accordingly.
+     * The Method also reads the User Branch of the Owner of the ParkAd's Space, in order to display
+     * their profile as well.
+     */
     public void readParkAd() {
         DatabaseReference parkAdref = fbDB.getReference("ParkAds").child(parkAdID);
         parkAdref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 parkAd = snapshot.getValue(ParkAd.class);
-                System.out.println("ADDRESS IS " + parkAd.getAddress());
                 userID = parkAd.getUserID();
                 DatabaseReference userRef = fbDB.getReference("Users").child(userID);
                 userRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -94,7 +106,7 @@ public class ViewParkAd extends AppCompatActivity {
                         addressTv.setText("Address: " + parkAd.getAddress());
                         priceTv.setText("Price for hour: " + parkAd.getHourlyRate());
                         descTv.setText("Description: " + parkAd.getDescription());
-                        dateTv.setText("Date: "+ parkAd.getDate());
+                        dateTv.setText("Date: " + parkAd.getDate());
 
                         picURL = parkAd.getPictureUrl().get(0);
                         downloadImage(picURL, getApplicationContext(), 0);
@@ -117,9 +129,14 @@ public class ViewParkAd extends AppCompatActivity {
     }
 
 
-
-
-
+    /**
+     * SubMethod for the ReadParkAd Method.
+     * Used to download an image using the given URL, linked to the Storage database, and display it
+     * using an ImageView.
+     *
+     * @param imageUrl: The String containing the URL for the image in the Storage database.
+     * @param context:  The Activity Context.
+     */
     private void downloadImage(String imageUrl, final Context context, int mode) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReferenceFromUrl(imageUrl);
@@ -144,11 +161,17 @@ public class ViewParkAd extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 // Handle any errors
-                System.out.println("Error occured while downloading image");
             }
         });
     }
 
+    /**
+     * SubMethod for the downloadImage Method.
+     * Used to display the user's profile picture inside of a circle.
+     *
+     * @param bitmap: Bitmap describing the user's profile picture.
+     * @return: The Method returns the circular version of the given Bitmap.
+     */
     public Bitmap getCircularBitmap(Bitmap bitmap) {
         Bitmap output;
 
@@ -182,19 +205,30 @@ public class ViewParkAd extends AppCompatActivity {
     }
 
 
+    /**
+     * OnClickMethod for the MakeOrder Button.
+     * Launches the HourSelect Activity.
+     *
+     * @param view: The MakeOrder Button.
+     */
     public void GoToMakeOrder(View view) {
-        Intent si = new Intent(this,HourSelect.class);
-        si.putExtra("beginHour",parkAd.getBeginHour());
-        si.putExtra("endHour",parkAd.getFinishHour());
-        si.putExtra("parkAdID",parkAdID);
+        Intent si = new Intent(this, HourSelect.class);
+        si.putExtra("beginHour", parkAd.getBeginHour());
+        si.putExtra("endHour", parkAd.getFinishHour());
+        si.putExtra("parkAdID", parkAdID);
         startActivity(si);
     }
 
     private View.OnClickListener ProfilePicClickListener = new View.OnClickListener() {
+        /**
+         * OnClickMethod for the profilePic Button.
+         * Launches the ViewUser Activity.
+         * @param view: The profilePic Button.
+         */
         @Override
         public void onClick(View view) {
-            Intent si = new Intent(getApplicationContext(),ViewUser.class);
-            si.putExtra("UserID",userID);
+            Intent si = new Intent(getApplicationContext(), ViewUser.class);
+            si.putExtra("UserID", userID);
             startActivity(si);
         }
     };

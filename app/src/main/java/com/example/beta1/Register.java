@@ -32,6 +32,13 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.2
+ * @since 23/12/2022
+ * In this Activity, new users of the app can register themselves!
+ */
+
 public class Register extends AppCompatActivity {
 
     TextInputEditText etRegEmail;
@@ -87,6 +94,9 @@ public class Register extends AppCompatActivity {
         });
     }
 
+    /**
+     * Creates a user in the database using FireBase Auth and the user submitted information.
+     */
     public void createUser() {
         String email = etRegEmail.getText().toString().trim();
         String password = etRegPassword.getText().toString().trim();
@@ -116,27 +126,22 @@ public class Register extends AppCompatActivity {
                             @Override
                             public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                                 double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                                System.out.println("Upload is " + progress + "% done");
                             }
                         }).addOnPausedListener(new OnPausedListener<UploadTask.TaskSnapshot>() {
                             @Override
                             public void onPaused(UploadTask.TaskSnapshot taskSnapshot) {
-                                System.out.println("Upload is paused");
                             }
                         }).addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception exception) {
-                                System.out.println("Upload failed");
                             }
                         }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                             @Override
                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                System.out.println("Upload successful");
                                 refPic.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                                     @Override
                                     public void onSuccess(Uri uri) {
                                         picUrl = uri.toString();
-                                        System.out.println("WHAT    = " + picUrl);
                                         User userDB = new User(userName, 1, name, date, phone, picUrl);
                                         DatabaseReference refDb = mDb.getReference("Users");
                                         refDb.child(UID).setValue(userDB);
@@ -149,7 +154,8 @@ public class Register extends AppCompatActivity {
                         Toast.makeText(Register.this, "User registered successfully", Toast.LENGTH_SHORT).show();
                         Intent si = new Intent(Register.this, Login.class);
                         si.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(si);                    } else {
+                        startActivity(si);
+                    } else {
                         Toast.makeText(Register.this, "Registration Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -157,12 +163,25 @@ public class Register extends AppCompatActivity {
         }
     }
 
+    /**
+     * OnClickMethod for the profile picture ImageView. Used to launch the gallery
+     *
+     * @param view: The profile picture ImageView.
+     */
     public void ProfilePic(View view) {
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType("image/*");
         startActivityForResult(intent, GALLERY_REQUEST_CODE);
     }
 
+    /**
+     * OnActivityResult Method for the ProfilePic Method. Used to update the profile picture
+     * ImageView with the newly selected picture.
+     *
+     * @param requestCode: The GalleryRequestCode.
+     * @param resultCode:  The GalleryResultCode.
+     * @param data:        The Intent containing the image URI.
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

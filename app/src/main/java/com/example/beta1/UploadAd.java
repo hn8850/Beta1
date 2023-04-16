@@ -8,6 +8,14 @@ import android.os.Bundle;
 
 import com.google.android.material.tabs.TabLayout;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.0
+ * @since 27/12/2022
+ * The UploadAd Activity is a hub for all of the 3 different Fragments used to collect information
+ * about a ParkAd and upload it to the database.
+ */
+
 public class UploadAd extends AppCompatActivity {
 
     private TabLayout tabLayout;
