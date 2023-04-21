@@ -87,8 +87,10 @@ public class ActiveOrders extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String canceledOrderID = orderIDs.get(pos);
-                        DatabaseReference canceledOrderRef = fbDB.getReference("Users").child(currUserID).child("Orders").child(canceledOrderID);
-                        canceledOrderRef.child("canceled").setValue(true);
+                        DatabaseReference canceledOrderRefUser = fbDB.getReference("Users").child(currUserID).child("Orders").child(canceledOrderID);
+                        canceledOrderRefUser.child("canceled").setValue(true);
+                        DatabaseReference canceledOrderRefGeneral = fbDB.getReference("Orders").child(canceledOrderID);
+                        canceledOrderRefGeneral.setValue(null);
                         Toast.makeText(ActiveOrders.this, "Order Canceled", Toast.LENGTH_SHORT);
                         activeOrdersDataList.remove(pos);
                         CustomOrderListAdapter adapter = new CustomOrderListAdapter(activeOrdersDataList);

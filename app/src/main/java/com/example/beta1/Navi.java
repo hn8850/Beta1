@@ -9,7 +9,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.location.Address;
 import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -32,8 +34,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
-import com.example.beta1.databinding.ActivityNaviBinding;
 import com.example.beta1.databinding.Navi2Binding;
+import com.google.android.gms.common.util.MapUtils;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapsInitializer;
@@ -50,8 +53,10 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -81,7 +86,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private Navi2Binding binding;
-    private ActivityNaviBinding binding2;
     private final static int LOCATION_PERMISSION_CODE = 101;
     FirebaseDatabase fbDB;
     ArrayList<ParkAd> parkAds;
@@ -95,6 +99,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
     HashMap<String, String> query = new HashMap<>();
 
+    SupportMapFragment mapFragment;
+    ValueEventListener parkAdUpdateListener;
     FirebaseAuth mAuth;
     String currUserID;
 
@@ -106,15 +112,23 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         setContentView(binding.getRoot());
 
         fbDB = FirebaseDatabase.getInstance();
+
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser CurrentUserAuth = FirebaseAuth.getInstance().getCurrentUser();
+        currUserID = CurrentUserAuth.getUid();
+
         parkAdMarkerOptions = new ArrayList<>();
         parkAdMarkers = new ArrayList<>();
         parkAdIDs = new ArrayList<>();
         parkAds = new ArrayList<>();
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         mapFragment.getMapAsync(this);
-
-
     }
 
     /**
@@ -238,8 +252,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      */
     public void SetParkAdMarkers() {
         DatabaseReference AdsDB = fbDB.getReference("ParkAds");
+        Query parkAdUpdateQuery = AdsDB;
         System.out.println("WHATS GOING ON");
-        AdsDB.addListenerForSingleValueEvent(new ValueEventListener() {
+        parkAdUpdateListener = new ValueEventListener(){
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
@@ -248,36 +263,38 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 SimpleDateFormat hourFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     ParkAd parkAd = snapshot1.getValue(ParkAd.class);
-                    System.out.println("yes");
-
-                    String currentDate = dateFormat.format(new Date());
-                    currentDate = Services.addLeadingZerosToDate(currentDate, false);
-                    String parkAdDateStr = parkAd.getDate();
-                    parkAdDateStr = Services.addLeadingZerosToDate(parkAdDateStr, false);
-                    try {
-                        System.out.println("Dates: " + currentDate + "," + parkAdDateStr);
-                        if (Integer.valueOf(currentDate) > Integer.valueOf(parkAdDateStr)) {
-                            UpdateParkAdCompleted(snapshot1.getKey()); //parkDate has passed,hence its completed
-                        } else if (parkAdDateStr.matches(currentDate)) {
-                            long currentTimeMillis = System.currentTimeMillis();
-                            Date current2 = new Date(currentTimeMillis);
-                            String currentHour = hourFormat.format(current2);
-                            System.out.println("HOURS: " + currentHour + "," + parkAd.getBeginHour() + "," + parkAd.getFinishHour());
-                            if (!Services.isFirstTimeBeforeSecond(currentHour, parkAd.getFinishHour())) {
-                                System.out.println("WHYTHO:" + parkAd.getFinishHour());
-                                UpdateParkAdCompleted(snapshot1.getKey()); //ParkHour has passed,hence its completed
+                    if (!currUserID.matches(parkAd.getUserID())) {
+                        System.out.println("yes");
+                        String currentDate = dateFormat.format(new Date());
+                        currentDate = Services.addLeadingZerosToDate(currentDate, false);
+                        String parkAdDateStr = parkAd.getDate();
+                        parkAdDateStr = Services.addLeadingZerosToDate(parkAdDateStr, false);
+                        try {
+                            System.out.println("Dates: " + currentDate + "," + parkAdDateStr);
+                            if (Integer.valueOf(currentDate) > Integer.valueOf(parkAdDateStr)) {
+                                UpdateParkAdCompleted(snapshot1.getKey()); //parkDate has passed,hence its completed
+                            } else if (parkAdDateStr.matches(currentDate)) {
+                                long currentTimeMillis = System.currentTimeMillis();
+                                Date current2 = new Date(currentTimeMillis);
+                                String currentHour = hourFormat.format(current2);
+                                System.out.println("HOURS: " + currentHour + "," + parkAd.getBeginHour() + "," + parkAd.getFinishHour());
+                                if (!Services.isFirstTimeBeforeSecond(currentHour, parkAd.getFinishHour())) {
+                                    System.out.println("WHYTHO:" + parkAd.getFinishHour());
+                                    UpdateParkAdCompleted(snapshot1.getKey()); //ParkHour has passed,hence its completed
+                                } else {
+                                    System.out.println("WHYTHO2:" + parkAd.getFinishHour());
+                                    parkAds.add(parkAd);
+                                    parkAdIDs.add(snapshot1.getKey());
+                                }
                             } else {
-                                System.out.println("WHYTHO2:" + parkAd.getFinishHour());
                                 parkAds.add(parkAd);
                                 parkAdIDs.add(snapshot1.getKey());
                             }
-                        } else {
-                            parkAds.add(parkAd);
-                            parkAdIDs.add(snapshot1.getKey());
+                        } catch (Error e) {
+                            System.out.println("CHECK THIS");
                         }
-                    } catch (Error e) {
-                        System.out.println("CHECK THIS");
                     }
+
                 }
                 BitmapDescriptor blueMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
                 for (ParkAd parkAd : parkAds) {
@@ -305,7 +322,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             public void onCancelled(@NonNull DatabaseError error) {
 
             }
-        });
+        };
+        parkAdUpdateQuery.addValueEventListener(parkAdUpdateListener);
     }
 
     /**
@@ -313,9 +331,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      * update the completion status of each order according to the current date.
      */
     public void VerifyDateOfOrders() {
-        mAuth = FirebaseAuth.getInstance();
-        FirebaseUser CurrentUserAuth = FirebaseAuth.getInstance().getCurrentUser();
-        currUserID = CurrentUserAuth.getUid();
         DatabaseReference userOrders = fbDB.getReference("Users").child(currUserID).child("Orders");
         userOrders.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -589,6 +604,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      * submitted.
      */
     public void searchQuery() {
+        boolean animate = false;
         for (Marker marker : sortedParkAdMarkers) {
             marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         }
@@ -608,12 +624,18 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             pos = sortedAds.indexOf(parkAd);
             addressComponents = parkAd.getAddress().split(",");
             if (searchQuery.matches(parkAd.getAddress())) {
+                zoomToAddress(this,mMap,parkAd.getAddress());
+                animate = true;
                 Marker marker = sortedParkAdMarkers.get(pos);
                 marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
             }
             for (String component : addressComponents) {
                 if ((searchQuery.toLowerCase(Locale.ROOT)).matches(component.toLowerCase(Locale.ROOT))) {
                     Marker marker = sortedParkAdMarkers.get(pos);
+                    if (!animate){
+                        zoomToLatLng(mMap,marker.getPosition(),10  );
+                        animate = true;
+                    }
                     marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
                 }
             }
@@ -789,6 +811,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
             }
         }
+
+
+
     }
 
 
@@ -837,5 +862,46 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     }
     */
 
+    /**
+     * SubMethod for the SearchQuery Method.
+     * Used to zoom the camera of the Map View on the address the user has submitted.
+     * (This Method is only there's a ParkAd Marker at that location!).
+     * @param context: The application's Context.
+     * @param googleMap: The GoogleMap Object linked to the MapView.
+     * @param address: The address the user has submitted (String).
+     */
+    public static void zoomToAddress(Context context, GoogleMap googleMap, String address) {
+        String TAG = MapUtils.class.getSimpleName();
+        Geocoder geocoder = new Geocoder(context);
+        try {
+            List<Address> addresses = geocoder.getFromLocationName(address, 1);
+            if (addresses != null && addresses.size() > 0) {
+                Address resultAddress = addresses.get(0);
+                double lat = resultAddress.getLatitude();
+                double lon = resultAddress.getLongitude();
+                LatLng latLng = new LatLng(lat, lon);
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
+                googleMap.animateCamera(cameraUpdate);
+            } else {
+                Log.e(TAG, "No addresses found for the given address string: " + address);
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error geocoding address: " + e.getMessage());
+        }
+    }
+
+    /**
+     * SubMethod for the SearchQuery Method.
+     * Used to zoom the camera of the Map View on the LatLng of an address's component the user has
+     * submitted (country/city/street etc).
+     * (This Method is only there's a ParkAd Marker at that location!).
+     * @param context: The application's Context.
+     * @param googleMap: The GoogleMap Object linked to the MapView.
+     * @param address: The address the user has submitted (String).
+     */
+    public static void zoomToLatLng(GoogleMap googleMap, LatLng latLng, float zoomLevel) {
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel);
+        googleMap.animateCamera(cameraUpdate);
+    }
 
 }

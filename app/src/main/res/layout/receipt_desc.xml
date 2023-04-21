@@ -8,6 +8,14 @@
 
 
     <TextView
+        android:id="@+id/sellerTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Seller:"
+        android:textStyle="bold" />
+
+    <TextView
         android:id="@+id/buyerTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -30,7 +38,12 @@
         android:text="Confirm Date:"
         />
 
-
+    <TextView
+        android:id="@+id/paymentIdTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Payment ID:" />
 
 
 </LinearLayout>

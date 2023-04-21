@@ -16,6 +16,17 @@ import java.util.regex.Pattern;
 
 public class Services {
 
+    /**
+     * Boolean Method that validates if a given string is a valid phone number in Israel.
+     *
+     * @param phoneNumber The phone number to be validated (String).
+     * @return: The Method returns true if the phone number is valid, false otherwise.
+     */
+    public static boolean isValidPhoneNumber(String phoneNumber) {
+        String regex = "^0?(([23489]{1}\\d{7})|[5]{1}[012345689]\\d{7})$";
+        return phoneNumber.matches(regex);
+    }
+
 
     /**
      * Boolean Method that returns true if the time described by the firstTimeStr String is before

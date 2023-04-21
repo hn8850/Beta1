@@ -2,10 +2,8 @@ package com.example.beta1;
 
 /***
  * @author Harel Navon harelnavon2710@gmail.com
- * @version 1.0
- * @since 24/2/2023
- * The Receipt Object Class.
- * A Receipt is created after an Order goes through.
+ * @version 1.1
+ * @since 24/2/2023 The Receipt Object Class. A Receipt is created after an Order goes through.
  */
 public class Receipt {
 
@@ -47,24 +45,31 @@ public class Receipt {
     String paymentID;
 
     /**
+     * The name of the owner for the ParkAd that is associated with the Receipt.
+     */
+    String sellerName;
+
+
+    /**
      * Empty Constructor required for reading from FireBase Database.
      */
     public Receipt() {
 
     }
 
+
     /**
      * General complete Constructor for the Receipt Object.
      *
      * @param sellerUserID  the seller user id
-     * @param buyerUserID   the buyer user id
      * @param parkAdPath    the park ad path
      * @param orderKey      the order key
      * @param finalPrice    the final price
      * @param dateOfConfirm the date of confirm
      * @param paymentID     the payment id
+     * @param sellerName    the seller name
      */
-    public Receipt(String sellerUserID, String buyerUserID, String parkAdPath, String orderKey, double finalPrice, String dateOfConfirm, String paymentID) {
+    public Receipt(String sellerUserID, String buyerUserID, String parkAdPath, String orderKey, double finalPrice, String dateOfConfirm, String paymentID, String sellerName) {
         this.sellerUserID = sellerUserID;
         this.buyerUserID = buyerUserID;
         this.parkAdPath = parkAdPath;
@@ -72,6 +77,7 @@ public class Receipt {
         this.finalPrice = finalPrice;
         this.dateOfConfirm = dateOfConfirm;
         this.paymentID = paymentID;
+        this.sellerName = sellerName;
     }
 
     /**
@@ -199,6 +205,26 @@ public class Receipt {
     public void setPaymentID(String paymentID) {
         this.paymentID = paymentID;
     }
+
+    /**
+     * Gets seller name.
+     *
+     * @return the seller name
+     */
+    public String getSellerName() {
+        return sellerName;
+    }
+
+    /**
+     * Sets seller name.
+     *
+     * @param sellerName the seller name
+     */
+    public void setSellerName(String sellerName) {
+        this.sellerName = sellerName;
+    }
+
+
 }
 
 

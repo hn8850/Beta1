@@ -47,8 +47,8 @@ public class WriteReview extends AppCompatActivity {
         star4 = findViewById(R.id.star4);
         star5 = findViewById(R.id.star5);
         messageEt = findViewById(R.id.reviewMessage);
-        currUserUID = "Ga32GBQJKSXDM6WGVyv0L7fxEta2"; // gal
-        parkAdOwnerUID = "PtRW2LnyQCXJXiuOtxx0amzlGt23"; //harel
+        currUserUID = "QFsNW865Z9TgkezB4WZUBuOVIAU2"; // gal
+        parkAdOwnerUID = "1A9qBnfvcnTrDEGiA8B2xcIYrly2"; //harel
 
         fbDB = FirebaseDatabase.getInstance();
     }
@@ -94,7 +94,7 @@ public class WriteReview extends AppCompatActivity {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     User currUser = snapshot.getValue(User.class);
-                    Review review = new Review(clickedStarIndex, message, currUser.getUserName());
+                    Review review = new Review(clickedStarIndex, message, currUser.getName());
                     DatabaseReference reviewPath = fbDB.getReference("Users").child(parkAdOwnerUID).child("Reviews").child(currUserUID);
                     reviewPath.setValue(review);
                     Toast.makeText(getApplicationContext(), "Review Submitted", Toast.LENGTH_SHORT);

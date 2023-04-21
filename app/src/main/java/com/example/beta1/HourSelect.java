@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.util.UUID;
 
 /**
  * @author Harel Navon harelnavon2710@gmail.com
@@ -191,17 +192,36 @@ public class HourSelect extends AppCompatActivity {
                         ordersRef.child(Orderkey).setValue(order);
                         DatabaseReference usersRef = fbDB.getReference("Users");
                         usersRef.child(userID).child("Orders").child(Orderkey).setValue(order);
+                        UUID uuid = UUID.randomUUID();
+                        String paymentID = uuid.toString();
 
-                        receipt = new Receipt(sellerID, userID, parkAdID, Orderkey, finalPrice, confirmDate, "");
-                        DatabaseReference receiptRef = fbDB.getReference("Users").child(sellerID).child("Receipts");
-                        String receiptKey = receiptRef.push().getKey();
-                        receiptRef.child(receiptKey).setValue(receipt);
+                        DatabaseReference sellerRef = fbDB.getReference("Users").child(sellerID);
+                        sellerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                User seller = snapshot.getValue(User.class);
+                                receipt = new Receipt(sellerID, userID, parkAdID, Orderkey, finalPrice, confirmDate, paymentID,seller.getName());
+                                DatabaseReference receiptRefSeller = fbDB.getReference("Users").child(sellerID).child("Receipts");
+                                String receiptKey = receiptRefSeller.push().getKey();
+                                receiptRefSeller.child(receiptKey).setValue(receipt);
+                                DatabaseReference receiptRefUser = fbDB.getReference("Users").child(userID).child("Receipts");
+                                receiptRefUser.child(receiptKey).setValue(receipt);
 
-                        String[] beginHourParts = beginFull.split(":");
-                        beginHourParts[0] = String.valueOf(Integer.valueOf(beginHourParts[0]) - 1);
-                        String notiTime = beginHourParts[0] + ":" + beginHourParts[1]; //1 hour before Order Begin Time
-                        NotificationScheduler.scheduleNotification(getApplicationContext(), "Spark Alert", "The ParkAd you ordered at " + parkAddress + " will be available in an hour!", parkDate, notiTime, 1); //Begin Noti
-                        NotificationScheduler.scheduleNotification(getApplicationContext(), "Spark Alert", "Your time with the ParkAd at " + parkAddress + " has finished!", parkDate, endFull, 2); //Ending Noti
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+
+                            }
+                        });
+
+
+
+//                        String[] beginHourParts = beginFull.split(":");
+//                        beginHourParts[0] = String.valueOf(Integer.valueOf(beginHourParts[0]) - 1);
+//                        String notiTime = beginHourParts[0] + ":" + beginHourParts[1]; //1 hour before Order Begin Time
+//                        NotificationScheduler.scheduleNotification(getApplicationContext(), "Spark Alert", "The ParkAd you ordered at " + parkAddress + " will be available in an hour!", parkDate, notiTime, 1); //Begin Noti
+//                        NotificationScheduler.scheduleNotification(getApplicationContext(), "Spark Alert", "Your time with the ParkAd at " + parkAddress + " has finished!", parkDate, endFull, 2); //Ending Noti
                         // Launch Google Pay
 
                     }
@@ -217,45 +237,6 @@ public class HourSelect extends AppCompatActivity {
     }
 
 
-//    private void handlePaymentSuccess(PaymentData paymentData) {
-//        // Perform post-payment tasks, such as updating the order status, sending a confirmation email, etc.
-//        String paymentId = paymentData.getPaymentMethodToken().getToken();
-//        DatabaseReference receiptRef = fbDB.getReference("Users").child(receipt.getSellerUserID()).child("Receipts");
-//        String reciptKey = receiptRef.push().getKey();
-//        receipt.setPaymentID(paymentId);
-//        receiptRef.child(reciptKey).setValue(receipt);
-//
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//        builder.setTitle("Order Made!");
-//        builder.setPositiveButton("Return to Home", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                Intent si = new Intent(getApplicationContext(), Navi.class);
-//                startActivity(si);
-//            }
-//        });
-//
-//        builder.show();
-//
-//    }
-//
-//    private void handlePaymentError(Status status) {
-//        // Handle the error appropriately
-//        int statusCode = status.getStatusCode();
-//        String errorMessage = status.getStatusMessage();
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//        builder.setTitle("uh oh! an error has occurred");
-//        builder.setMessage("Error code:" + statusCode + ",Error Message:" + errorMessage);
-//        builder.setPositiveButton("Try Again", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                Intent si = new Intent(getApplicationContext(), HourSelect.class);
-//                startActivity(si);
-//            }
-//        });
-//
-//        builder.show();
-//    }
 
     /**
      * SubMethod for the MakeOrder Method.

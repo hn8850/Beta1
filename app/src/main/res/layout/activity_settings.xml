@@ -20,7 +20,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="10"
+            android:layout_weight="11"
             android:orientation="horizontal">
 
             <Space
@@ -31,7 +31,7 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="100"
+                android:layout_weight="120"
                 android:orientation="vertical">
 
                 <Space
@@ -43,7 +43,7 @@
                     android:id="@+id/profilePic"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="2"
+                    android:layout_weight="4"
                     app:srcCompat="@drawable/custom_info_window_background" />
 
                 <TextView
@@ -62,7 +62,7 @@
                     android:id="@+id/emailTv"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="0.8"
+                    android:layout_weight="1.2"
                     android:gravity="center"
                     android:text="Email" />
 
@@ -101,7 +101,8 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="5"
             android:orientation="vertical">
 
             <Button
@@ -146,7 +147,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="7"
+            android:layout_weight="10"
             android:orientation="vertical">
 
             <Button

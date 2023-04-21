@@ -20,6 +20,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -79,13 +80,37 @@ public class Login extends AppCompatActivity {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
                     if (task.isSuccessful()) {
-                        Toast.makeText(Login.this, "User logged in successfully", Toast.LENGTH_SHORT).show();
-                        Intent si = new Intent(getApplicationContext(), Navi.class);
-                        si.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(si);
+                        FirebaseUser currUser = mAuth.getCurrentUser();
+                        if (currUser.isEmailVerified()) {
+                            Toast.makeText(Login.this, "User logged in successfully", Toast.LENGTH_SHORT).show();
+                            Intent si = new Intent(getApplicationContext(), Navi.class);
+                            si.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(si);
+                        } else {
+                            AlertDialog.Builder adb = new AlertDialog.Builder(Login.this);
+                            adb.setTitle("Can't login!");
+                            adb.setMessage("Please verify your user! Check your email for verification email");
+                            adb.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                }
+                            });
+                            adb.create().show();
+                        }
+
 
                     } else {
-                        Toast.makeText(Login.this, "Log in Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        AlertDialog.Builder adb = new AlertDialog.Builder(Login.this);
+                        adb.setTitle("Can't login!");
+                        adb.setMessage("Log in Error:" + task.getException().getMessage());
+                        adb.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                            }
+                        });
+                        adb.create().show();
                     }
                 }
             });

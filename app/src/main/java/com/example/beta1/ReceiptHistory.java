@@ -94,9 +94,11 @@ public class ReceiptHistory extends AppCompatActivity {
         HashMap<String, String> data = new HashMap<>();
         SharedPreferences sharedPreferences = getSharedPreferences("my_shared_prefs", MODE_PRIVATE);
         String buyerName = sharedPreferences.getString("buyer", null);
+        data.put("seller",receipt.getSellerName());
         data.put("buyer", buyerName);
         data.put("price", String.valueOf(receipt.getFinalPrice()));
         data.put("confirm", receipt.getDateOfConfirm());
+        data.put("ID",receipt.getPaymentID());
 
         receiptHistoryDataList.add(data);
     }

@@ -4,8 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -42,7 +48,7 @@ import java.util.ArrayList;
 
 public class ViewUser extends AppCompatActivity {
 
-    TextView IDEt, NameEt, DateEt, PhoneEt;
+    TextView NameEt, DateEt, PhoneEt;
     ImageView iv;
     TextView tVactive,rating;
 
@@ -59,14 +65,13 @@ public class ViewUser extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_user);
-        IDEt = findViewById(R.id.etRegID);
         NameEt = findViewById(R.id.etRegName);
         DateEt = findViewById(R.id.etRegDateofBirth);
         PhoneEt = findViewById(R.id.etRegPhone);
 
         TextInputLayout textInputLayout;
         EditText editText;
-        int[] textInputLayoutIDs = {R.id.text1,R.id.text2,R.id.text3,R.id.text4};
+        int[] textInputLayoutIDs = {R.id.text2,R.id.text3,R.id.text4};
         for (int i=0;i<textInputLayoutIDs.length;i++){
             textInputLayout = findViewById(textInputLayoutIDs[i]);
             editText = textInputLayout.getEditText();
@@ -99,9 +104,8 @@ public class ViewUser extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User currentUser = snapshot.getValue(User.class);
-                IDEt.setText(currentUser.getUserName());
                 NameEt.setText(currentUser.getName());
-                setTitle(currentUser.getUserName() + "'s Profile Page");
+                setTitle(currentUser.getName() + "'s Profile Page");
                 DateEt.setText(currentUser.getDateOfBirth());
                 PhoneEt.setText(currentUser.getPhoneNumber());
                 picUrl = currentUser.getProfilePicURL();
@@ -170,6 +174,9 @@ public class ViewUser extends AppCompatActivity {
                 // Data for "images/island.jpg" is returns, use this as needed
                 Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                 iv.setImageBitmap(bitmap);
+                Bitmap bitmap2 = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+                Bitmap circularBitmap = getCircularBitmap(bitmap2);
+                iv.setImageBitmap(circularBitmap);
                 File file = new File(context.getCacheDir(), "tempImage");
                 file.delete();
             }
@@ -179,6 +186,45 @@ public class ViewUser extends AppCompatActivity {
                 // Handle any errors
             }
         });
+    }
+
+    /**
+     * SubMethod for the downloadImage Method.
+     * Used to display the user's profile picture inside of a circle.
+     *
+     * @param bitmap: Bitmap describing the user's profile picture.
+     * @return: The Method returns the circular version of the given Bitmap.
+     */
+    public Bitmap getCircularBitmap(Bitmap bitmap) {
+        Bitmap output;
+
+        if (bitmap.getWidth() > bitmap.getHeight()) {
+            output = Bitmap.createBitmap(bitmap.getHeight(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        } else {
+            output = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getWidth(), Bitmap.Config.ARGB_8888);
+        }
+
+        Canvas canvas = new Canvas(output);
+
+        final int color = 0xff424242;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        float r = 0;
+
+        if (bitmap.getWidth() > bitmap.getHeight()) {
+            r = bitmap.getHeight() / 2;
+        } else {
+            r = bitmap.getWidth() / 2;
+        }
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawCircle(r, r, r, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+        return output;
     }
 
     /**

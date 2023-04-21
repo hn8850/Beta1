@@ -162,6 +162,7 @@ public class LocationFrag extends Fragment {
          */
         @Override
         public void onClick(View view) {
+            finishButton.setClickable(false);
             sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
             String latitude = sharedPrefs.getString("latitude", "0");
             String longitude = sharedPrefs.getString("longitude", "0");

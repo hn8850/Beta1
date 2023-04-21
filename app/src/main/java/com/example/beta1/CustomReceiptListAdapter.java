@@ -49,6 +49,8 @@ public class CustomReceiptListAdapter extends BaseAdapter {
         // get the data for the current position
         HashMap<String, String> data = (HashMap<String, String>) getItem(position);
 
+        TextView sellerView = convertView.findViewById(R.id.sellerTextView);
+        sellerView.setText("Seller: " + data.get("seller"));
 
         TextView buyerView = convertView.findViewById(R.id.buyerTextView);
         buyerView.setText("Buyer: " + data.get("buyer"));
@@ -58,6 +60,9 @@ public class CustomReceiptListAdapter extends BaseAdapter {
 
         TextView confirmDateTv = convertView.findViewById(R.id.dateOfConfirmTextView);
         confirmDateTv.setText("Confirm Date: " + data.get("confirm"));
+
+        TextView paymentIdTv = convertView.findViewById(R.id.paymentIdTextView);
+        paymentIdTv.setText("Payment ID: " + data.get("ID"));
 
 
         return convertView;

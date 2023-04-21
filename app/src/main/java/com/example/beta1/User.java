@@ -9,10 +9,6 @@ import java.util.ArrayList;
  */
 public class User {
 
-    /**
-     * The Username.
-     */
-    String userName;
 
     /**
      * Integer that is reflective of the User's active status. 1 if active. 0 if not.
@@ -67,16 +63,13 @@ public class User {
 
     /**
      * General complete Constructor for the User Object.
-     *
-     * @param userName      the user name
      * @param active        the active
      * @param name          the name
      * @param dateOfBirth   the date of birth
      * @param phoneNumber   the phone number
      * @param profilePicURL the profile pic url
      */
-    public User(String userName, int active, String name, String dateOfBirth, String phoneNumber, String profilePicURL) {
-        this.userName = userName;
+    public User(int active, String name, String dateOfBirth, String phoneNumber, String profilePicURL) {
         this.active = active;
         Name = name;
         DateOfBirth = dateOfBirth;
@@ -90,23 +83,7 @@ public class User {
     }
 
 
-    /**
-     * Gets user name.
-     *
-     * @return the user name
-     */
-    public String getUserName() {
-        return userName;
-    }
 
-    /**
-     * Sets user name.
-     *
-     * @param userName the user name
-     */
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
 
     /**
      * Gets active.

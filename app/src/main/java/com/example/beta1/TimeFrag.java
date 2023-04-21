@@ -191,6 +191,7 @@ public class TimeFrag extends Fragment {
          */
         @Override
         public void onClick(View view) {
+            finishButton.setClickable(false);
             sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
             String latitude = sharedPrefs.getString("latitude", "0");
             String longitude = sharedPrefs.getString("longitude", "0");
@@ -461,7 +462,7 @@ public class TimeFrag extends Fragment {
     }
 
     /**
-     * SubMethod for the information verification proccess.
+     * SubMethod for the information verification process.
      * Used to handle user errors regarding the information that was submitted, by creating
      * AlertDialog boxes.
      *
@@ -479,7 +480,6 @@ public class TimeFrag extends Fragment {
         });
         AlertDialog dialog = adb.create();
         dialog.show();
-
     }
 
 

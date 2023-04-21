@@ -22,6 +22,16 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
+        <TextView
+            android:id="@+id/textView28"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="5"
+            android:text="Here are all of the ParkAd's available in this location, according to your filters!"
+            android:textColor="#0B0B0B"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
         <ListView
             android:id="@+id/listview"
             android:layout_width="match_parent"
