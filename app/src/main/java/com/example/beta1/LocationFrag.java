@@ -1,6 +1,9 @@
 package com.example.beta1;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
@@ -33,6 +36,9 @@ import com.google.firebase.storage.StorageException;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.maps.GeoApiContext;
+import com.google.maps.GeocodingApi;
+import com.google.maps.model.GeocodingResult;
 
 import java.io.IOException;
 import java.net.URI;
@@ -119,28 +125,33 @@ public class LocationFrag extends Fragment {
             } else {
 
                 String address = country + "," + city + "," + street + " " + houseNumber;
-                double[] latLng = getLatLngFromAddress(getActivity(), address);
-                if (latLng == null) {
-                    Toast.makeText(getActivity().getApplicationContext(), "ENTER VALID ADDRESS", Toast.LENGTH_SHORT).show();
+                if (isAddress(address)) {
+                    double[] latLng = getLatLngFromAddress(getActivity(), address);
+                    if (latLng == null) {
+                        Toast.makeText(getActivity().getApplicationContext(), "ENTER VALID ADDRESS", Toast.LENGTH_SHORT).show();
+                    } else {
+                        String latitude = String.valueOf(latLng[0]);
+                        String longitude = String.valueOf(latLng[1]);
+
+
+                        sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
+
+                        // Get a reference to the Shared Preferences editor
+                        SharedPreferences.Editor editor = sharedPrefs.edit();
+
+                        // Write the data to the Shared Preferences file
+                        editor.putString(getString(R.string.prefs_address_key), address);
+                        editor.putString(getString(R.string.prefs_latitude_key), latitude);
+                        editor.putString(getString(R.string.prefs_longitude_key), longitude);
+
+
+                        // Save the changes to the Shared Preferences file
+                        editor.apply();
+                        Toast.makeText(getActivity().getApplicationContext(), "LOCATION SAVED!", Toast.LENGTH_SHORT).show();
+
+                    }
                 } else {
-                    String latitude = String.valueOf(latLng[0]);
-                    String longitude = String.valueOf(latLng[1]);
-
-
-                    sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
-
-                    // Get a reference to the Shared Preferences editor
-                    SharedPreferences.Editor editor = sharedPrefs.edit();
-
-                    // Write the data to the Shared Preferences file
-                    editor.putString(getString(R.string.prefs_address_key), address);
-                    editor.putString(getString(R.string.prefs_latitude_key), latitude);
-                    editor.putString(getString(R.string.prefs_longitude_key), longitude);
-
-
-                    // Save the changes to the Shared Preferences file
-                    editor.apply();
-                    Toast.makeText(getActivity().getApplicationContext(), "LOCATION SAVED!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity().getApplicationContext(), "ENTER VALID ADDRESS23", Toast.LENGTH_SHORT).show();
 
                 }
 
@@ -266,6 +277,20 @@ public class LocationFrag extends Fragment {
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
 
+        AlertDialog.Builder adb = new AlertDialog.Builder(getContext());
+        adb.setTitle("Success");
+        adb.setMessage("Ad Uploaded Successfully!");
+        adb.setNeutralButton("Return to Home", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+                Intent si = new Intent(getContext(), Navi.class);
+                startActivity(si);
+            }
+        });
+        AlertDialog dialog = adb.create();
+        dialog.show();
+
 
     }
 
@@ -305,6 +330,43 @@ public class LocationFrag extends Fragment {
 
         }
     };
+
+
+    /**
+     * SubMethod for the save Button OnClickMethod.
+     * Used to verify if the user submitted address exists.
+     *
+     * @param address: The address to be verified (String)
+     * @return: The Method returns true if the address exists,false otherwise.
+     */
+    public boolean isAddress(String address) {
+        try {
+            // Create a new geocoding API client using your API key
+            GeoApiContext context = new GeoApiContext.Builder()
+                    .apiKey("AIzaSyBuElPUnsIAMgwv-4a219mjx-4a5NzmYxc")
+                    .build();
+
+            // Use the geocoding API to geocode the given address
+            GeocodingResult[] results = GeocodingApi.geocode(context, address).await();
+
+            // Check if the geocoding API returned any results
+            if (results != null && results.length > 0) {
+                // Get the first result
+                GeocodingResult result = results[0];
+
+                // Check if the result has a valid geometry object
+                if (result.geometry != null && result.geometry.location != null) {
+                    // The address exists and has a valid location
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // The address does not exist or could not be verified
+        return false;
+    }
 
 
     /**

@@ -55,6 +55,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.maps.GeoApiContext;
+import com.google.maps.GeocodingApi;
+import com.google.maps.model.GeocodingResult;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -103,6 +106,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     ValueEventListener parkAdUpdateListener;
     FirebaseAuth mAuth;
     String currUserID;
+    boolean firstTime = true;
 
 
     @Override
@@ -117,18 +121,24 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         FirebaseUser CurrentUserAuth = FirebaseAuth.getInstance().getCurrentUser();
         currUserID = CurrentUserAuth.getUid();
 
+        query.put("date1", "NONE");
+        query.put("date2", "NONE");
         parkAdMarkerOptions = new ArrayList<>();
         parkAdMarkers = new ArrayList<>();
         parkAdIDs = new ArrayList<>();
         parkAds = new ArrayList<>();
          mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mapFragment.getMapAsync(this);
+        if (!firstTime){
+            sortParkAds();
+        }
     }
 
     /**
@@ -145,9 +155,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         } else {
             requestLocationPermission();
         }
-        query.put("date1", "NONE");
-        query.put("date2", "NONE");
         SetParkAdMarkers();
+        firstTime = false;
         filter = findViewById(R.id.filter);
         filter.setOnClickListener(new View.OnClickListener() {
             /**
@@ -491,9 +500,22 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         final EditText editTextMM2 = dialog.findViewById(R.id.edit_text_mm_2);
         final EditText editTextYYYY2 = dialog.findViewById(R.id.edit_text_yyyy_2);
 
+        if (!query.get("date1").matches("NONE")){
+            String date1 = query.get("date1");
+            String[] dateComponents = date1.split("/");
+            editTextDD1.setText(dateComponents[0]);
+            editTextMM1.setText(dateComponents[1]);
+            editTextYYYY1.setText(dateComponents[2]);
+
+            String date2 = query.get("date2");
+            dateComponents = date2.split("/");
+            editTextDD2.setText(dateComponents[0]);
+            editTextMM2.setText(dateComponents[1]);
+            editTextYYYY2.setText(dateComponents[2]);
+
+        }
         // Get a reference to the "Submit" button
         Button submitButton = dialog.findViewById(R.id.dialog_button);
-
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -515,9 +537,13 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
                         Date Date1 = sdf.parse(date1);
                         Date Date2 = sdf.parse(date2);
-                        if (Date2.after(Date1)) {
+                        if (Date2.after(Date1) || Date2.compareTo(Date1)==0) {
                             query.put("date1", date1);
                             query.put("date2", date2);
+                            sortParkAds();
+                            dialog.dismiss();
+
+
                         } else {
                             Toast.makeText(Navi.this, "Dates must be in order!", Toast.LENGTH_SHORT).show();
 
@@ -530,14 +556,27 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 } catch (Exception e) {
                     query.put("date1", "NONE");
                     query.put("date2", "NONE");
+                    sortParkAds();
                     Toast.makeText(Navi.this, "DateFilter Reset", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
 
                 }
-                dialog.dismiss();
             }
         });
 
-        sortParkAds();
+        Button clearButton = dialog.findViewById(R.id.clearButton);
+        clearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editTextDD1.setText("");
+                editTextMM1.setText("");
+                editTextYYYY1.setText("");
+                editTextDD2.setText("");
+                editTextMM2.setText("");
+                editTextYYYY2.setText("");
+            }
+        });
+
 
         Window window = dialog.getWindow();
         if (window != null) {
@@ -563,9 +602,12 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         sortedIDs.clear();
         sortedParkAdMarkers.clear();
         sortedParkAdMarkerOptions.clear();
+
         int pos;
         String adDate;
         for (ParkAd parkAd : parkAds) {
+            System.out.println("PARKAD:" + parkAd.toString());
+            System.out.println("POS:" + parkAds.indexOf(parkAd));
             adDate = parkAd.getDate();
             if (!query.get("date1").matches("NONE")) {
                 if (Services.isDateBetween(adDate, query.get("date1"), query.get("date2"))) {
@@ -739,6 +781,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     }
 
 
+
+
     /**
      * SubMethod for the animateCamera Method.
      *
@@ -895,9 +939,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      * Used to zoom the camera of the Map View on the LatLng of an address's component the user has
      * submitted (country/city/street etc).
      * (This Method is only there's a ParkAd Marker at that location!).
-     * @param context: The application's Context.
      * @param googleMap: The GoogleMap Object linked to the MapView.
-     * @param address: The address the user has submitted (String).
+     * @param latLng: The latLng of the location the user has submitted (String).
+     * @param zoomLevel: The zoom level for the animation.
      */
     public static void zoomToLatLng(GoogleMap googleMap, LatLng latLng, float zoomLevel) {
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel);

@@ -4,40 +4,32 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
-import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -50,9 +42,8 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @author Harel Navon harelnavon2710@gmail.com
@@ -70,7 +61,10 @@ public class EditProfile extends AppCompatActivity {
     ImageView iv;
     Uri imageUri;
 
+    File photoFile;
     final static int GALLERY_REQUEST_CODE = 1;
+    private static final int REQUEST_IMAGE_CAPTURE = 2;
+    private static final int RESULT_OK = -1;
 
     FirebaseAuth mAuth;
     FirebaseDatabase mDb;
@@ -306,31 +300,94 @@ public class EditProfile extends AppCompatActivity {
      * @param view: The profile picture ImageView.
      */
     public void ProfilePic(View view) {
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType("image/*");
-        startActivityForResult(intent, GALLERY_REQUEST_CODE);
+        CharSequence options[] = new CharSequence[]{"Take Photo", "Choose from Gallery"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(EditProfile.this);
+        builder.setTitle("Select Option");
+        builder.setItems(options, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (which == 0) {
+                    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    photoFile = null;
+                    try {
+                        photoFile = createImageFile();
+                    } catch (IOException ex) {
+                        // Error occurred while creating the File
+                    }
+                    if (photoFile != null) {
+                        imageUri = FileProvider.getUriForFile(EditProfile.this, "com.mydomain.fileprovider", photoFile);
+                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                    }
+
+
+                } else if (which == 1) {
+                    Intent pickGalleryIntent = new Intent(Intent.ACTION_PICK);
+                    pickGalleryIntent.setType("image/*");
+                    startActivityForResult(pickGalleryIntent, GALLERY_REQUEST_CODE);
+
+                }
+            }
+        });
+        builder.show();
     }
+
 
     /**
      * OnActivityResult Method for the ProfilePic Method. Used to update the profile picture
      * ImageView with the newly selected picture.
      *
-     * @param requestCode: The GalleryRequestCode.
-     * @param resultCode:  The GalleryResultCode.
+     * @param requestCode: The GalleryRequestCode/CameraRequestCode.
+     * @param resultCode:  The ResultCode.
      * @param data:        The Intent containing the image URI.
      */
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == GALLERY_REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
+        if (resultCode == RESULT_OK) {
+            if (requestCode == GALLERY_REQUEST_CODE) {
                 imageUri = data.getData();
                 iv.setImageURI(imageUri);
                 picUrl = imageUri.toString();
                 changedPic = true;
+            } else if (requestCode == REQUEST_IMAGE_CAPTURE) {
+                imageUri = Uri.fromFile(photoFile);
+                iv.setImageURI(imageUri);
+                picUrl = imageUri.toString();
+                changedPic = true;
             }
+            Bitmap bitmap2 = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+            Bitmap circularBitmap = getCircularBitmap(bitmap2);
+            iv.setImageBitmap(circularBitmap);
+
+            Toast.makeText(EditProfile.this, "Upload Successful", Toast.LENGTH_SHORT).show();
         }
+
     }
+
+
+    /**
+     * SubMethod for the profile pic ImageView OnClickMethod.
+     * Used to create a File from any image selected (which will then be converted to a URI).
+     *
+     * @throws IOException
+     * @return: Image File.
+     */
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+        return image;
+    }
+
+
 
 
 }

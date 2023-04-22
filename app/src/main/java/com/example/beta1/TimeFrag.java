@@ -3,6 +3,7 @@ package com.example.beta1;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
@@ -293,6 +294,21 @@ public class TimeFrag extends Fragment {
         userAdRef.setValue(ad);
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
+
+
+        AlertDialog.Builder adb = new AlertDialog.Builder(getContext());
+        adb.setTitle("Success");
+        adb.setMessage("Ad Uploaded Successfully!");
+        adb.setNeutralButton("Return to Home", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+                Intent si = new Intent(getContext(),Navi.class);
+                startActivity(si);
+            }
+        });
+        AlertDialog dialog = adb.create();
+        dialog.show();
 
     }
 

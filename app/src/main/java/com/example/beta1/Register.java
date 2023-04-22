@@ -2,13 +2,23 @@ package com.example.beta1;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -34,6 +44,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -58,7 +69,10 @@ public class Register extends AppCompatActivity {
     ImageView iv;
     Uri imageUri;
 
+    File photoFile;
     final static int GALLERY_REQUEST_CODE = 1;
+    private static final int REQUEST_IMAGE_CAPTURE = 2;
+    private static final int RESULT_OK = -1;
 
     TextView tvLoginHere;
     Button btnRegister;
@@ -151,15 +165,25 @@ public class Register extends AppCompatActivity {
                                         User userDB = new User(1, name, date, phone, picUrl);
                                         DatabaseReference refDb = mDb.getReference("Users");
                                         refDb.child(UID).setValue(userDB);
+                                        AlertDialog.Builder adb = new AlertDialog.Builder(Register.this);
+                                        adb.setTitle("User created successfully");
+                                        adb.setMessage("A Verification Email has been sent to you!");
+                                        adb.setNeutralButton("Return", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface, int i) {
+                                                Intent si = new Intent(Register.this, Login.class);
+                                                si.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                startActivity(si);
+                                                dialogInterface.dismiss();
+                                            }
+                                        });
+                                        AlertDialog dialog = adb.create();
+                                        dialog.show();
                                     }
                                 });
                             }
                         });
 
-                        Toast.makeText(Register.this, "User registered successfully", Toast.LENGTH_SHORT).show();
-                        Intent si = new Intent(Register.this, Login.class);
-                        si.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(si);
                     } else {
                         ErrorAlert("Registration Error: " + task.getException().getMessage());
                     }
@@ -288,29 +312,127 @@ public class Register extends AppCompatActivity {
      * @param view: The profile picture ImageView.
      */
     public void ProfilePic(View view) {
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType("image/*");
-        startActivityForResult(intent, GALLERY_REQUEST_CODE);
+        CharSequence options[] = new CharSequence[]{"Take Photo", "Choose from Gallery"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(Register.this);
+        builder.setTitle("Select Option");
+        builder.setItems(options, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (which == 0) {
+                    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    photoFile = null;
+                    try {
+                        photoFile = createImageFile();
+                    } catch (IOException ex) {
+                        // Error occurred while creating the File
+                    }
+                    if (photoFile != null) {
+                        imageUri = FileProvider.getUriForFile(Register.this, "com.mydomain.fileprovider", photoFile);
+                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                    }
+
+
+                } else if (which == 1) {
+                    Intent pickGalleryIntent = new Intent(Intent.ACTION_PICK);
+                    pickGalleryIntent.setType("image/*");
+                    startActivityForResult(pickGalleryIntent, GALLERY_REQUEST_CODE);
+
+                }
+            }
+        });
+        builder.show();
     }
 
     /**
      * OnActivityResult Method for the ProfilePic Method. Used to update the profile picture
      * ImageView with the newly selected picture.
      *
-     * @param requestCode: The GalleryRequestCode.
-     * @param resultCode:  The GalleryResultCode.
+     * @param requestCode: The GalleryRequestCode/CameraRequestCode.
+     * @param resultCode:  The ResultCode.
      * @param data:        The Intent containing the image URI.
      */
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == GALLERY_REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
+        if (resultCode == RESULT_OK) {
+            if (requestCode == GALLERY_REQUEST_CODE) {
                 imageUri = data.getData();
                 iv.setImageURI(imageUri);
                 picUrl = imageUri.toString();
+            } else if (requestCode == REQUEST_IMAGE_CAPTURE) {
+                imageUri = Uri.fromFile(photoFile);
+                iv.setImageURI(imageUri);
+                picUrl = imageUri.toString();
             }
+            Bitmap bitmap2 = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+            Bitmap circularBitmap = getCircularBitmap(bitmap2);
+            iv.setImageBitmap(circularBitmap);
+
+            Toast.makeText(Register.this, "Upload Successful", Toast.LENGTH_SHORT).show();
         }
+
+    }
+
+    /**
+     * SubMethod for the profile pic ImageView OnClickMethod.
+     * Used to create a File from any image selected (which will then be converted to a URI).
+     *
+     * @throws IOException
+     * @return: Image File.
+     */
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+        return image;
+    }
+
+
+    /**
+     * SubMethod for the downloadImage Method.
+     * Used to display the user's profile picture inside of a circle.
+     *
+     * @param bitmap: Bitmap describing the user's profile picture.
+     * @return: The Method returns the circular version of the given Bitmap.
+     */
+    public Bitmap getCircularBitmap(Bitmap bitmap) {
+        Bitmap output;
+
+        if (bitmap.getWidth() > bitmap.getHeight()) {
+            output = Bitmap.createBitmap(bitmap.getHeight(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        } else {
+            output = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getWidth(), Bitmap.Config.ARGB_8888);
+        }
+
+        Canvas canvas = new Canvas(output);
+
+        final int color = 0xff424242;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        float r = 0;
+
+        if (bitmap.getWidth() > bitmap.getHeight()) {
+            r = bitmap.getHeight() / 2;
+        } else {
+            r = bitmap.getWidth() / 2;
+        }
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawCircle(r, r, r, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+        return output;
     }
 
 }

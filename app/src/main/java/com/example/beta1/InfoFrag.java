@@ -309,6 +309,21 @@ public class InfoFrag extends Fragment {
         Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
 
+        AlertDialog.Builder adb = new AlertDialog.Builder(getContext());
+        adb.setTitle("Success");
+        adb.setMessage("Ad Uploaded Successfully!");
+        adb.setNeutralButton("Return to Home", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+                Intent si = new Intent(getContext(),Navi.class);
+                startActivity(si);
+            }
+        });
+        AlertDialog dialog = adb.create();
+        dialog.show();
+
+
     }
 
 

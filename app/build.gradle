@@ -46,6 +46,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage:20.1.0'
     implementation 'com.google.firebase:firebase-database-ktx:20.1.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
+    implementation 'com.google.maps:google-maps-services:0.19.0'
 
 
     implementation 'androidx.appcompat:appcompat:1.5.1'
