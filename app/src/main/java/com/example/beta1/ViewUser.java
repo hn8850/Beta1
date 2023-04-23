@@ -10,13 +10,15 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,7 +26,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -36,6 +37,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /***
  * @author Harel Navon harelnavon2710@gmail.com
@@ -48,42 +50,45 @@ import java.util.ArrayList;
 
 public class ViewUser extends AppCompatActivity {
 
-    TextView NameEt, DateEt, PhoneEt;
-    ImageView iv;
-    TextView tVactive,rating;
+    TextView NameEt;
+    ImageView profilePicIv,starIv;
+    TextView rating;
+    Button allReviewsBtn;
 
-    String  picUrl;
-    int active;
+    String picUrl;
     String UID;
     Uri imageUri;
 
     FirebaseDatabase mDb;
     FirebaseStorage mStorage;
 
+    ListView recentReviewsList;
+    ArrayList<HashMap<String, String>> recentReviewDataList = new ArrayList<>();
+
+
     Intent gi;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_user);
         NameEt = findViewById(R.id.etRegName);
-        DateEt = findViewById(R.id.etRegDateofBirth);
-        PhoneEt = findViewById(R.id.etRegPhone);
+        recentReviewsList = findViewById(R.id.reviewsList);
 
         TextInputLayout textInputLayout;
         EditText editText;
-        int[] textInputLayoutIDs = {R.id.text2,R.id.text3,R.id.text4};
-        for (int i=0;i<textInputLayoutIDs.length;i++){
-            textInputLayout = findViewById(textInputLayoutIDs[i]);
+        int[] textInputLayoutIDs = {R.id.text2};
+        for (int textInputLayoutID : textInputLayoutIDs) {
+            textInputLayout = findViewById(textInputLayoutID);
             editText = textInputLayout.getEditText();
             editText.setTextColor(Color.BLACK);
             editText.setEnabled(false);
         }
 
 
-        iv = findViewById(R.id.imageView);
-
-        tVactive = findViewById(R.id.ActiveTv);
-
+        allReviewsBtn = findViewById(R.id.button10);
+        profilePicIv = findViewById(R.id.imageView);
+        starIv = findViewById(R.id.imageView8);
         rating = findViewById(R.id.rating);
 
         mDb = FirebaseDatabase.getInstance();
@@ -106,25 +111,10 @@ public class ViewUser extends AppCompatActivity {
                 User currentUser = snapshot.getValue(User.class);
                 NameEt.setText(currentUser.getName());
                 setTitle(currentUser.getName() + "'s Profile Page");
-                DateEt.setText(currentUser.getDateOfBirth());
-                PhoneEt.setText(currentUser.getPhoneNumber());
+
                 picUrl = currentUser.getProfilePicURL();
                 imageUri = Uri.parse(picUrl);
                 downloadImage(picUrl, getApplicationContext());
-
-                active = currentUser.getActive();
-                if (active == 1) {
-                    tVactive.setTextColor(Color.GREEN);
-                    tVactive.setTextSize(20);
-                    tVactive.setTypeface(null, Typeface.BOLD);
-                    tVactive.setText("Active");
-
-                } else {
-                    tVactive.setTextColor(Color.RED);
-                    tVactive.setTextSize(20);
-                    tVactive.setTypeface(null, Typeface.BOLD);
-                    tVactive.setText("Not Active");
-                }
 
                 DataSnapshot reviewsSnapshot = snapshot.child("Reviews");
 
@@ -132,19 +122,34 @@ public class ViewUser extends AppCompatActivity {
                 int count = 0;
                 for (DataSnapshot reviewSnapshot : reviewsSnapshot.getChildren()) {
                     Review review = reviewSnapshot.getValue(Review.class);
+                    if (recentReviewDataList.size() < 3) {
+                        HashMap<String, String> data = new HashMap<>();
+                        data.put("submitter", review.getReviewerUserName());
+                        data.put("content", review.getMessage());
+                        data.put("pos", String.valueOf(review.getStars()));
+                        recentReviewDataList.add(data);
+                    }
                     sumOfStars = sumOfStars + review.getStars();
                     count++;
                 }
 
-                if (count == 0){
-                    rating.setText("No Reviews Yet!");
+                if (recentReviewDataList.size()!=0){
+                    CustomReviewListAdapter adapter = new CustomReviewListAdapter(recentReviewDataList);
+                    recentReviewsList.setAdapter(adapter);
                 }
-                else{
-                    double average = sumOfStars/count;
+
+                if (count == 0) {
+                    String[] listString = new String[]{"No Reviews Yet!"};
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(ViewUser.this, android.R.layout.simple_list_item_1, listString);
+                    recentReviewsList.setAdapter(adapter);
+                    rating.setVisibility(View.INVISIBLE);
+                    starIv.setImageResource(0);
+                    allReviewsBtn.setVisibility(View.INVISIBLE);
+                    allReviewsBtn.setClickable(false);
+                } else {
+                    double average = sumOfStars / count;
                     rating.setText("Average Ratings: " + average);
                 }
-
-
 
             }
 
@@ -173,10 +178,10 @@ public class ViewUser extends AppCompatActivity {
             public void onSuccess(byte[] bytes) {
                 // Data for "images/island.jpg" is returns, use this as needed
                 Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                iv.setImageBitmap(bitmap);
-                Bitmap bitmap2 = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+                profilePicIv.setImageBitmap(bitmap);
+                Bitmap bitmap2 = ((BitmapDrawable) profilePicIv.getDrawable()).getBitmap();
                 Bitmap circularBitmap = getCircularBitmap(bitmap2);
-                iv.setImageBitmap(circularBitmap);
+                profilePicIv.setImageBitmap(circularBitmap);
                 File file = new File(context.getCacheDir(), "tempImage");
                 file.delete();
             }
@@ -233,8 +238,8 @@ public class ViewUser extends AppCompatActivity {
      * @param view: The ReviewHistory Button.
      */
     public void goToReviewHistory(View view) {
-        Intent si = new Intent(this,ReviewHistory.class);
-        si.putExtra("UID",UID);
+        Intent si = new Intent(this, ReviewHistory.class);
+        si.putExtra("UID", UID);
         startActivity(si);
     }
 

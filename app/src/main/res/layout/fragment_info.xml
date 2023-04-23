@@ -35,7 +35,7 @@
             android:id="@+id/description"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="5"
+            android:layout_weight="10"
             android:ems="10"
             android:hint="enter description"
             android:inputType="textPersonName" />
@@ -47,7 +47,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="10"
+            android:layout_weight="9"
             android:orientation="horizontal">
 
             <ImageView
@@ -121,7 +121,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3"
+            android:layout_weight="3.5"
             android:orientation="horizontal">
 
             <Space
@@ -146,19 +146,19 @@
             android:id="@+id/save3"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3"
+            android:layout_weight="4"
             android:text="Save" />
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="0.5" />
 
         <Button
             android:id="@+id/finish4"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3"
+            android:layout_weight="4"
             android:clickable="false"
             android:text="finish and post"
             android:visibility="invisible" />

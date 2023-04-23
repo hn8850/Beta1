@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -106,7 +107,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     ValueEventListener parkAdUpdateListener;
     FirebaseAuth mAuth;
     String currUserID;
-    boolean firstTime = true;
+    ProgressDialog progressDialog;
 
 
     @Override
@@ -127,18 +128,14 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         parkAdMarkers = new ArrayList<>();
         parkAdIDs = new ArrayList<>();
         parkAds = new ArrayList<>();
-         mapFragment = (SupportMapFragment) getSupportFragmentManager()
+
+        progressDialog = new ProgressDialog(Navi.this);
+
+
+        mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (!firstTime){
-            sortParkAds();
-        }
     }
 
     /**
@@ -156,7 +153,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             requestLocationPermission();
         }
         SetParkAdMarkers();
-        firstTime = false;
         filter = findViewById(R.id.filter);
         filter.setOnClickListener(new View.OnClickListener() {
             /**
@@ -263,10 +259,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         DatabaseReference AdsDB = fbDB.getReference("ParkAds");
         Query parkAdUpdateQuery = AdsDB;
         System.out.println("WHATS GOING ON");
-        parkAdUpdateListener = new ValueEventListener(){
+        parkAdUpdateListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-
                 System.out.println("check");
                 SimpleDateFormat dateFormat = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
                 SimpleDateFormat hourFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
@@ -363,7 +358,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                         System.out.println("current = " + current.toString() + " parkDate = " + parkAdDate.toString());
                         if (current.isAfter(parkAdDate)) {
                             System.out.println("Bad!");
-                            UpdateOrderCompleted(orderSnap.getKey()); //OrderDate has passed,hence its completed
+                            UpdateOrderCompleted(orderSnap.getKey(), order); //OrderDate has passed,hence its completed
                         } else if (current.toString().equals(parkAdDate.toString())) {
                             System.out.println("good!");
                             long currentTimeMillis = System.currentTimeMillis();
@@ -374,7 +369,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                                     System.out.println("great!");
                                     UpdateOrderActive(order.getParkAdID());
                                 } else {
-                                    UpdateOrderCompleted(orderSnap.getKey()); //OrderHour has passed,hence its completed
+                                    UpdateOrderCompleted(orderSnap.getKey(), order); //OrderHour has passed,hence its completed
                                 }
                             }
                         }
@@ -397,7 +392,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      *
      * @param OrderID: The KeyID in the database for the completed order.
      */
-    public void UpdateOrderCompleted(String OrderID) {
+    public void UpdateOrderCompleted(String OrderID, Order order) {
         DatabaseReference finishedOrder = fbDB.getReference("Users").child(currUserID).child("Orders").child(OrderID);
         finishedOrder.child("complete").setValue(true);
         finishedOrder.child("active").setValue(false);
@@ -411,7 +406,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 Intent si = new Intent(getApplicationContext(), WriteReview.class);
-                si.putExtra("OrderID", OrderID);
+                si.putExtra("SellerID", order.getSellerId());
                 si.putExtra("UID", currUserID);
                 startActivity(si);
             }
@@ -500,7 +495,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         final EditText editTextMM2 = dialog.findViewById(R.id.edit_text_mm_2);
         final EditText editTextYYYY2 = dialog.findViewById(R.id.edit_text_yyyy_2);
 
-        if (!query.get("date1").matches("NONE")){
+        if (!query.get("date1").matches("NONE")) {
             String date1 = query.get("date1");
             String[] dateComponents = date1.split("/");
             editTextDD1.setText(dateComponents[0]);
@@ -537,7 +532,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
                         Date Date1 = sdf.parse(date1);
                         Date Date2 = sdf.parse(date2);
-                        if (Date2.after(Date1) || Date2.compareTo(Date1)==0) {
+                        if (Date2.after(Date1) || Date2.compareTo(Date1) == 0) {
                             query.put("date1", date1);
                             query.put("date2", date2);
                             sortParkAds();
@@ -554,6 +549,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     }
 
                 } catch (Exception e) {
+                    System.out.println("ECXECPTIOn " + e.getMessage().toString());
                     query.put("date1", "NONE");
                     query.put("date2", "NONE");
                     sortParkAds();
@@ -597,6 +593,10 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      * the Map View accordingly.
      */
     public void sortParkAds() {
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
         mMap.clear();
         sortedAds.clear();
         sortedIDs.clear();
@@ -605,11 +605,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
         int pos;
         String adDate;
-        for (ParkAd parkAd : parkAds) {
-            System.out.println("PARKAD:" + parkAd.toString());
-            System.out.println("POS:" + parkAds.indexOf(parkAd));
-            adDate = parkAd.getDate();
-            if (!query.get("date1").matches("NONE")) {
+        if (!query.get("date1").matches("NONE")) {
+            for (ParkAd parkAd : parkAds) {
+                adDate = parkAd.getDate();
                 if (Services.isDateBetween(adDate, query.get("date1"), query.get("date2"))) {
                     pos = parkAds.indexOf(parkAd);
                     sortedAds.add(parkAd);
@@ -617,12 +615,15 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     sortedParkAdMarkers.add(parkAdMarkers.get(pos));
                     sortedParkAdMarkerOptions.add(parkAdMarkerOptions.get(pos));
                 }
-            } else {
+            }
+        } else {
+            for (ParkAd parkAd : parkAds) {
                 pos = parkAds.indexOf(parkAd);
                 sortedAds.add(parkAd);
                 sortedIDs.add(parkAdIDs.get(pos));
                 sortedParkAdMarkers.add(parkAdMarkers.get(pos));
                 sortedParkAdMarkerOptions.add(parkAdMarkerOptions.get(pos));
+                System.out.println("RECOUNT of Parks = + " + sortedAds.size());
             }
         }
 
@@ -638,6 +639,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             parkAdMarkerOptions.add(markerOptions);
             parkAdMarkers.add(marker);
         }
+        progressDialog.dismiss();
     }
 
     /**
@@ -646,9 +648,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      * submitted.
      */
     public void searchQuery() {
-        boolean animate = false;
         for (Marker marker : sortedParkAdMarkers) {
-            marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+            marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+
         }
         String searchQuery;
         try {
@@ -665,20 +667,20 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
             pos = sortedAds.indexOf(parkAd);
             addressComponents = parkAd.getAddress().split(",");
+            System.out.println("SearchQUERY=" + searchQuery);
+            System.out.println("address=" + parkAd.getAddress());
             if (searchQuery.matches(parkAd.getAddress())) {
-                zoomToAddress(this,mMap,parkAd.getAddress());
-                animate = true;
+                zoomToAddress(this, mMap, parkAd.getAddress());
                 Marker marker = sortedParkAdMarkers.get(pos);
                 marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                break;
             }
             for (String component : addressComponents) {
                 if ((searchQuery.toLowerCase(Locale.ROOT)).matches(component.toLowerCase(Locale.ROOT))) {
                     Marker marker = sortedParkAdMarkers.get(pos);
-                    if (!animate){
-                        zoomToLatLng(mMap,marker.getPosition(),10  );
-                        animate = true;
-                    }
+                    zoomToLatLng(mMap, marker.getPosition(), 10);
                     marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+
                 }
             }
         }
@@ -781,8 +783,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     }
 
 
-
-
     /**
      * SubMethod for the animateCamera Method.
      *
@@ -857,7 +857,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         }
 
 
-
     }
 
 
@@ -910,9 +909,10 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      * SubMethod for the SearchQuery Method.
      * Used to zoom the camera of the Map View on the address the user has submitted.
      * (This Method is only there's a ParkAd Marker at that location!).
-     * @param context: The application's Context.
+     *
+     * @param context:   The application's Context.
      * @param googleMap: The GoogleMap Object linked to the MapView.
-     * @param address: The address the user has submitted (String).
+     * @param address:   The address the user has submitted (String).
      */
     public static void zoomToAddress(Context context, GoogleMap googleMap, String address) {
         String TAG = MapUtils.class.getSimpleName();
@@ -939,8 +939,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      * Used to zoom the camera of the Map View on the LatLng of an address's component the user has
      * submitted (country/city/street etc).
      * (This Method is only there's a ParkAd Marker at that location!).
+     *
      * @param googleMap: The GoogleMap Object linked to the MapView.
-     * @param latLng: The latLng of the location the user has submitted (String).
+     * @param latLng:    The latLng of the location the user has submitted (String).
      * @param zoomLevel: The zoom level for the animation.
      */
     public static void zoomToLatLng(GoogleMap googleMap, LatLng latLng, float zoomLevel) {

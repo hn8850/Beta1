@@ -85,7 +85,7 @@
             android:id="@+id/textView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3"
+            android:layout_weight="3.5"
             android:text="Begin Hour:"
             android:textSize="34sp" />
 
@@ -126,7 +126,7 @@
             android:id="@+id/textView2"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3"
+            android:layout_weight="3.5"
             android:text="End Hour:"
             android:textSize="34sp" />
 

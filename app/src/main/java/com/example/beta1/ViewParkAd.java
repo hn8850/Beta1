@@ -3,6 +3,7 @@ package com.example.beta1;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -14,7 +15,9 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.Image;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -34,22 +37,28 @@ import java.io.File;
 
 /***
  * @author Harel Navon harelnavon2710@gmail.com
- * @version 1.4
- * @since 28/1/2023
- * The ViewParkAd Activity.
- * In this Activity, the user can view more information about the ParkAd he selected in the
- * ParkAdQueryListView Activity.
+ * @version 2.0
+ * @since 28/1/2023 The ViewParkAd Activity. In this Activity, the user can view more information about the ParkAd he selected in the ParkAdQueryListView Activity.
  */
-
 public class ViewParkAd extends AppCompatActivity {
 
-    TextView addressTv, dateTv, priceTv, descTv, titleTv;
-    ImageView iv, profilePic;
 
+    TextView addressTv, priceTv, descTv, titleTv,dateTv;
+    ImageView profilePic;
     Intent gi;
+
     String parkAdID;
-    String picURL;
+    String profilePicURL;
     String userID;
+
+
+    ImageView bigPic;
+    int[] imageViewIds;
+    ImageView[] imageViews;
+
+    ProgressDialog progressDialog;
+    private final Handler handler = new Handler();
+    private Runnable runnable;
 
     User user;
     ParkAd parkAd;
@@ -62,15 +71,30 @@ public class ViewParkAd extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_park_ad);
 
-        getSupportActionBar().hide();
 
         addressTv = findViewById(R.id.addressTv);
         priceTv = findViewById(R.id.priceTv);
         descTv = findViewById(R.id.descTv);
         dateTv = findViewById(R.id.dateTv);
-        iv = findViewById(R.id.imageView7);
-        titleTv = findViewById(R.id.title_text);
-        profilePic = findViewById(R.id.right_image);
+        titleTv = findViewById(R.id.titletv);
+
+        bigPic = findViewById(R.id.imageView9);
+        bigPic.setImageResource(0);
+        imageViewIds = new int[5];
+        imageViewIds[0] = R.id.imageView10;
+        imageViewIds[1] = R.id.imageView11;
+        imageViewIds[2] = R.id.imageView12;
+        imageViewIds[3] = R.id.imageView13;
+        imageViewIds[4] = R.id.imageView14;
+
+        imageViews = new ImageView[imageViewIds.length];
+        for (int i = 0; i < imageViewIds.length; i++) {
+            imageViews[i] = findViewById(imageViewIds[i]);
+            imageViews[i].setImageResource(0);
+        }
+
+        profilePic = findViewById(R.id.imageView15);
+        profilePic.setImageResource(0);
         profilePic.setOnClickListener(ProfilePicClickListener);
 
 
@@ -79,6 +103,10 @@ public class ViewParkAd extends AppCompatActivity {
 
         fbDB = FirebaseDatabase.getInstance();
         storage = FirebaseStorage.getInstance();
+        progressDialog = new ProgressDialog(ViewParkAd.this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
         readParkAd();
 
     }
@@ -94,22 +122,32 @@ public class ViewParkAd extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 parkAd = snapshot.getValue(ParkAd.class);
+                imageViews[parkAd.getPictureUrl().size() - 1].addOnLayoutChangeListener(picLoaded);
                 userID = parkAd.getUserID();
                 DatabaseReference userRef = fbDB.getReference("Users").child(userID);
                 userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
+
                         user = snapshot.getValue(User.class);
                         titleTv.setText(user.getName() + "'s Parking Space");
-                        picURL = user.getProfilePicURL();
-                        downloadImage(picURL, getApplicationContext(), 1);
+                        profilePicURL = user.getProfilePicURL();
+                        downloadImage(profilePicURL, getApplicationContext(), 1, 0);
                         addressTv.setText("Address: " + parkAd.getAddress());
-                        priceTv.setText("Price for hour: " + parkAd.getHourlyRate());
-                        descTv.setText("Description: " + parkAd.getDescription());
+                        priceTv.setText("Price for hour: " + parkAd.getHourlyRate() + " NIS");
+                        descTv.setText(parkAd.getDescription());
                         dateTv.setText("Date: " + parkAd.getDate());
 
-                        picURL = parkAd.getPictureUrl().get(0);
-                        downloadImage(picURL, getApplicationContext(), 0);
+                        String parkPicURL;
+                        for (int i = 0; i < parkAd.getPictureUrl().size(); i++) {
+                            parkPicURL = parkAd.getPictureUrl().get(i);
+                            downloadImage(parkPicURL, getApplicationContext(), 0, i);
+                        }
+                        for (int i = parkAd.getPictureUrl().size(); i < 5; i++) {
+                            imageViews[i].setImageResource(0);
+                            imageViews[i].setClickable(false);
+                        }
+
                     }
 
                     @Override
@@ -137,7 +175,7 @@ public class ViewParkAd extends AppCompatActivity {
      * @param imageUrl: The String containing the URL for the image in the Storage database.
      * @param context:  The Activity Context.
      */
-    private void downloadImage(String imageUrl, final Context context, int mode) {
+    private void downloadImage(String imageUrl, final Context context, int mode, int index) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReferenceFromUrl(imageUrl);
 
@@ -147,8 +185,12 @@ public class ViewParkAd extends AppCompatActivity {
             public void onSuccess(byte[] bytes) {
                 // Data for "images/island.jpg" is returns, use this as needed
                 Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                if (mode == 0) iv.setImageBitmap(bitmap);
-                else {
+                if (mode == 0) {
+                    if (index == 0) {
+                        bigPic.setImageBitmap(bitmap);
+                    }
+                    imageViews[index].setImageBitmap(bitmap);
+                } else {
                     profilePic.setImageBitmap(bitmap);
                     Bitmap bitmap2 = ((BitmapDrawable) profilePic.getDrawable()).getBitmap();
                     Bitmap circularBitmap = getCircularBitmap(bitmap2);
@@ -169,7 +211,8 @@ public class ViewParkAd extends AppCompatActivity {
      * SubMethod for the downloadImage Method.
      * Used to display the user's profile picture inside of a circle.
      *
-     * @param bitmap: Bitmap describing the user's profile picture.
+     * @param bitmap : Bitmap describing the user's profile picture.
+     * @return the circular bitmap
      * @return: The Method returns the circular version of the given Bitmap.
      */
     public Bitmap getCircularBitmap(Bitmap bitmap) {
@@ -209,7 +252,7 @@ public class ViewParkAd extends AppCompatActivity {
      * OnClickMethod for the MakeOrder Button.
      * Launches the HourSelect Activity.
      *
-     * @param view: The MakeOrder Button.
+     * @param view : The MakeOrder Button.
      */
     public void GoToMakeOrder(View view) {
         Intent si = new Intent(this, HourSelect.class);
@@ -221,7 +264,7 @@ public class ViewParkAd extends AppCompatActivity {
 
     private View.OnClickListener ProfilePicClickListener = new View.OnClickListener() {
         /**
-         * OnClickMethod for the profilePic Button.
+         * OnClickMethod for the profilePic ImageView.
          * Launches the ViewUser Activity.
          * @param view: The profilePic Button.
          */
@@ -232,4 +275,40 @@ public class ViewParkAd extends AppCompatActivity {
             startActivity(si);
         }
     };
+
+    /**
+     * OnClick Method for the different ParkAd pic ImageViews.
+     * Used to set the big ImageView to the image that was clicked.
+     *
+     * @param view : The ImageView that was clicked.
+     */
+    public void setBigPic(View view) {
+        if (view instanceof ImageView) {
+            ImageView clickedView = (ImageView) view;
+            bigPic.setImageDrawable(clickedView.getDrawable());
+        }
+    }
+
+    /**
+     * Used to verify that the last Imageview to be loaded has in fact loaded, which results in
+     * closing the progress bar.
+     */
+    View.OnLayoutChangeListener picLoaded = new View.OnLayoutChangeListener() {
+        @Override
+        public void onLayoutChange(View view, int i, int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+            if (parkAd != null) {
+                // Cancel the previous callback
+                if (runnable != null) {
+                    handler.removeCallbacks(runnable);
+                }
+
+                // Dismiss the progress dialog after a short delay
+                runnable = () -> progressDialog.dismiss();
+                handler.postDelayed(runnable, 700); // delay of 500ms before dismissing dialog
+
+            }
+
+        }
+    };
+
 }

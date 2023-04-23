@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -47,8 +48,11 @@ public class WriteReview extends AppCompatActivity {
         star4 = findViewById(R.id.star4);
         star5 = findViewById(R.id.star5);
         messageEt = findViewById(R.id.reviewMessage);
-        currUserUID = "QFsNW865Z9TgkezB4WZUBuOVIAU2"; // gal
-        parkAdOwnerUID = "1A9qBnfvcnTrDEGiA8B2xcIYrly2"; //harel
+        Intent gi = getIntent();
+        currUserUID = gi.getStringExtra("UID");
+        parkAdOwnerUID = gi.getStringExtra("SellerID");
+//        currUserUID = "TnyEbubOoORaJuOKVkEeJHsmkaQ2"; // popick
+//        parkAdOwnerUID = "1A9qBnfvcnTrDEGiA8B2xcIYrly2"; //yuval
 
         fbDB = FirebaseDatabase.getInstance();
     }
