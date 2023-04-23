@@ -354,6 +354,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     try {
                         System.out.println("STATUS NOW = " + order.isComplete);
                         if (!(order.isComplete || order.isCanceled)) {
+
                             LocalDate current = LocalDate.parse(currentDate, formatter);
                             LocalDate parkAdDate = LocalDate.parse(parkAdDateStr, formatter);
                             System.out.println("current = " + current.toString() + " parkDate = " + parkAdDate.toString());
