@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -51,8 +53,6 @@ public class WriteReview extends AppCompatActivity {
         Intent gi = getIntent();
         currUserUID = gi.getStringExtra("UID");
         parkAdOwnerUID = gi.getStringExtra("SellerID");
-//        currUserUID = "TnyEbubOoORaJuOKVkEeJHsmkaQ2"; // popick
-//        parkAdOwnerUID = "1A9qBnfvcnTrDEGiA8B2xcIYrly2"; //yuval
 
         fbDB = FirebaseDatabase.getInstance();
     }
@@ -101,8 +101,17 @@ public class WriteReview extends AppCompatActivity {
                     Review review = new Review(clickedStarIndex, message, currUser.getName());
                     DatabaseReference reviewPath = fbDB.getReference("Users").child(parkAdOwnerUID).child("Reviews").child(currUserUID);
                     reviewPath.setValue(review);
-                    Toast.makeText(getApplicationContext(), "Review Submitted", Toast.LENGTH_SHORT);
-
+                    AlertDialog.Builder adb = new AlertDialog.Builder(WriteReview.this);
+                    adb.setTitle("Review Submitted!");
+                    adb.setMessage("You may now return to the home screen");
+                    adb.setPositiveButton("Return", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            Intent si = new Intent(WriteReview.this, Navi.class);
+                            startActivity(si);
+                        }
+                    });
+                    adb.create().show();
                 }
 
                 @Override

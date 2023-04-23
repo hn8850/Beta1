@@ -13,6 +13,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -34,6 +36,9 @@ public class ParkAdQueryListView extends AppCompatActivity {
     ListView listView;
     String lat, lan;
     FirebaseDatabase fbDB;
+    FirebaseAuth mAuth;
+    String UID;
+
     String beginHour, endHour, date, queryDate1, queryDate2;
     ArrayList<HashMap<String, String>> parkAdsDataList = new ArrayList<>();
 
@@ -44,6 +49,10 @@ public class ParkAdQueryListView extends AppCompatActivity {
         setContentView(R.layout.activity_park_ad_query_list_view);
         listView = findViewById(R.id.listview);
         fbDB = FirebaseDatabase.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currUser = mAuth.getCurrentUser();
+        UID = currUser.getUid();
+
 
         Intent gi = getIntent();
         lat = gi.getStringExtra("lat");
@@ -70,7 +79,7 @@ public class ParkAdQueryListView extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     ParkAd parkAd = snapshot1.getValue(ParkAd.class);
-                    if (parkAd.getLatitude().matches(lat) && parkAd.getLongitude().matches(lan)) {
+                    if (parkAd.getLatitude().matches(lat) && parkAd.getLongitude().matches(lan) && !parkAd.getUserID().matches(UID)) {
                         if (Services.isDateBetween(parkAd.getDate(), queryDate1, queryDate2)) {
                             HashMap<String, String> data = new HashMap<>();
                             data.put("date", parkAd.getDate());

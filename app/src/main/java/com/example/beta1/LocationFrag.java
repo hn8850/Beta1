@@ -178,7 +178,11 @@ public class LocationFrag extends Fragment {
                 imageUris.add(sharedPrefs.getString("URI5", null));
             }
 
+            FirebaseUser currUser = FirebaseAuth.getInstance().getCurrentUser();
+            String userUid = currUser.getUid();
+
             String path = (latitude + longitude).replace(".", "");
+            path = path + userUid;
             StorageReference refStorage = mStorage.getReference("ParkAdPics");
             StorageReference refPath = refStorage.child(path);
             ReCreateFolder(path);

@@ -206,7 +206,11 @@ public class TimeFrag extends Fragment {
                 imageUris.add(sharedPrefs.getString("URI5", null));
             }
 
+            FirebaseUser currUser = FirebaseAuth.getInstance().getCurrentUser();
+            String userUid = currUser.getUid();
+
             String path = (latitude + longitude).replace(".", "");
+            path = path + userUid;
             StorageReference refStorage = mStorage.getReference("ParkAdPics");
             StorageReference refPath = refStorage.child(path);
             ReCreateFolder(path);
@@ -269,8 +273,8 @@ public class TimeFrag extends Fragment {
 
         String path = (latitude + longitude).replace(".", "");
 
-        FirebaseUser newUser = FirebaseAuth.getInstance().getCurrentUser();
-        String userUid = newUser.getUid();
+        FirebaseUser currUser = FirebaseAuth.getInstance().getCurrentUser();
+        String userUid = currUser.getUid();
         int Active = 1;
         String Date = sharedPrefs.getString("Date", "0");
         String dateParam = Services.addLeadingZerosToDate(Date, true);

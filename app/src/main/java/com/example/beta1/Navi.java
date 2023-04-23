@@ -107,7 +107,8 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     ValueEventListener parkAdUpdateListener;
     FirebaseAuth mAuth;
     String currUserID;
-    ProgressDialog progressDialog;
+
+    LatLng searchedParkAdLocation;
 
 
     @Override
@@ -128,8 +129,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         parkAdMarkers = new ArrayList<>();
         parkAdIDs = new ArrayList<>();
         parkAds = new ArrayList<>();
-
-        progressDialog = new ProgressDialog(Navi.this);
 
 
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -353,26 +352,32 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                             .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
                             .toFormatter();
                     try {
-                        LocalDate current = LocalDate.parse(currentDate, formatter);
-                        LocalDate parkAdDate = LocalDate.parse(parkAdDateStr, formatter);
-                        System.out.println("current = " + current.toString() + " parkDate = " + parkAdDate.toString());
-                        if (current.isAfter(parkAdDate)) {
-                            System.out.println("Bad!");
-                            UpdateOrderCompleted(orderSnap.getKey(), order); //OrderDate has passed,hence its completed
-                        } else if (current.toString().equals(parkAdDate.toString())) {
-                            System.out.println("good!");
-                            long currentTimeMillis = System.currentTimeMillis();
-                            Date current2 = new Date(currentTimeMillis);
-                            String currentHour = sdf2.format(current2);
-                            if (!Services.isFirstTimeBeforeSecond(currentHour, order.getBeginHour())) {
-                                if (Services.isHourBetween(currentHour, order.getBeginHour(), order.getEndHour())) {
-                                    System.out.println("great!");
-                                    UpdateOrderActive(order.getParkAdID());
-                                } else {
-                                    UpdateOrderCompleted(orderSnap.getKey(), order); //OrderHour has passed,hence its completed
+                        System.out.println("STATUS NOW = " + order.isComplete);
+                        if (!(order.isComplete || order.isCanceled)) {
+                            LocalDate current = LocalDate.parse(currentDate, formatter);
+                            LocalDate parkAdDate = LocalDate.parse(parkAdDateStr, formatter);
+                            System.out.println("current = " + current.toString() + " parkDate = " + parkAdDate.toString());
+                            if (current.isAfter(parkAdDate)) {
+                                System.out.println("Bad!");
+                                UpdateOrderCompleted(orderSnap.getKey(), order); //OrderDate has passed,hence its completed
+                            } else if (current.toString().equals(parkAdDate.toString())) {
+                                System.out.println("good!");
+                                long currentTimeMillis = System.currentTimeMillis();
+                                Date current2 = new Date(currentTimeMillis);
+                                String currentHour = sdf2.format(current2);
+                                System.out.println("Current2 = " + currentHour);
+
+                                if (!Services.isFirstTimeBeforeSecond(currentHour, order.getBeginHour())) {
+                                    if (Services.isHourBetween(currentHour, order.getBeginHour(), order.getEndHour())) {
+                                        System.out.println("great!");
+                                        UpdateOrderActive(order.getParkAdID());
+                                    } else {
+                                        UpdateOrderCompleted(orderSnap.getKey(), order); //OrderHour has passed,hence its completed
+                                    }
                                 }
                             }
                         }
+
                     } catch (Error e) {
                         e.printStackTrace();
                     }
@@ -393,6 +398,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      * @param OrderID: The KeyID in the database for the completed order.
      */
     public void UpdateOrderCompleted(String OrderID, Order order) {
+        System.out.println("ORDERID = " + OrderID);
         DatabaseReference finishedOrder = fbDB.getReference("Users").child(currUserID).child("Orders").child(OrderID);
         finishedOrder.child("complete").setValue(true);
         finishedOrder.child("active").setValue(false);
@@ -409,8 +415,10 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 si.putExtra("SellerID", order.getSellerId());
                 si.putExtra("UID", currUserID);
                 startActivity(si);
+                dialogInterface.dismiss();
             }
         });
+        adb.create().show();
 
     }
 
@@ -431,7 +439,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             }
         }
         Marker activeMarker = sortedParkAdMarkers.get(pos);
-        activeMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET));
+        BitmapDescriptor activeParkAdMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET);
+
+        activeMarker.setIcon(activeParkAdMarkerIcon);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("You Have An Active Parking Space");
@@ -593,10 +603,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      * the Map View accordingly.
      */
     public void sortParkAds() {
-        progressDialog.setMessage("Loading...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-
         mMap.clear();
         sortedAds.clear();
         sortedIDs.clear();
@@ -612,8 +618,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     pos = parkAds.indexOf(parkAd);
                     sortedAds.add(parkAd);
                     sortedIDs.add(parkAdIDs.get(pos));
-                    sortedParkAdMarkers.add(parkAdMarkers.get(pos));
-                    sortedParkAdMarkerOptions.add(parkAdMarkerOptions.get(pos));
                 }
             }
         } else {
@@ -621,25 +625,30 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 pos = parkAds.indexOf(parkAd);
                 sortedAds.add(parkAd);
                 sortedIDs.add(parkAdIDs.get(pos));
-                sortedParkAdMarkers.add(parkAdMarkers.get(pos));
-                sortedParkAdMarkerOptions.add(parkAdMarkerOptions.get(pos));
-                System.out.println("RECOUNT of Parks = + " + sortedAds.size());
             }
         }
 
         BitmapDescriptor blueMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
+        BitmapDescriptor greenMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
         for (ParkAd parkAd : sortedAds) {
             LatLng location = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
-            MarkerOptions markerOptions = new MarkerOptions().icon(blueMarkerIcon)
-                    .position(location)
-                    .title(parkAd.getHourlyRate().toString())
-                    .snippet(String.valueOf(parkAd.getHourlyRate()));
+            MarkerOptions markerOptions;
+            if (searchedParkAdLocation != null && location.latitude == searchedParkAdLocation.latitude && location.longitude == searchedParkAdLocation.longitude) {
+                markerOptions = new MarkerOptions().icon(greenMarkerIcon)
+                        .position(location)
+                        .title(parkAd.getHourlyRate().toString())
+                        .snippet(String.valueOf(parkAd.getHourlyRate()));
+            } else {
+                markerOptions = new MarkerOptions().icon(blueMarkerIcon)
+                        .position(location)
+                        .title(parkAd.getHourlyRate().toString())
+                        .snippet(String.valueOf(parkAd.getHourlyRate()));
+            }
             Marker marker = mMap.addMarker(markerOptions);
             marker.showInfoWindow();
-            parkAdMarkerOptions.add(markerOptions);
-            parkAdMarkers.add(marker);
+            sortedParkAdMarkerOptions.add(markerOptions);
+            sortedParkAdMarkers.add(marker);
         }
-        progressDialog.dismiss();
     }
 
     /**
@@ -648,8 +657,11 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
      * submitted.
      */
     public void searchQuery() {
+        BitmapDescriptor blueMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE);
+        BitmapDescriptor greenMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN);
+
         for (Marker marker : sortedParkAdMarkers) {
-            marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            marker.setIcon(blueMarkerIcon);
 
         }
         String searchQuery;
@@ -670,17 +682,18 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             System.out.println("SearchQUERY=" + searchQuery);
             System.out.println("address=" + parkAd.getAddress());
             if (searchQuery.matches(parkAd.getAddress())) {
+                searchedParkAdLocation = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
                 zoomToAddress(this, mMap, parkAd.getAddress());
                 Marker marker = sortedParkAdMarkers.get(pos);
-                marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                marker.setIcon(greenMarkerIcon);
                 break;
             }
             for (String component : addressComponents) {
                 if ((searchQuery.toLowerCase(Locale.ROOT)).matches(component.toLowerCase(Locale.ROOT))) {
                     Marker marker = sortedParkAdMarkers.get(pos);
                     zoomToLatLng(mMap, marker.getPosition(), 10);
-                    marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-
+                    marker.setIcon(greenMarkerIcon);
+                    searchedParkAdLocation = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
                 }
             }
         }
