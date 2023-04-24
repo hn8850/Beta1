@@ -1,5 +1,6 @@
 package com.example.beta1;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -51,9 +52,10 @@ import java.util.HashMap;
 public class ViewUser extends AppCompatActivity {
 
     TextView NameEt;
-    ImageView profilePicIv,starIv;
+    ImageView profilePicIv, starIv;
     TextView rating;
     Button allReviewsBtn;
+    ProgressDialog progressDialog;
 
     String picUrl;
     String UID;
@@ -96,6 +98,10 @@ public class ViewUser extends AppCompatActivity {
 
         gi = getIntent();
         UID = gi.getStringExtra("UserID");
+        progressDialog = new ProgressDialog(ViewUser.this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
         readUser();
     }
 
@@ -133,7 +139,7 @@ public class ViewUser extends AppCompatActivity {
                     count++;
                 }
 
-                if (recentReviewDataList.size()!=0){
+                if (recentReviewDataList.size() != 0) {
                     CustomReviewListAdapter adapter = new CustomReviewListAdapter(recentReviewDataList);
                     recentReviewsList.setAdapter(adapter);
                 }
@@ -150,6 +156,8 @@ public class ViewUser extends AppCompatActivity {
                     double average = sumOfStars / count;
                     rating.setText("Average Ratings: " + average);
                 }
+
+                progressDialog.dismiss();
 
             }
 

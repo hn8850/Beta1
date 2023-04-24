@@ -1,6 +1,7 @@
 package com.example.beta1;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -8,10 +9,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,11 +17,12 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -38,7 +36,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -61,6 +58,8 @@ public class TimeFrag extends Fragment {
     String beginHour, beginMinute, endHour, endMinute;
     String Date, Price;
     String beginTime, endTime;
+
+    ProgressDialog progressDialog;
 
 
     Calendar calendar = Calendar.getInstance();
@@ -149,13 +148,13 @@ public class TimeFrag extends Fragment {
             try {
                 Date = dayET.getText().toString() + '/' + monthET.getText().toString() + '/' + yearET.getText().toString();
             } catch (Exception e) {
-                ErrorAlert("Fill out all of the fields!");
+                Services.ErrorAlert("Fill out all of the fields!", getContext());
                 return;
             }
 
             try {
             } catch (Exception e) {
-                ErrorAlert("Fill out all of the fields!");
+                Services.ErrorAlert("Fill out all of the fields!", getContext());
                 return;
             }
 
@@ -164,19 +163,15 @@ public class TimeFrag extends Fragment {
             endTime = endHour + ":" + endMinute;
             if (ValidInfo()) {
                 sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
-
                 // Get a reference to the Shared Preferences editor
                 SharedPreferences.Editor editor = sharedPrefs.edit();
-
                 // Write the data to the Shared Preferences file
                 editor.putString(getString(R.string.prefs_date_key), Date);
                 editor.putString(getString(R.string.prefs_beginhour_key), beginTime);
                 editor.putString(getString(R.string.prefs_finishhour_key), endTime);
                 editor.putString(getString(R.string.prefs_hourlyrate_key), Price);
-
                 // Save the changes to the Shared Preferences file
                 editor.apply();
-                Toast.makeText(getActivity().getApplicationContext(), "TIME + PRICE SAVED!", Toast.LENGTH_SHORT).show();
             }
         }
     };
@@ -223,7 +218,10 @@ public class TimeFrag extends Fragment {
                     i--;
                 }
             }
-            ArrayList<UploadTask> tasks = new ArrayList<>();
+            progressDialog = new ProgressDialog(getContext());
+            progressDialog.setMessage("Uploading...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
             for (int i = 0; i < imageUris.size(); i++) {
                 Uri imageUri = Uri.parse(imageUris.get(i));
                 if (!((imageUri.toString()).matches("NONE"))) {
@@ -296,10 +294,10 @@ public class TimeFrag extends Fragment {
         adRef.child(parkAdKey).setValue(ad);
         DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child(parkAdKey);
         userAdRef.setValue(ad);
-        Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
 
 
+        progressDialog.dismiss();
         AlertDialog.Builder adb = new AlertDialog.Builder(getContext());
         adb.setTitle("Success");
         adb.setMessage("Ad Uploaded Successfully!");
@@ -307,7 +305,7 @@ public class TimeFrag extends Fragment {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
-                Intent si = new Intent(getContext(),Navi.class);
+                Intent si = new Intent(getContext(), Navi.class);
                 startActivity(si);
             }
         });
@@ -426,11 +424,11 @@ public class TimeFrag extends Fragment {
      */
     public boolean ValidInfo() {
         if (beginHour.matches("Choose hour") || endHour.matches("Choose hour")) {
-            ErrorAlert("Choose an actual hour!");
+            Services.ErrorAlert("Choose an actual hour!", getContext());
             return false;
         }
         if (beginMinute.matches("Choose minutes") || endMinute.matches("Choose minutes")) {
-            ErrorAlert("Choose an actual hour!");
+            Services.ErrorAlert("Choose an actual hour!", getContext());
 
             return false;
         }
@@ -439,7 +437,7 @@ public class TimeFrag extends Fragment {
         Pattern r = Pattern.compile(pattern);
         Matcher m = r.matcher(Date);
         if (!m.find()) {
-            ErrorAlert("Choose an actual date!");
+            Services.ErrorAlert("Choose an actual date!", getContext());
 
             return false;
         }
@@ -449,18 +447,18 @@ public class TimeFrag extends Fragment {
         currentDate = Services.addLeadingZerosToDate(currentDate, false);
         String DateTemp = Services.addLeadingZerosToDate(Date, false);
         if (Integer.valueOf(DateTemp) - Integer.valueOf(currentDate) < 0) {
-            ErrorAlert("That date has passed!");
+            Services.ErrorAlert("That date has passed!", getContext());
             return false;
         }
 
 
         if (SpinEndHour.getSelectedItemPosition() < SpinBeginHour.getSelectedItemPosition()) {
-            ErrorAlert("BeginHour cant be after EndHour");
+            Services.ErrorAlert("BeginHour cant be after EndHour", getContext());
             return false;
         }
         if (SpinEndHour.getSelectedItemPosition() == SpinBeginHour.getSelectedItemPosition()) {
             if (SpinEndMinute.getSelectedItemPosition() <= SpinBeginMinute.getSelectedItemPosition()) {
-                ErrorAlert("BeginHour cant be after EndHour");
+                Services.ErrorAlert("BeginHour cant be after EndHour", getContext());
                 return false;
             }
         }
@@ -468,38 +466,17 @@ public class TimeFrag extends Fragment {
         if (Integer.valueOf(DateTemp) - Integer.valueOf(currentDate) == 0) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (!Services.isTimeRangeAfterCurrentHour(beginTime, endTime)) {
-                    ErrorAlert("That TimeRange has passed");
+                    Services.ErrorAlert("That TimeRange has passed", getContext());
                     return false;
                 }
             }
         }
 
         if (Price.isEmpty() || Double.valueOf(Price) <= 0) {
-            ErrorAlert("Price per hour cant be zero!");
+            Services.ErrorAlert("Price per hour cant be zero!", getContext());
             return false;
         }
         return true;
-    }
-
-    /**
-     * SubMethod for the information verification process.
-     * Used to handle user errors regarding the information that was submitted, by creating
-     * AlertDialog boxes.
-     *
-     * @param message: The message containing what the user did wrong when submitting information.
-     */
-    public void ErrorAlert(String message) {
-        AlertDialog.Builder adb = new AlertDialog.Builder(getContext());
-        adb.setTitle("An error occurred when saving your info!");
-        adb.setMessage(message);
-        adb.setNeutralButton("Return", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.dismiss();
-            }
-        });
-        AlertDialog dialog = adb.create();
-        dialog.show();
     }
 
 

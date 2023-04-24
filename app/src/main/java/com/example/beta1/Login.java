@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -52,6 +53,10 @@ public class Login extends AppCompatActivity {
         btnLogin = findViewById(R.id.btnLogin);
 
         mAuth = FirebaseAuth.getInstance();
+        if (mAuth.getCurrentUser()!=null){
+            Intent si = new Intent(Login.this,Navi.class);
+            startActivity(si);
+        }
 
         btnLogin.setOnClickListener(view -> {
             loginUser();
@@ -84,7 +89,6 @@ public class Login extends AppCompatActivity {
                         if (currUser.isEmailVerified()) {
                             Toast.makeText(Login.this, "User logged in successfully", Toast.LENGTH_SHORT).show();
                             Intent si = new Intent(getApplicationContext(), Navi.class);
-                            si.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(si);
                         } else {
                             AlertDialog.Builder adb = new AlertDialog.Builder(Login.this);
@@ -127,7 +131,7 @@ public class Login extends AppCompatActivity {
     public void resetPass(View view) {
         String email = etLoginEmail.getText().toString();
         if (!(isValidEmail(email))) {
-            Toast.makeText(Login.this, "Not a Valid Email!", Toast.LENGTH_SHORT).show();
+            ErrorAlert("An error occurred!","Please enter a Valid Email!");
         } else {
             AlertDialog.Builder adb = new AlertDialog.Builder(this);
             adb.setTitle("Send Email?");
@@ -140,9 +144,9 @@ public class Login extends AppCompatActivity {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
                                     if (task.isSuccessful()) {
-                                        Toast.makeText(Login.this, "Check your email for password reset instructions!", Toast.LENGTH_SHORT).show();
+                                        ErrorAlert("Password reset email sent.","Check your email for password reset instructions!  \n  Please note that you cant login until setting a new password!");
                                     } else {
-                                        Toast.makeText(Login.this, "Email not registered", Toast.LENGTH_SHORT).show();
+                                        ErrorAlert("An error occurred!","Email not registered!");
                                     }
                                 }
                             });
@@ -175,18 +179,40 @@ public class Login extends AppCompatActivity {
     }
 
 
+    /**
+     * SubMethod for the information verification process.
+     * Used to notify the user about their login status, by creating
+     * AlertDialog boxes.
+     *
+     * @param message: The message containing what the user did wrong when submitting information.
+     */
+    public void ErrorAlert(String title, String message) {
+        android.app.AlertDialog.Builder adb = new android.app.AlertDialog.Builder(Login.this);
+        adb.setTitle(title);
+        adb.setMessage(message);
+        adb.setNeutralButton("Return", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        android.app.AlertDialog dialog = adb.create();
+        dialog.show();
+    }
+
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
+        menu.add("Navi");
+        menu.add("test");
+        menu.add("Post Ad");
+        menu.add("Settings");
         return true;
     }
 
     public boolean onOptionsItemSelected(MenuItem item) {
         String st = item.getTitle().toString();
-
-        if (st.equals("Login")) {
-            Toast.makeText(this, "You're in this Activity!!", Toast.LENGTH_SHORT).show();
-        }
 
         if (st.equals("Navi")) {
             Intent si = new Intent(this, Navi.class);
@@ -199,11 +225,6 @@ public class Login extends AppCompatActivity {
 
         if (st.equals("Post Ad")) {
             Intent si = new Intent(this, UploadAd.class);
-            startActivity(si);
-        }
-
-        if (st.equals("Edit Profile")) {
-            Intent si = new Intent(this, EditProfile.class);
             startActivity(si);
         }
 

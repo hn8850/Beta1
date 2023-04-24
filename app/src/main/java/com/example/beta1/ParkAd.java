@@ -1,9 +1,6 @@
 package com.example.beta1;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 /***
  * @author Harel Navon harelnavon2710@gmail.com

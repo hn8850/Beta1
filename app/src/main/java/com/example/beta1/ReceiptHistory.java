@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.google.firebase.database.DataSnapshot;
@@ -73,6 +74,11 @@ public class ReceiptHistory extends AppCompatActivity {
 
                         }
                     });
+                }
+                if (receiptHistoryDataList.size()==0){
+                    String[] listString = new String[]{"Nothing to see here!"};
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(ReceiptHistory.this, android.R.layout.simple_list_item_1, listString);
+                    listView.setAdapter(adapter);
                 }
             }
 

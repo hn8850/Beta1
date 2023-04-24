@@ -9,7 +9,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -164,7 +163,7 @@ public class HourSelect extends AppCompatActivity {
      */
     public void makeOrder(View view) {
         if (SpinEndHour.getSelectedItemPosition() == 0 || SpinBeginHour.getSelectedItemPosition() == 0 || SpinBeginMinute.getSelectedItemPosition() == 0 || SpinEndMinute.getSelectedItemPosition() == 0) {
-            Toast.makeText(this, "CHOOSE VALID TIMES", Toast.LENGTH_SHORT).show();
+            Services.ErrorAlert("Please enter valid times!",HourSelect.this);
         } else {
             String beginFull = beginHour + ":" + beginMinute;
             String endFull = endHour + ":" + endMinute;
@@ -231,7 +230,7 @@ public class HourSelect extends AppCompatActivity {
 
 
             } else {
-                Toast.makeText(this, "Select Hour in Available Range", Toast.LENGTH_SHORT).show();
+                Services.ErrorAlert("Select Hour in Available Range",HourSelect.this);
             }
         }
     }

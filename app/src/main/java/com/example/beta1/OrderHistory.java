@@ -1,18 +1,14 @@
 package com.example.beta1;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.widget.ListView;
-
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -20,17 +16,14 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -158,6 +151,11 @@ public class OrderHistory extends AppCompatActivity {
                         });
 
                     }
+                }
+                if (orderHistoryDataList.size()==0){
+                    String[] listString = new String[]{"Nothing to see here!"};
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(OrderHistory.this, android.R.layout.simple_list_item_1, listString);
+                    listView.setAdapter(adapter);
                 }
             }
 

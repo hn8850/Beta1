@@ -1,6 +1,7 @@
 package com.example.beta1;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,10 +15,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -51,6 +52,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 
 public class LocationFrag extends Fragment {
+
+    private ViewPager mViewPager;
+
     EditText countryEditText, cityEditText, streetEditText, houseNumberEditText;
     Button saveButton, finishButton;
 
@@ -63,6 +67,8 @@ public class LocationFrag extends Fragment {
 
     FirebaseDatabase mDb;
     FirebaseStorage mStorage;
+
+    ProgressDialog progressDialog;
 
     private SharedPreferences sharedPrefs;
 
@@ -112,37 +118,31 @@ public class LocationFrag extends Fragment {
 
 
             if ((country.isEmpty()) || (city.isEmpty()) || (street.isEmpty()) || (houseNumber.isEmpty())) {
-                Toast.makeText(getActivity().getApplicationContext(), "ENTER ALL INFO", Toast.LENGTH_SHORT).show();
+                Services.ErrorAlert("Fill out every field!", getContext());
             } else {
 
                 String address = country + "," + city + "," + street + " " + houseNumber;
                 if (isAddress(address)) {
                     double[] latLng = getLatLngFromAddress(getActivity(), address);
                     if (latLng == null) {
-                        Toast.makeText(getActivity().getApplicationContext(), "ENTER VALID ADDRESS", Toast.LENGTH_SHORT).show();
+                        Services.ErrorAlert("Error occured when saving your address!", getContext());
                     } else {
                         String latitude = String.valueOf(latLng[0]);
                         String longitude = String.valueOf(latLng[1]);
 
-
                         sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
-
                         // Get a reference to the Shared Preferences editor
                         SharedPreferences.Editor editor = sharedPrefs.edit();
-
                         // Write the data to the Shared Preferences file
                         editor.putString(getString(R.string.prefs_address_key), address);
                         editor.putString(getString(R.string.prefs_latitude_key), latitude);
                         editor.putString(getString(R.string.prefs_longitude_key), longitude);
-
-
                         // Save the changes to the Shared Preferences file
                         editor.apply();
-                        Toast.makeText(getActivity().getApplicationContext(), "LOCATION SAVED!", Toast.LENGTH_SHORT).show();
-
+                        goToNextFragment();
                     }
                 } else {
-                    Toast.makeText(getActivity().getApplicationContext(), "ENTER VALID ADDRESS23", Toast.LENGTH_SHORT).show();
+                    Services.ErrorAlert("The address you provided is not valid!", getContext());
 
                 }
 
@@ -195,7 +195,11 @@ public class LocationFrag extends Fragment {
                     i--;
                 }
             }
-            ArrayList<UploadTask> tasks = new ArrayList<>();
+
+            progressDialog = new ProgressDialog(getContext());
+            progressDialog.setMessage("Uploading...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
             for (int i = 0; i < imageUris.size(); i++) {
                 Uri imageUri = Uri.parse(imageUris.get(i));
                 if (!((imageUri.toString()).matches("NONE"))) {
@@ -269,8 +273,9 @@ public class LocationFrag extends Fragment {
         adRef.child(parkAdKey).setValue(ad);
         DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child(parkAdKey);
         userAdRef.setValue(ad);
-        Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
+
+        progressDialog.dismiss();
 
         AlertDialog.Builder adb = new AlertDialog.Builder(getContext());
         adb.setTitle("Success");
@@ -422,6 +427,16 @@ public class LocationFrag extends Fragment {
         }
 
         return latLng;
+    }
+
+    /**
+     * SubMethod for the save Button OnClickMethod.
+     * Used to launch the next Fragment of the UploadAd Activity (signaling the user that their data
+     * was successfully saved).
+     */
+    public void goToNextFragment() {
+        mViewPager = getActivity().findViewById(R.id.viewpager);
+        mViewPager.setCurrentItem(1);
     }
 
 }

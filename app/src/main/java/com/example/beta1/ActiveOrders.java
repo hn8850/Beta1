@@ -1,17 +1,17 @@
 package com.example.beta1;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -20,10 +20,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
@@ -91,10 +89,19 @@ public class ActiveOrders extends AppCompatActivity {
                         canceledOrderRefUser.child("canceled").setValue(true);
                         DatabaseReference canceledOrderRefGeneral = fbDB.getReference("Orders").child(canceledOrderID);
                         canceledOrderRefGeneral.setValue(null);
-                        Toast.makeText(ActiveOrders.this, "Order Canceled", Toast.LENGTH_SHORT);
                         activeOrdersDataList.remove(pos);
                         CustomOrderListAdapter adapter = new CustomOrderListAdapter(activeOrdersDataList);
                         listView.setAdapter(adapter);
+                        AlertDialog.Builder adb2 =new AlertDialog.Builder(ActiveOrders.this);
+                        adb2.setTitle("Order Canceled.");
+                        adb2.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface2, int i) {
+                                dialogInterface2.dismiss();
+                            }
+                        });
+                        adb2.create().show();
+                        dialogInterface.dismiss();
                     }
                 });
                 AlertDialog dialog = adb.create();
@@ -205,6 +212,11 @@ public class ActiveOrders extends AppCompatActivity {
                         });
 
                     }
+                }
+                if (activeOrdersDataList.size()==0){
+                    String[] listString = new String[]{"Nothing to see here!"};
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(ActiveOrders.this, android.R.layout.simple_list_item_1, listString);
+                    listView.setAdapter(adapter);
                 }
 
             }

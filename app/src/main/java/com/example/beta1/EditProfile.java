@@ -1,6 +1,7 @@
 package com.example.beta1;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -19,7 +20,6 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -72,6 +72,8 @@ public class EditProfile extends AppCompatActivity {
     FirebaseUser CurrentUserAuth;
     UploadTask uploadTask;
 
+    ProgressDialog progressDialog;
+
     boolean changedPic = false;
 
     @Override
@@ -89,6 +91,10 @@ public class EditProfile extends AppCompatActivity {
         CurrentUserAuth = FirebaseAuth.getInstance().getCurrentUser();
         Intent gi = getIntent();
         UID = gi.getStringExtra("UID");
+        progressDialog = new ProgressDialog(EditProfile.this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
         readUser();
     }
 
@@ -103,16 +109,11 @@ public class EditProfile extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User currentUser = snapshot.getValue(User.class);
-                if (currentUser != null) {
-                    NameEt.setText(currentUser.getName());
-                    PhoneEt.setText(currentUser.getPhoneNumber().substring(1));
-                    picUrl = currentUser.getProfilePicURL();
-                    imageUri = Uri.parse(picUrl);
-                    downloadImage(picUrl, getApplicationContext());
-
-                } else
-                    Toast.makeText(getApplicationContext(), "LOG IN !!!", Toast.LENGTH_SHORT).show();
-
+                NameEt.setText(currentUser.getName());
+                PhoneEt.setText(currentUser.getPhoneNumber().substring(1));
+                picUrl = currentUser.getProfilePicURL();
+                imageUri = Uri.parse(picUrl);
+                downloadImage(picUrl, getApplicationContext());
             }
 
             @Override
@@ -137,6 +138,9 @@ public class EditProfile extends AppCompatActivity {
         phone = "0" + PhoneEt.getText().toString();
 
         if (validInfo()) {
+            progressDialog.setMessage("Updating...");
+            progressDialog.show();
+
             if (changedPic) {
                 StorageReference refStorage = mStorage.getReference("UserPics");
                 StorageReference refPic = refStorage.child(UID);
@@ -167,6 +171,17 @@ public class EditProfile extends AppCompatActivity {
                 userDB.child("name").setValue(name);
                 userDB.child("phoneNumber").setValue(phone);
             }
+            progressDialog.dismiss();
+            AlertDialog.Builder adb = new AlertDialog.Builder(EditProfile.this);
+            adb.setTitle("Credentials Updated!");
+            adb.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    finish();
+                }
+            });
+            AlertDialog dialog = adb.create();
+            dialog.show();
         }
 
     }
@@ -191,32 +206,11 @@ public class EditProfile extends AppCompatActivity {
         }
 
         if (!Services.isValidPhoneNumber(phone)) {
-            ErrorAlert("Please enter valid phone number");
+            Services.ErrorAlert("Please enter valid phone number",EditProfile.this);
             return false;
         }
 
         return true;
-    }
-
-    /**
-     * SubMethod for the information verification process.
-     * Used to handle user errors regarding the information that was submitted, by creating
-     * AlertDialog boxes.
-     *
-     * @param message: The message containing what the user did wrong when submitting information.
-     */
-    public void ErrorAlert(String message) {
-        AlertDialog.Builder adb = new AlertDialog.Builder(this);
-        adb.setTitle("An error occurred when saving your info!");
-        adb.setMessage(message);
-        adb.setNeutralButton("Return", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.dismiss();
-            }
-        });
-        AlertDialog dialog = adb.create();
-        dialog.show();
     }
 
 
@@ -245,6 +239,7 @@ public class EditProfile extends AppCompatActivity {
                 iv.setImageBitmap(circularBitmap);
                 File file = new File(context.getCacheDir(), "tempImage");
                 file.delete();
+                progressDialog.dismiss();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -276,7 +271,7 @@ public class EditProfile extends AppCompatActivity {
         final Paint paint = new Paint();
         final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
 
-        float r = 0;
+        float r;
 
         if (bitmap.getWidth() > bitmap.getHeight()) {
             r = bitmap.getHeight() / 2;
@@ -361,7 +356,6 @@ public class EditProfile extends AppCompatActivity {
             Bitmap circularBitmap = getCircularBitmap(bitmap2);
             iv.setImageBitmap(circularBitmap);
 
-            Toast.makeText(EditProfile.this, "Upload Successful", Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -386,8 +380,6 @@ public class EditProfile extends AppCompatActivity {
         );
         return image;
     }
-
-
 
 
 }

@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -20,6 +19,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -56,9 +57,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.google.maps.GeoApiContext;
-import com.google.maps.GeocodingApi;
-import com.google.maps.model.GeocodingResult;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -76,7 +74,7 @@ import java.util.Locale;
  * @author Harel Navon harelnavon2710@gmail.com
  * @version 3.1
  * @since 23/12/2022
- * This Activity is the main Activity of the Spark app.
+ * The Navi Activity is the main Activity of the Spark app.
  * In this Activity, the user can view all of the available ParkAds in the GoogleMap View.
  * The user can also search and filter ParkAds for more specific results.
  */
@@ -135,6 +133,27 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        AlertDialog.Builder adb = new AlertDialog.Builder(Navi.this);
+        adb.setTitle("Want to leave?");
+        adb.setMessage("Press Close App to leave the app, or Dismiss to stay!");
+        adb.setNegativeButton("Close App", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                finishAffinity();
+            }
+        });
+        adb.setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog dialog = adb.create();
+        dialog.show();
     }
 
     /**
@@ -354,7 +373,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     try {
                         System.out.println("STATUS NOW = " + order.isComplete);
                         if (!(order.isComplete || order.isCanceled)) {
-
                             LocalDate current = LocalDate.parse(currentDate, formatter);
                             LocalDate parkAdDate = LocalDate.parse(parkAdDateStr, formatter);
                             System.out.println("current = " + current.toString() + " parkDate = " + parkAdDate.toString());
@@ -551,12 +569,10 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
 
                         } else {
-                            Toast.makeText(Navi.this, "Dates must be in order!", Toast.LENGTH_SHORT).show();
-
+                            Services.ErrorAlert("Dates must be in order!",Navi.this);
                         }
                     } else {
-                        Toast.makeText(Navi.this, "Enter Valid Dates!", Toast.LENGTH_SHORT).show();
-
+                        Services.ErrorAlert("Please enter valid dates!",Navi.this);
                     }
 
                 } catch (Exception e) {
@@ -564,7 +580,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     query.put("date1", "NONE");
                     query.put("date2", "NONE");
                     sortParkAds();
-                    Toast.makeText(Navi.this, "DateFilter Reset", Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
 
                 }
@@ -667,9 +682,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         }
         String searchQuery;
         try {
-            searchQuery = searchBar.getText().toString();
+            searchQuery = searchBar.getText().toString().trim();
         } catch (Exception e) {
-            Toast.makeText(Navi.this, "Enter Valid Address", Toast.LENGTH_SHORT).show();
+            Services.ErrorAlert("Enter Valid Address",Navi.this);
             return;
         }
         String[] addressComponents;
@@ -961,6 +976,20 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     public static void zoomToLatLng(GoogleMap googleMap, LatLng latLng, float zoomLevel) {
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel);
         googleMap.animateCamera(cameraUpdate);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        mAuth.signOut();
+        Intent si = new Intent(Navi.this,Login.class);
+        startActivity(si);
+
+        return  true;
     }
 
 }

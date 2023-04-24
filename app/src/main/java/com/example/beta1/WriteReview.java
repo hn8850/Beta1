@@ -1,9 +1,5 @@
 package com.example.beta1;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,11 +7,11 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.Toast;
 
-import com.google.firebase.auth.FirebaseAuth;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -90,7 +86,7 @@ public class WriteReview extends AppCompatActivity {
      */
     public void submit(View view) {
         if (clickedStarIndex == 0) {
-            Toast.makeText(this, "Choose Some Stars", Toast.LENGTH_SHORT);
+            Services.ErrorAlert("Please choose some stars",WriteReview.this);
         } else {
             message = messageEt.getText().toString();
             DatabaseReference currUserPath = fbDB.getReference("Users").child(currUserUID);

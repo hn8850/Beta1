@@ -1,6 +1,7 @@
 package com.example.beta1;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -17,12 +18,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -55,6 +55,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class InfoFrag extends Fragment {
 
+    private ViewPager mViewPager;
+
     EditText descEditText;
     Button upload, save, finishButton, clear;
     String desc;
@@ -65,6 +67,8 @@ public class InfoFrag extends Fragment {
     String[] StringURIs;
     Uri imageUri;
     File photoFile;
+
+    ProgressDialog progressDialog;
 
 
     private static final int RESULT_OK = -1;
@@ -176,7 +180,7 @@ public class InfoFrag extends Fragment {
             desc = descEditText.getText().toString();
             if (desc.isEmpty()) desc = "No description";
             if (imageUris == null || imageUris[0] == null) {
-                Toast.makeText(getActivity().getApplicationContext(), "Choose at least one picture!", Toast.LENGTH_SHORT).show();
+                Services.ErrorAlert("Choose at least one picture!", getContext());
             } else {
                 sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
                 SharedPreferences.Editor editor = sharedPrefs.edit();
@@ -186,10 +190,8 @@ public class InfoFrag extends Fragment {
                 editor.putString(getString(R.string.prefs_URI3_key), StringURIs[2]);
                 editor.putString(getString(R.string.prefs_URI4_key), StringURIs[3]);
                 editor.putString(getString(R.string.prefs_URI5_key), StringURIs[4]);
-
                 editor.apply();
-                Toast.makeText(getActivity().getApplicationContext(), "INFO SAVED!", Toast.LENGTH_SHORT).show();
-
+                goToNextFragment();
             }
 
         }
@@ -238,6 +240,11 @@ public class InfoFrag extends Fragment {
                     i--;
                 }
             }
+            ProgressDialog progressDialog = new ProgressDialog(getContext());
+            progressDialog.setMessage("Uploading...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
+
             for (int i = 0; i < imageUris.size(); i++) {
                 Uri imageUri = Uri.parse(imageUris.get(i));
                 if (!((imageUri.toString()).matches("NONE"))) {
@@ -281,7 +288,6 @@ public class InfoFrag extends Fragment {
      */
     public void uploadAd(ArrayList<String> imageURLS) {
         imagesCounter = 0;
-
         sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
 
         String latitude = sharedPrefs.getString("latitude", "0");
@@ -311,8 +317,9 @@ public class InfoFrag extends Fragment {
         adRef.child(parkAdKey).setValue(ad);
         DatabaseReference userAdRef = mDb.getReference("Users").child(userUid).child("ParkAds").child(parkAdKey);
         userAdRef.setValue(ad);
-        Toast.makeText(getActivity().getApplicationContext(), "AD UPLOADED!", Toast.LENGTH_SHORT).show();
         sharedPrefs.edit().clear().apply();
+
+        progressDialog.dismiss();
 
         AlertDialog.Builder adb = new AlertDialog.Builder(getContext());
         adb.setTitle("Success");
@@ -321,7 +328,7 @@ public class InfoFrag extends Fragment {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
-                Intent si = new Intent(getContext(),Navi.class);
+                Intent si = new Intent(getContext(), Navi.class);
                 startActivity(si);
             }
         });
@@ -412,7 +419,7 @@ public class InfoFrag extends Fragment {
         @Override
         public void onClick(View view) {
             if (imagesCounter >= 5) {
-                Toast.makeText(getActivity().getApplicationContext(), "You can only select up to 5 images", Toast.LENGTH_SHORT).show();
+                Services.ErrorAlert("You can only select up to 5 images", getContext());
                 return;
             }
 
@@ -473,7 +480,7 @@ public class InfoFrag extends Fragment {
                     int numImages = clipData.getItemCount();
                     if (numImages + imagesCounter > MAX_IMAGES) {
                         // Show an error message
-                        Toast.makeText(getActivity().getApplicationContext(), "You can only select up to 5 images", Toast.LENGTH_SHORT).show();
+                        Services.ErrorAlert("You can only select up to 5 images", getContext());
                         return;
                     }
                     for (int i = 0; i < numImages; i++) {
@@ -497,10 +504,9 @@ public class InfoFrag extends Fragment {
                     } else StringURIs[i] = "NONE";
                 }
 
-                Toast.makeText(getActivity().getApplicationContext(), "Upload Successful", Toast.LENGTH_SHORT).show();
             } else if (requestCode == REQUEST_IMAGE_CAPTURE) {
                 if (imagesCounter >= 5) {
-                    Toast.makeText(getActivity().getApplicationContext(), "You can only select up to 5 images", Toast.LENGTH_SHORT).show();
+                    Services.ErrorAlert("You can only select up to 5 images", getContext());
                     return;
                 } else {
                     imageUri = Uri.fromFile(photoFile);
@@ -566,5 +572,17 @@ public class InfoFrag extends Fragment {
 
         }
     };
+
+
+    /**
+     * SubMethod for the save Button OnClickMethod.
+     * Used to launch the next Fragment of the UploadAd Activity (signaling the user that their data
+     * was successfully saved).
+     */
+    public void goToNextFragment() {
+        mViewPager = getActivity().findViewById(R.id.viewpager);
+        mViewPager.setCurrentItem(2);
+    }
+
 
 }

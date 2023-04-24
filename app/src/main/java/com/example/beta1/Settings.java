@@ -1,8 +1,6 @@
 package com.example.beta1;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -15,10 +13,14 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -50,7 +52,7 @@ public class Settings extends AppCompatActivity {
     ImageView profilePic;
     Uri imageUri;
     TextView nameTv, emailTv;
-    boolean signedIn;
+    ProgressDialog progressDialog;
 
 
     FirebaseAuth mAuth;
@@ -63,31 +65,39 @@ public class Settings extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         profilePic = findViewById(R.id.profilePic);
+        profilePic.setImageResource(0);
         nameTv = findViewById(R.id.nameTv);
+        nameTv.setText("");
         emailTv = findViewById(R.id.emailTv);
+        emailTv.setText("");
 
         mAuth = FirebaseAuth.getInstance();
         mDb = FirebaseDatabase.getInstance();
         mStorage = FirebaseStorage.getInstance();
         CurrentUserAuth = FirebaseAuth.getInstance().getCurrentUser();
-        signedIn = false;
-        if (CurrentUserAuth != null) {
             for (UserInfo userInfo : CurrentUserAuth.getProviderData()) {
                 if (userInfo.getProviderId().equals("password")) {
                     UID = CurrentUserAuth.getUid();
-                    signedIn = true;
+                    progressDialog = new ProgressDialog(Settings.this);
+                    progressDialog.setMessage("Loading...");
+                    progressDialog.setCancelable(false);
+                    progressDialog.show();
                     readUser();
                 }
             }
-            if (!signedIn) Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
-
-        } else Toast.makeText(this, "LOG IN !!!", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         readUser();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent si = new Intent(this, Navi.class);
+        startActivity(si);
     }
 
     /**
@@ -100,15 +110,11 @@ public class Settings extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User currentUser = snapshot.getValue(User.class);
-                if (currentUser != null) {
-                    nameTv.setText(currentUser.getName());
-                    emailTv.setText(CurrentUserAuth.getEmail());
-                    picUrl = currentUser.getProfilePicURL();
-                    imageUri = Uri.parse(picUrl);
-                    downloadImage(picUrl, getApplicationContext());
-
-                } else
-                    Toast.makeText(getApplicationContext(), "LOG IN !!!", Toast.LENGTH_SHORT).show();
+                nameTv.setText(currentUser.getName());
+                emailTv.setText(CurrentUserAuth.getEmail());
+                picUrl = currentUser.getProfilePicURL();
+                imageUri = Uri.parse(picUrl);
+                downloadImage(picUrl, getApplicationContext());
             }
 
             @Override
@@ -144,6 +150,7 @@ public class Settings extends AppCompatActivity {
                 profilePic.setImageBitmap(circularBitmap);
                 File file = new File(context.getCacheDir(), "tempImage");
                 file.delete();
+                progressDialog.dismiss();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -270,6 +277,21 @@ public class Settings extends AppCompatActivity {
         Intent si = new Intent(this, ReviewHistory.class);
         si.putExtra("UID", UID);
         startActivity(si);
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        mAuth.signOut();
+        Intent si = new Intent(Settings.this,Login.class);
+        startActivity(si);
+
+        return  true;
     }
 
 

@@ -1,10 +1,7 @@
 package com.example.beta1;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
-
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -25,7 +22,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -38,8 +38,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnPausedListener;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -60,10 +58,10 @@ import java.util.Date;
 public class Register extends AppCompatActivity {
 
     TextInputEditText etRegEmail;
-    TextInputEditText etRegPassword;
+    TextInputEditText etRegPassword,etSecondPass;
     TextInputEditText NameEt, PhoneEt;
     EditText dd, mm, yyyy;
-    String email, password;
+    String email, password,password2;
     String name, date, phone, picUrl;
     String UID;
     ImageView iv;
@@ -82,6 +80,8 @@ public class Register extends AppCompatActivity {
     FirebaseStorage mStorage;
     UploadTask uploadTask;
 
+    ProgressDialog progressDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,6 +89,7 @@ public class Register extends AppCompatActivity {
 
         etRegEmail = findViewById(R.id.etRegEmail);
         etRegPassword = findViewById(R.id.etRegPass);
+        etSecondPass = findViewById(R.id.etRegPass2);
         NameEt = findViewById(R.id.etRegName);
         PhoneEt = findViewById(R.id.etRegPhone);
         dd = findViewById(R.id.edit_text_dd_1);
@@ -108,6 +109,10 @@ public class Register extends AppCompatActivity {
         mStorage = FirebaseStorage.getInstance();
 
         btnRegister.setOnClickListener(view -> {
+            progressDialog = new ProgressDialog(Register.this);
+            progressDialog.setMessage("Registering...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
             createUser();
         });
 
@@ -124,6 +129,7 @@ public class Register extends AppCompatActivity {
     public void createUser() {
         email = etRegEmail.getText().toString().trim();
         password = etRegPassword.getText().toString().trim();
+        password2 = etSecondPass.getText().toString().trim();
         name = NameEt.getText().toString();
         date = dd.getText().toString() + "/" + mm.getText().toString() + "/" + yyyy.getText().toString();
         phone = "0" + PhoneEt.getText().toString();
@@ -132,7 +138,6 @@ public class Register extends AppCompatActivity {
             mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
-                    System.out.println("CRASH");
                     if (task.isSuccessful()) {
                         FirebaseUser newUser = FirebaseAuth.getInstance().getCurrentUser();
                         newUser.sendEmailVerification();
@@ -140,19 +145,9 @@ public class Register extends AppCompatActivity {
                         StorageReference refStorage = mStorage.getReference("UserPics");
                         StorageReference refPic = refStorage.child(UID);
                         uploadTask = refPic.putFile(imageUri);
-                        uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                            @Override
-                            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                                double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                            }
-                        }).addOnPausedListener(new OnPausedListener<UploadTask.TaskSnapshot>() {
-                            @Override
-                            public void onPaused(UploadTask.TaskSnapshot taskSnapshot) {
-                            }
-                        }).addOnFailureListener(new OnFailureListener() {
+                        uploadTask.addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception exception) {
-                                System.out.println("FAIL");
                             }
                         }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                             @Override
@@ -160,8 +155,9 @@ public class Register extends AppCompatActivity {
                                 refPic.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                                     @Override
                                     public void onSuccess(Uri uri) {
-                                        System.out.println("WIN");
+                                        progressDialog.dismiss();
                                         picUrl = uri.toString();
+                                        date = Services.addLeadingZerosToDate(date,true);
                                         User userDB = new User(1, name, date, phone, picUrl);
                                         DatabaseReference refDb = mDb.getReference("Users");
                                         refDb.child(UID).setValue(userDB);
@@ -185,7 +181,7 @@ public class Register extends AppCompatActivity {
                         });
 
                     } else {
-                        ErrorAlert("Registration Error: " + task.getException().getMessage());
+                        Services.ErrorAlert("Registration Error: " + task.getException().getMessage(),Register.this);
                     }
                 }
             });
@@ -209,6 +205,17 @@ public class Register extends AppCompatActivity {
             etRegPassword.requestFocus();
             return false;
         }
+        if (TextUtils.isEmpty(password2)) {
+            etSecondPass.setError("You must renter password");
+            etSecondPass.requestFocus();
+            return false;
+        }
+
+        if (!password2.matches(password)){
+            Services.ErrorAlert("Passwords do not match!",Register.this);
+            return false;
+        }
+
         if (TextUtils.isEmpty(name)) {
             NameEt.setError("Name cannot be empty");
             NameEt.requestFocus();
@@ -225,42 +232,21 @@ public class Register extends AppCompatActivity {
             return false;
         }
         if (!Services.isValidPhoneNumber(phone)) {
-            ErrorAlert("Please enter valid phone number");
+            Services.ErrorAlert("Please enter valid phone number",Register.this);
             return false;
         }
         if (!Services.isValidDate2(date)) {
-            ErrorAlert("Enter a valid date!");
+            Services.ErrorAlert("Please enter a valid date",Register.this);
             return false;
         }
         if (!isAge16AndAbove(date)) {
-            ErrorAlert("User must be above the age of 16!");
+            Services.ErrorAlert("User must be above the age of 16!",Register.this);
             return false;
         }
 
-        System.out.println("TRUE");
         return true;
     }
 
-    /**
-     * SubMethod for the information verification process.
-     * Used to handle user errors regarding the information that was submitted, by creating
-     * AlertDialog boxes.
-     *
-     * @param message: The message containing what the user did wrong when submitting information.
-     */
-    public void ErrorAlert(String message) {
-        AlertDialog.Builder adb = new AlertDialog.Builder(this);
-        adb.setTitle("An error occurred when saving your info!");
-        adb.setMessage(message);
-        adb.setNeutralButton("Return", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.dismiss();
-            }
-        });
-        AlertDialog dialog = adb.create();
-        dialog.show();
-    }
 
     /**
      * Boolean SubMethod for the ValidInfo Method.
@@ -300,7 +286,6 @@ public class Register extends AppCompatActivity {
                 && birthDateCalendar.get(Calendar.DAY_OF_MONTH) > currentDate.get(Calendar.DAY_OF_MONTH))) {
             age--;
         }
-
         // Check if age is 16 or above
         return age >= 16;
     }
@@ -313,7 +298,6 @@ public class Register extends AppCompatActivity {
      */
     public void ProfilePic(View view) {
         CharSequence options[] = new CharSequence[]{"Take Photo", "Choose from Gallery"};
-
         AlertDialog.Builder builder = new AlertDialog.Builder(Register.this);
         builder.setTitle("Select Option");
         builder.setItems(options, new DialogInterface.OnClickListener() {
@@ -369,8 +353,6 @@ public class Register extends AppCompatActivity {
             Bitmap bitmap2 = ((BitmapDrawable) iv.getDrawable()).getBitmap();
             Bitmap circularBitmap = getCircularBitmap(bitmap2);
             iv.setImageBitmap(circularBitmap);
-
-            Toast.makeText(Register.this, "Upload Successful", Toast.LENGTH_SHORT).show();
         }
 
     }

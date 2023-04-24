@@ -5,8 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -84,10 +84,19 @@ public class ActiveParkAds extends AppCompatActivity {
                         canceledParkAdRef4User.child("active").setValue(0);
                         DatabaseReference canceledParkAdRefGeneral = fbDB.getReference("ParkAds").child(canceledParkAdID);
                         canceledParkAdRefGeneral.setValue(null);
-                        Toast.makeText(ActiveParkAds.this, "ParkAd removed", Toast.LENGTH_SHORT);
                         activeParkAdDataList.remove(pos);
                         CustomParkAdListAdapter adapter = new CustomParkAdListAdapter(activeParkAdDataList);
                         listView.setAdapter(adapter);
+                        AlertDialog.Builder adb2 =new AlertDialog.Builder(ActiveParkAds.this);
+                        adb2.setTitle("ParkAd Removed.");
+                        adb2.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface2, int i) {
+                                dialogInterface2.dismiss();
+                            }
+                        });
+                        adb2.create().show();
+                        dialogInterface.dismiss();
                     }
                 });
                 AlertDialog dialog = adb.create();
@@ -195,8 +204,15 @@ public class ActiveParkAds extends AppCompatActivity {
                     }
                 }
 
-                CustomParkAdListAdapter adapter = new CustomParkAdListAdapter(activeParkAdDataList);
-                listView.setAdapter(adapter);
+                if (activeParkAdDataList.size()==0){
+                    String[] listString = new String[]{"Nothing to see here!"};
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(ActiveParkAds.this, android.R.layout.simple_list_item_1, listString);
+                    listView.setAdapter(adapter);
+                }
+                else{
+                    CustomParkAdListAdapter adapter = new CustomParkAdListAdapter(activeParkAdDataList);
+                    listView.setAdapter(adapter);
+                }
             }
 
 

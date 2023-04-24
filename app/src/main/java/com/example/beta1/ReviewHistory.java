@@ -1,13 +1,13 @@
 package com.example.beta1;
 
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.widget.ListView;
-
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -60,8 +60,15 @@ public class ReviewHistory extends AppCompatActivity {
                     data.put("pos", String.valueOf(review.getStars()));
                     reviewHistoryDataList.add(data);
                 }
-                CustomReviewListAdapter adapter = new CustomReviewListAdapter(reviewHistoryDataList);
-                listView.setAdapter(adapter);
+                if (reviewHistoryDataList.size() == 0) {
+                    String[] listString = new String[]{"Nothing to see here!"};
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(ReviewHistory.this, android.R.layout.simple_list_item_1, listString);
+                    listView.setAdapter(adapter);
+                } else {
+                    CustomReviewListAdapter adapter = new CustomReviewListAdapter(reviewHistoryDataList);
+                    listView.setAdapter(adapter);
+                }
+
             }
 
             @Override

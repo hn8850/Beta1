@@ -1,5 +1,8 @@
 package com.example.beta1;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
@@ -7,13 +10,18 @@ import androidx.annotation.RequiresApi;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author Harel Navon harelnavon2710@gmail.com
+ * @version 1.6
+ * @since 24/2/2023
+ * The Services class is a collection of widely used SubMethod across all of the different classes
+ * in the project.
+ * Mainly used for date and time comparisons/castings to String values.
+ */
 public class Services {
 
     /**
@@ -29,12 +37,14 @@ public class Services {
 
 
     /**
-     * Boolean Method that returns true if the time described by the firstTimeStr String is before
-     * the the time described by the secondTimeStr String.
+     * Boolean SubMethod used within the reading process's of Orders and ParkAds all across the app.
+     * Used to check if a given time String describes a hour after the hour described by another
+     * time String.
      *
-     * @param firstTimeStr:  The time String to be checked if its before the secondTimeStr String.
-     * @param secondTimeStr: The time String to be checked if its after the firstTimeStr String.
-     * @return
+     * @param firstTimeStr:  The time String to be checked if its before the secondTimeStr String ('HH:mm' format).
+     * @param secondTimeStr: The time String to be checked if its after the firstTimeStr String ('HH:mm' format).
+     * @return: The Method returns true if the time described by the firstTimeStr String is before
+     * the time described by the secondTimeStr String, false otherwise.
      */
     public static boolean isFirstTimeBeforeSecond(String firstTimeStr, String secondTimeStr) {
         try {
@@ -55,6 +65,16 @@ public class Services {
         }
     }
 
+    /**
+     * Boolean SubMethod used within the reading process's of Orders and ParkAds all across the app.
+     * Used to verify that a given hour is between 2 other hours.
+     *
+     * @param checkHour: The hour to be checked (String, 'HH:mm' format).
+     * @param beginHour: The hour at which the time range that is checked begins (String, 'HH:mm' format).
+     * @param endHour:   The hour at which the time range that is checked ends (String, 'HH:mm' format).
+     * @return: The Method returns true if the time described by the checkHour String is between or
+     * equal to the time's described by the beginHour and endHour Strings. false otherwise.
+     */
     public static boolean isHourBetween(String checkHour, String beginHour, String endHour) {
         try {
             // Parse time strings into Date objects using SimpleDateFormat
@@ -73,6 +93,20 @@ public class Services {
     }
 
 
+    /**
+     * String SubMethod used  within the reading and writing process's of Orders and ParkAds all
+     * across the app.
+     * Used to unify date String format (to include leading zeroes across database, and for display
+     * purposes), as well as used to compare between int values of different date Strings.
+     *
+     * @param dateString: The date String to receive leading zeros (e.g '1/1/1970' will return as
+     *                    '01/01/1970').
+     * @param Slashes:    boolean used to identify is the Method is to be used for display or comparison
+     *                    purposes.
+     *                    A true value will return a String in the 'dd/MM/yyyy' format to display, while
+     *                    A false value will return a String in the 'yyyyMMdd', for date comparison.
+     * @return: The Method returns a date strings with leading zeroes added to it (if need be).
+     */
     public static String addLeadingZerosToDate(String dateString, boolean Slashes) {
         String[] dateParts = dateString.split("/");
         String day = dateParts[0];
@@ -91,7 +125,12 @@ public class Services {
         return year + month + day; //ParkAdDateKey
     }
 
-    //for receipt
+    /**
+     * SubMethod used as part of the Receipt Object creation process.
+     * Used to document the time at which a Receipt was created.
+     *
+     * @return: A time String in the  "dd/MM/yyyy 'at' HH:mm" format.
+     */
     public static String getCurrentTimeFormatted() {
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy 'at' HH:mm");
         Date currentDate = new Date();
@@ -100,6 +139,15 @@ public class Services {
         return formattedDate;
     }
 
+    /**
+     * Boolean SubMethod used within the reading process's of Orders and ParkAds all across the app.
+     * Used to check if a given time range is after the current hour.
+     *
+     * @param startTime: Time String that describes the beginning of the time range ('HH:mm' format).
+     * @param endTime:   Time String that describes the ending of the time range ('HH:mm' format).
+     * @return: The Method returns true if the time range described by the startTime and endTime
+     * Strings is after the current hour. false otherwise.
+     */
     @RequiresApi(api = Build.VERSION_CODES.O)
     public static boolean isTimeRangeAfterCurrentHour(String startTime, String endTime) {
         // Get the current time as a LocalTime object
@@ -112,17 +160,33 @@ public class Services {
     }
 
 
+    /**
+     * Boolean SubMethod used to verify date inputs by the user.
+     *
+     * @param date: The date String to be checked.
+     * @return: The Method returns true if the date string describes a valid date,false otherwise.
+     */
     public static boolean isValidDate2(String date) {
         String pattern = "^(3[01]|[12][0-9]|0?[1-9])/(1[0-2]|0?[1-9])/[0-9]{4}$";
         Pattern r = Pattern.compile(pattern);
         Matcher m = r.matcher(date);
         if (!m.find()) {
-            System.out.println(3);
             return false;
         }
         return true;
     }
 
+    /**
+     * Boolean SubMethod used within the reading process's of Orders and ParkAds all across the app.
+     * Used to check if a given date is between or equal to the date range described by the other
+     * 2 dates given.
+     *
+     * @param checkDate: The date to be checked for being in range (String, 'dd/MM/yyyy' format).
+     * @param date1:     Date String that describes the beginning of the date range ('dd/MM/yyyy' format).
+     * @param date2:     Date String that describes the ending of the date range ('dd/MM/yyyy' format).
+     * @return: The Method returns true if the date described in the checkDate String is between or
+     * equal to the dates described in the date1 and date2 Strings. false otherwise.
+     */
     public static boolean isDateBetween(String checkDate, String date1, String date2) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         try {
@@ -137,6 +201,16 @@ public class Services {
         }
     }
 
+    /**
+     * Boolean SubMethod used in the HourSelect Activity.
+     * Used in case the ParkAd viewed by the user corresponds with the current date.
+     * In that case, the Method receives the current time and calculates which quarter of an hour is
+     * closest to the time given.
+     *
+     * @param timeString: Time String to be used as the base for the calculation process ('HH:mm' format).
+     * @return: The Method returns a time String depicting the closest quarter hour to the timeString
+     * given ('HH:mm' format).
+     */
     public static String roundToNextQuarterHour(String timeString) {
         String[] parts = timeString.split(":");
         int hour = Integer.parseInt(parts[0]);
@@ -159,6 +233,27 @@ public class Services {
         }
 
         return String.format("%02d:%02d", hour, minute);
+    }
+
+    /**
+     * SubMethod for the information verification process.
+     * Used to handle user errors regarding the information that was submitted, by creating
+     * AlertDialog boxes.
+     *
+     * @param message: The message containing what the user did wrong when submitting information.
+     */
+    public static  void ErrorAlert(String message, Context context) {
+        AlertDialog.Builder adb = new AlertDialog.Builder(context);
+        adb.setTitle("An error occurred when saving your info!");
+        adb.setMessage(message);
+        adb.setNeutralButton("Return", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog dialog = adb.create();
+        dialog.show();
     }
 
 

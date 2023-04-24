@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:title="Login" />
-    <item android:title="Navi" />
-    <item android:title="Post Ad" />
-    <item android:title="Settings" />
-    <item android:title="Support" />
-    <item android:title="test" />
+    <item android:title="Log Out" />
 
 
 </menu>
