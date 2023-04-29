@@ -14,4 +14,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Beta1"
 include ':app'
-include ':test111'

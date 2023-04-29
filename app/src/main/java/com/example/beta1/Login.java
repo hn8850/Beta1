@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -229,7 +230,7 @@ public class Login extends AppCompatActivity {
         }
 
         if (st.equals("Settings")) {
-            Intent si = new Intent(this, Settings.class);
+            Intent si = new Intent(this, SettingsScreen.class);
             startActivity(si);
         }
 

@@ -28,7 +28,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
+import android.provider.Settings;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -57,6 +57,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -128,6 +129,9 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         parkAdIDs = new ArrayList<>();
         parkAds = new ArrayList<>();
 
+        if (!isUsingNetworkTime()) {
+            showTimeWarningDialog();
+        }
 
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -220,7 +224,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
              */
             @Override
             public void onClick(View view) {
-                Intent si = new Intent(Navi.this, Settings.class);
+                Intent si = new Intent(Navi.this, SettingsScreen.class);
                 startActivity(si);
             }
         });
@@ -283,12 +287,14 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 System.out.println("check");
                 SimpleDateFormat dateFormat = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
                 SimpleDateFormat hourFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                String currentDate = dateFormat.format(new Date());
+                System.out.println("NEWCURRENT: " + currentDate);
+                currentDate = Services.addLeadingZerosToDate(currentDate, false);
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     ParkAd parkAd = snapshot1.getValue(ParkAd.class);
                     if (!currUserID.matches(parkAd.getUserID())) {
                         System.out.println("yes");
-                        String currentDate = dateFormat.format(new Date());
-                        currentDate = Services.addLeadingZerosToDate(currentDate, false);
+
                         String parkAdDateStr = parkAd.getDate();
                         parkAdDateStr = Services.addLeadingZerosToDate(parkAdDateStr, false);
                         try {
@@ -569,10 +575,10 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
 
                         } else {
-                            Services.ErrorAlert("Dates must be in order!",Navi.this);
+                            Services.ErrorAlert("Dates must be in order!", Navi.this);
                         }
                     } else {
-                        Services.ErrorAlert("Please enter valid dates!",Navi.this);
+                        Services.ErrorAlert("Please enter valid dates!", Navi.this);
                     }
 
                 } catch (Exception e) {
@@ -684,7 +690,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         try {
             searchQuery = searchBar.getText().toString().trim();
         } catch (Exception e) {
-            Services.ErrorAlert("Enter Valid Address",Navi.this);
+            Services.ErrorAlert("Enter Valid Address", Navi.this);
             return;
         }
         String[] addressComponents;
@@ -889,51 +895,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
     }
 
 
-    /*
-    public void NaviwithADB(@NonNull LatLng latLng) {
-        double latitude = latLng.latitude;
-        double longitude = latLng.longitude;
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Choose a map app");
-
-        builder.setPositiveButton("Google Maps", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // Launch Google Maps
-                Uri gmmIntentUri = Uri.parse("google.navigation:q=" + latitude + "," + longitude);
-                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                mapIntent.setPackage("com.google.android.apps.maps");
-                startActivity(mapIntent);
-            }
-        });
-
-        builder.setNeutralButton("NO NAVIGATION", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.cancel();
-            }
-        });
-
-        builder.setNegativeButton("Waze", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // Launch Waze
-                try {
-                    String url = "waze://?q=" + latitude + "," + longitude;
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    startActivity(intent);
-                } catch (ActivityNotFoundException ex) {
-                    // If Waze is not installed, open it in Google Play:
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.waze"));
-                    startActivity(intent);
-                }
-            }
-        });
-        builder.show();
-    }
-    */
-
     /**
      * SubMethod for the SearchQuery Method.
      * Used to zoom the camera of the Map View on the address the user has submitted.
@@ -978,6 +939,40 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
         googleMap.animateCamera(cameraUpdate);
     }
 
+    /**
+     * Boolean Method used to verify if the user is manipulating their time settings.
+     * Must return true to access the app's services.
+     *
+     * @return: The Method returns true if the user has activated "Use Network Provided Time" in
+     * their system settings. false otherwise.
+     */
+    private boolean isUsingNetworkTime() {
+        return Settings.Global.getInt(getContentResolver(), Settings.Global.AUTO_TIME, 0) == 1;
+    }
+
+    /**
+     * SubMethod used to display the user with a warning message in case the isUsingNetworkTime Method
+     * returns false.
+     */
+    private void showTimeWarningDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Time Warning")
+                .setMessage("Your device is not using network-provided time. Please enable network time in your device settings to ensure accurate app functionality.")
+                .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startActivity(new Intent(Settings.ACTION_DATE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("Close App", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        finishAffinity();
+                    }
+                })
+                .show();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
@@ -986,10 +981,10 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
 
     public boolean onOptionsItemSelected(MenuItem item) {
         mAuth.signOut();
-        Intent si = new Intent(Navi.this,Login.class);
+        Intent si = new Intent(Navi.this, Login.class);
         startActivity(si);
 
-        return  true;
+        return true;
     }
 
 }

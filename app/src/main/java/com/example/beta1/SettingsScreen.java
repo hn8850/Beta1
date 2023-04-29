@@ -45,7 +45,7 @@ import java.io.File;
  * (Activities such as the different histories and EditProfile).
  */
 
-public class Settings extends AppCompatActivity {
+public class SettingsScreen extends AppCompatActivity {
 
     String picUrl;
     String UID;
@@ -78,7 +78,7 @@ public class Settings extends AppCompatActivity {
             for (UserInfo userInfo : CurrentUserAuth.getProviderData()) {
                 if (userInfo.getProviderId().equals("password")) {
                     UID = CurrentUserAuth.getUid();
-                    progressDialog = new ProgressDialog(Settings.this);
+                    progressDialog = new ProgressDialog(SettingsScreen.this);
                     progressDialog.setMessage("Loading...");
                     progressDialog.setCancelable(false);
                     progressDialog.show();
@@ -288,9 +288,8 @@ public class Settings extends AppCompatActivity {
 
     public boolean onOptionsItemSelected(MenuItem item) {
         mAuth.signOut();
-        Intent si = new Intent(Settings.this,Login.class);
+        Intent si = new Intent(SettingsScreen.this,Login.class);
         startActivity(si);
-
         return  true;
     }
 

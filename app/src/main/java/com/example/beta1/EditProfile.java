@@ -90,6 +90,7 @@ public class EditProfile extends AppCompatActivity {
         mStorage = FirebaseStorage.getInstance();
         CurrentUserAuth = FirebaseAuth.getInstance().getCurrentUser();
         Intent gi = getIntent();
+
         UID = gi.getStringExtra("UID");
         progressDialog = new ProgressDialog(EditProfile.this);
         progressDialog.setMessage("Loading...");
