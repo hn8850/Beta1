@@ -20,6 +20,7 @@
             android:layout_weight="4"
             android:gravity="center"
             android:text="Register"
+            android:autoSizeTextType="uniform"
             android:textColor="@color/teal_700"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -30,6 +31,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:layout_weight="8"
+            android:autoSizeTextType="uniform"
             android:onClick="ProfilePic"
             android:src="@drawable/login" />
 
@@ -53,6 +55,7 @@
                 android:id="@+id/etRegEmail"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:autoSizeTextType="uniform"
                 android:hint="Email"
                 android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -74,6 +77,7 @@
                 android:id="@+id/etRegPass"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:autoSizeTextType="uniform"
                 android:hint="Password"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -94,6 +98,7 @@
                 android:id="@+id/etRegPass2"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:autoSizeTextType="uniform"
                 android:hint="Re-enter password"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -113,6 +118,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRegName"
                 android:layout_width="match_parent"
+                android:autoSizeTextType="uniform"
                 android:layout_height="match_parent"
                 android:hint="Name"
                 android:inputType="textEmailAddress" />
@@ -134,6 +140,7 @@
             <TextView
                 android:id="@+id/textView27"
                 android:layout_width="0dp"
+                android:autoSizeTextType="uniform"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
                 android:text="+972"
@@ -149,6 +156,7 @@
                     android:id="@+id/etRegPhone"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:autoSizeTextType="uniform"
                     android:layout_weight="5"
                     android:hint="Phone Number"
                     android:inputType="phone" />
@@ -166,6 +174,7 @@
             android:id="@+id/textView26"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:autoSizeTextType="uniform"
             android:layout_weight="1"
             android:text="Date of Birth:"
             android:textSize="20sp" />
@@ -183,6 +192,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="2"
                 android:hint="dd"
+                android:autoSizeTextType="uniform"
                 android:inputType="number"
                 android:maxLength="2"
                 android:maxLines="1"
@@ -192,6 +202,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:autoSizeTextType="uniform"
                 android:gravity="center"
                 android:text="/"
                 android:textSize="48sp" />
@@ -204,6 +215,7 @@
                 android:hint="mm"
                 android:inputType="number"
                 android:maxLength="2"
+                android:autoSizeTextType="uniform"
                 android:maxLines="1"
                 android:textSize="18sp" />
 
@@ -212,6 +224,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
+                android:autoSizeTextType="uniform"
                 android:text="/"
                 android:textSize="48sp" />
 
@@ -223,6 +236,7 @@
                 android:hint="yyyy"
                 android:inputType="number"
                 android:maxLength="4"
+                android:autoSizeTextType="uniform"
                 android:maxLines="1"
                 android:textSize="18sp" />
 
@@ -251,6 +265,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Already registered"
+                android:autoSizeTextType="uniform"
                 android:textSize="16sp" />
 
             <TextView
@@ -259,6 +274,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
                 android:text="Login here"
+                android:autoSizeTextType="uniform"
                 android:textColor="@color/teal_700"
                 android:textSize="20sp"
                 android:textStyle="bold" />

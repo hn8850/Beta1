@@ -271,8 +271,9 @@ public class ActiveOrders extends AppCompatActivity {
     }
 
     /**
-     * SubMethod for readActiveOrders Method. Used to delete the SharedPrefs file created for saving
-     * Order information,in order to clear up space.
+     * SubMethod for readActiveOrders Method.
+     * Used to delete the SharedPrefs file created for savingOrder information,in order to clear up
+     * space.
      */
     public void deleteSharedPref() {
         SharedPreferences sharedPreferences = getSharedPreferences("my_shared_prefs", MODE_PRIVATE);

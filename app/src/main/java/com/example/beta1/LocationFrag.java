@@ -343,7 +343,7 @@ public class LocationFrag extends Fragment {
         try {
             // Create a new geocoding API client using your API key
             GeoApiContext context = new GeoApiContext.Builder()
-                    .apiKey("AIzaSyBuElPUnsIAMgwv-4a219mjx-4a5NzmYxc")
+                    .apiKey("AIzaSyCsSSUy_GstxYigtSOG3okZkvGjIaQfJ74")
                     .build();
 
             // Use the geocoding API to geocode the given address

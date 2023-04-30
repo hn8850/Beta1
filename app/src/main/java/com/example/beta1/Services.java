@@ -163,14 +163,18 @@ public class Services {
     /**
      * Boolean SubMethod used to verify date inputs by the user.
      *
-     * @param date: The date String to be checked.
+     * @param dateStr: The date String to be checked.
      * @return: The Method returns true if the date string describes a valid date,false otherwise.
      */
-    public static boolean isValidDate2(String date) {
-        String pattern = "^(3[01]|[12][0-9]|0?[1-9])/(1[0-2]|0?[1-9])/[0-9]{4}$";
-        Pattern r = Pattern.compile(pattern);
-        Matcher m = r.matcher(date);
-        if (!m.find()) {
+    public static boolean isValidDate2(String dateStr) {
+        SimpleDateFormat sdfrmt = new SimpleDateFormat("dd/MM/yyyy");
+        sdfrmt.setLenient(false);
+        try
+        {
+            Date javaDate = sdfrmt.parse(dateStr);
+        }
+        catch (ParseException e)
+        {
             return false;
         }
         return true;

@@ -32,6 +32,7 @@ import android.provider.Settings;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -80,7 +81,7 @@ import java.util.Locale;
  * The user can also search and filter ParkAds for more specific results.
  */
 
-public class Navi extends FragmentActivity implements OnMapReadyCallback {
+public class Navi extends AppCompatActivity implements OnMapReadyCallback {
 
     Button filter;
     Button search;
@@ -252,24 +253,6 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             }
         });
 
-        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-            @Nullable
-            @Override
-            public View getInfoContents(@NonNull Marker marker) {
-                return null;
-            }
-
-            @Nullable
-            @Override
-            public View getInfoWindow(@NonNull Marker marker) {
-                View view = getLayoutInflater().inflate(R.layout.custom_info_window, null);
-                TextView priceTv = view.findViewById(R.id.title);
-                priceTv.setText(String.valueOf(marker.getTitle()));
-                System.out.println("Price2:" + marker.getTitle());
-                return view;
-
-            }
-        });
     }
 
     /**
@@ -328,8 +311,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                 for (ParkAd parkAd : parkAds) {
                     LatLng location = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
                     MarkerOptions markerOptions = new MarkerOptions().icon(blueMarkerIcon)
-                            .position(location)
-                            .title(parkAd.getHourlyRate().toString());
+                            .position(location);
                     Marker marker = mMap.addMarker(markerOptions);
                     marker.showInfoWindow();
 
@@ -582,12 +564,7 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
                     }
 
                 } catch (Exception e) {
-                    System.out.println("ECXECPTIOn " + e.getMessage().toString());
-                    query.put("date1", "NONE");
-                    query.put("date2", "NONE");
-                    sortParkAds();
-                    dialog.dismiss();
-
+                    Services.ErrorAlert("Please enter valid dates!",Navi.this);
                 }
             }
         });
@@ -658,12 +635,10 @@ public class Navi extends FragmentActivity implements OnMapReadyCallback {
             if (searchedParkAdLocation != null && location.latitude == searchedParkAdLocation.latitude && location.longitude == searchedParkAdLocation.longitude) {
                 markerOptions = new MarkerOptions().icon(greenMarkerIcon)
                         .position(location)
-                        .title(parkAd.getHourlyRate().toString())
                         .snippet(String.valueOf(parkAd.getHourlyRate()));
             } else {
                 markerOptions = new MarkerOptions().icon(blueMarkerIcon)
                         .position(location)
-                        .title(parkAd.getHourlyRate().toString())
                         .snippet(String.valueOf(parkAd.getHourlyRate()));
             }
             Marker marker = mMap.addMarker(markerOptions);
