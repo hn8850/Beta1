@@ -67,14 +67,6 @@
                 android:src="@drawable/plus" />
 
             <ImageButton
-                android:id="@+id/imageButton2"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@android:color/transparent"
-                android:src="@drawable/navicon2" />
-
-            <ImageButton
                 android:id="@+id/imageButton3"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -97,16 +89,6 @@
                 android:layout_weight="2"
                 android:gravity="center"
                 android:text="Post Ad"
-                android:textColor="#000000"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/textView24"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:gravity="center"
-                android:text="Explore"
                 android:textColor="#000000"
                 android:textStyle="bold" />
 

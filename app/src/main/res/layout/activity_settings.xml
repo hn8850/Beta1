@@ -176,18 +176,6 @@
                 android:textColor="#000000" />
 
             <Button
-                android:id="@+id/button4"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:backgroundTint="#FFFFFF"
-                android:drawableLeft="@drawable/ic_baseline_rate_review_24"
-                android:drawableRight="@drawable/ic_baseline_arrow_forward_24"
-                android:onClick="goToReviewHistory"
-                android:text="Reviews"
-                android:textColor="#000000" />
-
-            <Button
                 android:id="@+id/button8"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
@@ -197,6 +185,18 @@
                 android:drawableRight="@drawable/ic_baseline_arrow_forward_24"
                 android:onClick="goToReceiptHistory"
                 android:text="Receipt History"
+                android:textColor="#000000" />
+
+            <Button
+                android:id="@+id/button4"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:backgroundTint="#FFFFFF"
+                android:drawableLeft="@drawable/ic_baseline_rate_review_24"
+                android:drawableRight="@drawable/ic_baseline_arrow_forward_24"
+                android:onClick="goToReviewHistory"
+                android:text="Reviews"
                 android:textColor="#000000" />
 
 

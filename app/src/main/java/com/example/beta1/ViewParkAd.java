@@ -30,7 +30,9 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 
 /***
  * @author Harel Navon harelnavon2710@gmail.com
@@ -129,7 +131,7 @@ public class ViewParkAd extends AppCompatActivity {
                         user = snapshot.getValue(User.class);
                         titleTv.setText(user.getName() + "'s Parking Space");
                         profilePicURL = user.getProfilePicURL();
-                        downloadImage(profilePicURL, getApplicationContext(), 1, 0);
+                        downloadImage(profilePicURL, 1, 0);
                         addressTv.setText("Address: " + parkAd.getAddress());
                         priceTv.setText("Price for hour: " + parkAd.getHourlyRate() + " NIS");
                         descTv.setText(parkAd.getDescription());
@@ -138,7 +140,7 @@ public class ViewParkAd extends AppCompatActivity {
                         String parkPicURL;
                         for (int i = 0; i < parkAd.getPictureUrl().size(); i++) {
                             parkPicURL = parkAd.getPictureUrl().get(i);
-                            downloadImage(parkPicURL, getApplicationContext(), 0, i);
+                            downloadImage(parkPicURL,0, i);
                         }
                         for (int i = parkAd.getPictureUrl().size(); i < 5; i++) {
                             imageViews[i].setImageResource(0);
@@ -170,9 +172,16 @@ public class ViewParkAd extends AppCompatActivity {
      * using an ImageView.
      *
      * @param imageUrl: The String containing the URL for the image in the Storage database.
-     * @param context:  The Activity Context.
+     * @param mode: Integer used to determine if the image being downloaded is the ParkAd owner's
+     *            profile pic, or one of the ParkAd's images.
+     * @param index: Integer that is used in case the image being downloaded is one of the ParkAd's
+     *             images. If so and in case of index being equal to 0,the image downloaded will be
+     *             the default thumbnail (bigger picture).
+     *             If the index is not equal to zero, the image downloaded will be at one of the
+     *             smaller list of pictures.
+     *
      */
-    private void downloadImage(String imageUrl, final Context context, int mode, int index) {
+    private void downloadImage(String imageUrl, int mode, int index) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReferenceFromUrl(imageUrl);
 
@@ -180,21 +189,43 @@ public class ViewParkAd extends AppCompatActivity {
         storageRef.getBytes(FIVE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
             @Override
             public void onSuccess(byte[] bytes) {
-                // Data for "images/island.jpg" is returns, use this as needed
-                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                if (mode == 0) {
-                    if (index == 0) {
-                        bigPic.setImageBitmap(bitmap);
+                try {
+                    // Load the original image as a bitmap
+                    Bitmap originalBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    // Determine the desired maximum image size in bytes (e.g., 500 KB)
+                    int desiredMaxSizeInBytes = 500 * 1024;
+                    // Calculate the appropriate image quality based on the desired maximum size
+                    int quality = 100;
+                    if (bytes.length > desiredMaxSizeInBytes) {
+                        quality = (int) Math.ceil((float) desiredMaxSizeInBytes / (float) bytes.length * 100);
                     }
-                    imageViews[index].setImageBitmap(bitmap);
-                } else {
-                    profilePic.setImageBitmap(bitmap);
-                    Bitmap bitmap2 = ((BitmapDrawable) profilePic.getDrawable()).getBitmap();
-                    Bitmap circularBitmap = getCircularBitmap(bitmap2);
-                    profilePic.setImageBitmap(circularBitmap);
+                    // Create a new ByteArrayOutputStream to compress the image
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+                    // Compress the image bitmap with the calculated quality and save it to the output stream
+                    originalBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
+                    // Convert the compressed image to a byte array
+                    byte[] compressedImageBytes = outputStream.toByteArray();
+                    // Create a bitmap from the compressed byte array
+                    Bitmap compressedBitmap = BitmapFactory.decodeByteArray(compressedImageBytes, 0, compressedImageBytes.length);
+                    // Set the compressed bitmap to the appropriate ImageView
+                    if (mode == 0) {
+                        if (index == 0) {
+                            bigPic.setImageBitmap(compressedBitmap);
+                        }
+                        imageViews[index].setImageBitmap(compressedBitmap);
+                    } else {
+                        profilePic.setImageBitmap(compressedBitmap);
+                        Bitmap bitmap2 = ((BitmapDrawable) profilePic.getDrawable()).getBitmap();
+                        Bitmap circularBitmap = getCircularBitmap(bitmap2);
+                        profilePic.setImageBitmap(circularBitmap);
+                    }
+
+                    // Clean up resources
+                    outputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                File file = new File(context.getCacheDir(), "tempImage");
-                file.delete();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -203,6 +234,7 @@ public class ViewParkAd extends AppCompatActivity {
             }
         });
     }
+
 
     /**
      * SubMethod for the downloadImage Method.

@@ -7,6 +7,7 @@ import android.os.Build;
 
 import androidx.annotation.RequiresApi;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
@@ -258,6 +259,29 @@ public class Services {
         });
         AlertDialog dialog = adb.create();
         dialog.show();
+    }
+
+
+    /**
+     * Checks if a date string in the format "dd/MM/yyyy" describes a date that has not been reached yet.
+     *
+     * @param dateString the date string to be checked in the format "dd/MM/yyyy"
+     * @return {@code true} if the date has not been reached yet, {@code false} otherwise
+     */
+    public static boolean isDateNotReached(String dateString) {
+        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        dateFormat.setLenient(false); // Disable lenient parsing (e.g., 31/02/2023 will throw ParseException)
+
+        try {
+            Date currentDate = new Date(); // Get the current date
+            Date inputDate = dateFormat.parse(dateString); // Parse the input date string
+
+            // Compare the dates
+            return currentDate.before(inputDate);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return false; // Invalid date string
+        }
     }
 
 

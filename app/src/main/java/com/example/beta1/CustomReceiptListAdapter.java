@@ -56,7 +56,7 @@ public class CustomReceiptListAdapter extends BaseAdapter {
         buyerView.setText("Buyer: " + data.get("buyer"));
 
         TextView priceView = convertView.findViewById(R.id.priceTextView);
-        priceView.setText("Final Price: " + data.get("price") );
+        priceView.setText("Final Price: " + data.get("price") + " NIS" );
 
         TextView confirmDateTv = convertView.findViewById(R.id.dateOfConfirmTextView);
         confirmDateTv.setText("Confirm Date: " + data.get("confirm"));

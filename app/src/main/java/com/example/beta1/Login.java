@@ -59,22 +59,32 @@ public class Login extends AppCompatActivity {
         btnLogin = findViewById(R.id.btnLogin);
         rember = findViewById(R.id.rember);
 
-        mAuth = FirebaseAuth.getInstance();
-        if (mAuth.getCurrentUser()!=null){
-            SharedPreferences sharedPreferences = getSharedPreferences("rember",PREFS_MODE);
-            if (sharedPreferences.getString("remember","-1").matches("1")){
-                Intent si = new Intent(Login.this,Navi.class);
-                startActivity(si);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!isUsingNetworkTime()) {
+            showTimeWarningDialog();
+            saveStringToSharedPref("remember","0");
+        }
+        else{
+            mAuth = FirebaseAuth.getInstance();
+            if (mAuth.getCurrentUser()!=null){
+                SharedPreferences sharedPreferences = getSharedPreferences("rember",PREFS_MODE);
+                if (sharedPreferences.getString("remember","-1").matches("1")){
+                    Intent si = new Intent(Login.this,Navi.class);
+                    startActivity(si);
+                }
             }
 
+            btnLogin.setOnClickListener(view -> {
+                loginUser();
+            });
+            tvRegisterHere.setOnClickListener(view -> {
+                startActivity(new Intent(Login.this, Register.class));
+            });
         }
-
-        btnLogin.setOnClickListener(view -> {
-            loginUser();
-        });
-        tvRegisterHere.setOnClickListener(view -> {
-            startActivity(new Intent(Login.this, Register.class));
-        });
     }
 
     /**
@@ -235,37 +245,38 @@ public class Login extends AppCompatActivity {
     }
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add("Navi");
-        menu.add("test");
-        menu.add("Post Ad");
-        menu.add("Settings");
-        return true;
+    /**
+     * Boolean Method used to verify if the user is manipulating their time settings.
+     * Must return true to access the app's services.
+     *
+     * @return: The Method returns true if the user has activated "Use Network Provided Time" in
+     * their system settings. false otherwise.
+     */
+    private boolean isUsingNetworkTime() {
+        return Settings.Global.getInt(getContentResolver(), Settings.Global.AUTO_TIME, 0) == 1;
     }
 
-    public boolean onOptionsItemSelected(MenuItem item) {
-        String st = item.getTitle().toString();
-
-        if (st.equals("Navi")) {
-            Intent si = new Intent(this, Navi.class);
-            startActivity(si);
-        }
-        if (st.equals("test")) {
-            Intent si = new Intent(this, WriteReview.class);
-            startActivity(si);
-        }
-
-        if (st.equals("Post Ad")) {
-            Intent si = new Intent(this, UploadAd.class);
-            startActivity(si);
-        }
-
-        if (st.equals("Settings")) {
-            Intent si = new Intent(this, SettingsScreen.class);
-            startActivity(si);
-        }
-        return true;
+    /**
+     * SubMethod used to display the user with a warning message in case the isUsingNetworkTime Method
+     * returns false.
+     */
+    private void showTimeWarningDialog() {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Time Warning")
+                .setMessage("Your device is not using network-provided time. Please enable network time in your device settings to ensure accurate app functionality.")
+                .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startActivity(new Intent(Settings.ACTION_DATE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("Close App", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        finishAffinity();
+                    }
+                })
+                .show();
     }
 
 

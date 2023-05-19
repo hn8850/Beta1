@@ -90,8 +90,15 @@ public class ActiveOrders extends AppCompatActivity {
                         DatabaseReference canceledOrderRefGeneral = fbDB.getReference("Orders").child(canceledOrderID);
                         canceledOrderRefGeneral.setValue(null);
                         activeOrdersDataList.remove(pos);
-                        CustomOrderListAdapter adapter = new CustomOrderListAdapter(activeOrdersDataList);
-                        listView.setAdapter(adapter);
+                        if (activeOrdersDataList.size()==0){
+                            String[] listString = new String[]{"Nothing to see here!"};
+                            ArrayAdapter<String> adapter = new ArrayAdapter<String>(ActiveOrders.this, android.R.layout.simple_list_item_1, listString);
+                            listView.setAdapter(adapter);
+                        }
+                        else{
+                            CustomParkAdListAdapter adapter = new CustomParkAdListAdapter(activeOrdersDataList);
+                            listView.setAdapter(adapter);
+                        }
                         AlertDialog.Builder adb2 =new AlertDialog.Builder(ActiveOrders.this);
                         adb2.setTitle("Order Canceled.");
                         adb2.setNeutralButton("Close", new DialogInterface.OnClickListener() {

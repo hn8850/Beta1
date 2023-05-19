@@ -3,8 +3,10 @@ package com.example.beta1;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -82,6 +84,8 @@ public class Register extends AppCompatActivity {
 
     ProgressDialog progressDialog;
 
+    private static final int PREFS_MODE = Context.MODE_PRIVATE;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -109,10 +113,6 @@ public class Register extends AppCompatActivity {
         mStorage = FirebaseStorage.getInstance();
 
         btnRegister.setOnClickListener(view -> {
-            progressDialog = new ProgressDialog(Register.this);
-            progressDialog.setMessage("Registering...");
-            progressDialog.setCancelable(false);
-            progressDialog.show();
             createUser();
         });
 
@@ -135,6 +135,10 @@ public class Register extends AppCompatActivity {
         phone = "0" + PhoneEt.getText().toString();
 
         if (validInfo()) {
+            progressDialog = new ProgressDialog(Register.this);
+            progressDialog.setMessage("Registering...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
             mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
@@ -148,6 +152,8 @@ public class Register extends AppCompatActivity {
                         uploadTask.addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception exception) {
+                                progressDialog.dismiss();
+                                Services.ErrorAlert(exception.getMessage(),Register.this);
                             }
                         }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                             @Override
@@ -169,6 +175,11 @@ public class Register extends AppCompatActivity {
                                             public void onClick(DialogInterface dialogInterface, int i) {
                                                 Intent si = new Intent(Register.this, Login.class);
                                                 si.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                SharedPreferences sharedPreferences = getSharedPreferences("rember",PREFS_MODE);
+                                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                                editor.putString("remember","0");
+                                                editor.apply();
+                                                mAuth.signOut();
                                                 startActivity(si);
                                                 dialogInterface.dismiss();
                                             }
@@ -181,6 +192,7 @@ public class Register extends AppCompatActivity {
                         });
 
                     } else {
+                        progressDialog.dismiss();
                         Services.ErrorAlert("Registration Error: " + task.getException().getMessage(),Register.this);
                     }
                 }
@@ -239,6 +251,12 @@ public class Register extends AppCompatActivity {
             Services.ErrorAlert("Please enter a valid date",Register.this);
             return false;
         }
+
+        if (Services.isDateNotReached(date)){
+            Services.ErrorAlert("You cant be born in the future!",Register.this);
+            return false;
+        }
+
         if (!isAge16AndAbove(date)) {
             Services.ErrorAlert("User must be above the age of 16!",Register.this);
             return false;

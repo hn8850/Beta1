@@ -240,7 +240,7 @@ public class InfoFrag extends Fragment {
                     i--;
                 }
             }
-            ProgressDialog progressDialog = new ProgressDialog(getContext());
+            progressDialog = new ProgressDialog(getContext());
             progressDialog.setMessage("Uploading...");
             progressDialog.setCancelable(false);
             progressDialog.show();

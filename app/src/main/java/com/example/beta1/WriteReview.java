@@ -50,6 +50,7 @@ public class WriteReview extends AppCompatActivity {
         currUserUID = gi.getStringExtra("UID");
         parkAdOwnerUID = gi.getStringExtra("SellerID");
 
+
         fbDB = FirebaseDatabase.getInstance();
     }
 

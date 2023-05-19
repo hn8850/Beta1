@@ -82,7 +82,6 @@ import java.util.Locale;
  */
 
 public class Navi extends AppCompatActivity implements OnMapReadyCallback {
-
     Button filter;
     Button search;
     EditText searchBar;
@@ -130,9 +129,6 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
         parkAdIDs = new ArrayList<>();
         parkAds = new ArrayList<>();
 
-        if (!isUsingNetworkTime()) {
-            showTimeWarningDialog();
-        }
 
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -377,7 +373,7 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
                                 if (!Services.isFirstTimeBeforeSecond(currentHour, order.getBeginHour())) {
                                     if (Services.isHourBetween(currentHour, order.getBeginHour(), order.getEndHour())) {
                                         System.out.println("great!");
-                                        UpdateOrderActive(order.getParkAdID());
+                                        UpdateOrderActive(order,orderSnap.getKey());
                                     } else {
                                         UpdateOrderCompleted(orderSnap.getKey(), order); //OrderHour has passed,hence its completed
                                     }
@@ -425,6 +421,12 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
                 dialogInterface.dismiss();
             }
         });
+        adb.setNegativeButton("No!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
         adb.create().show();
 
     }
@@ -432,23 +434,30 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
     /**
      * SubMethod for the VerifyDateOfOrders Method. Used to update the completion status of a given
      * order to 'active'.
-     *
-     * @param ParkAdID: The KeyID in the database for the ParkAd that the order corresponds to.
+     * @param order: The Order Object that corresponds to the active order.
+     * @param orderID: The KeyID in the database for the order.
+
      */
-    public void UpdateOrderActive(String ParkAdID) {
-        System.out.println("PARKID =" + ParkAdID);
+    public void UpdateOrderActive(Order order,String orderID) {
+        String parkAdID = order.getParkAdID();
+        System.out.println("PARKID =" + parkAdID);
         int pos = -1;
         for (String parkAdIDtemp : sortedIDs) {
             System.out.println("TEMP= " + parkAdIDtemp);
-            if (parkAdIDtemp.matches(ParkAdID)) {
+            if (parkAdIDtemp.matches(parkAdID)) {
                 pos = sortedIDs.indexOf(parkAdIDtemp);
                 break;
             }
         }
         Marker activeMarker = sortedParkAdMarkers.get(pos);
-        BitmapDescriptor activeParkAdMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET);
+        BitmapDescriptor activeParkAdMarkerIcon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
 
         activeMarker.setIcon(activeParkAdMarkerIcon);
+
+        DatabaseReference generalOrderRef = fbDB.getReference("Orders").child(orderID);
+        generalOrderRef.child("active").setValue(true);
+        DatabaseReference userOrderRef = fbDB.getReference("Users").child(order.getRenterID()).child("Orders").child(orderID);
+        userOrderRef.child("active").setValue(true);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("You Have An Active Parking Space");
@@ -480,6 +489,7 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
         ExpiredAd.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                System.out.println("PARKADID=" + ParkAdID);
                 ParkAd completeAd = snapshot.getValue(ParkAd.class);
                 completeAd.setActive(0);
                 DatabaseReference completeBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds");
@@ -914,39 +924,7 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
         googleMap.animateCamera(cameraUpdate);
     }
 
-    /**
-     * Boolean Method used to verify if the user is manipulating their time settings.
-     * Must return true to access the app's services.
-     *
-     * @return: The Method returns true if the user has activated "Use Network Provided Time" in
-     * their system settings. false otherwise.
-     */
-    private boolean isUsingNetworkTime() {
-        return Settings.Global.getInt(getContentResolver(), Settings.Global.AUTO_TIME, 0) == 1;
-    }
 
-    /**
-     * SubMethod used to display the user with a warning message in case the isUsingNetworkTime Method
-     * returns false.
-     */
-    private void showTimeWarningDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Time Warning")
-                .setMessage("Your device is not using network-provided time. Please enable network time in your device settings to ensure accurate app functionality.")
-                .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        startActivity(new Intent(Settings.ACTION_DATE_SETTINGS));
-                    }
-                })
-                .setNegativeButton("Close App", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        finishAffinity();
-                    }
-                })
-                .show();
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

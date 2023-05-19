@@ -2,8 +2,11 @@ package com.example.beta1;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,16 +28,20 @@ import java.util.HashMap;
  */
 
 public class ReviewHistory extends AppCompatActivity {
-    String currUserID;
-    FirebaseDatabase fbDB;
+    TextView rating;
+    ImageView starIv;
     ListView listView;
+    String currUserID;
     ArrayList<HashMap<String, String>> reviewHistoryDataList = new ArrayList<>();
+    FirebaseDatabase fbDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_review_history);
         listView = findViewById(R.id.listview1);
+        rating = findViewById(R.id.rating);
+        starIv = findViewById(R.id.imageView8);
 
         Intent gi = getIntent();
         currUserID = gi.getStringExtra("UID");
@@ -52,8 +59,12 @@ public class ReviewHistory extends AppCompatActivity {
         reviewsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int sumOfStars = 0;
+                int count = 0;
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     Review review = snapshot1.getValue(Review.class);
+                    sumOfStars = sumOfStars + review.getStars();
+                    count++;
                     HashMap<String, String> data = new HashMap<>();
                     data.put("submitter", review.getReviewerUserName());
                     data.put("content", review.getMessage());
@@ -64,7 +75,11 @@ public class ReviewHistory extends AppCompatActivity {
                     String[] listString = new String[]{"Nothing to see here!"};
                     ArrayAdapter<String> adapter = new ArrayAdapter<String>(ReviewHistory.this, android.R.layout.simple_list_item_1, listString);
                     listView.setAdapter(adapter);
+                    rating.setVisibility(View.INVISIBLE);
+                    starIv.setImageResource(0);
                 } else {
+                    double average = sumOfStars / count;
+                    rating.setText("Average Ratings: " + average);
                     CustomReviewListAdapter adapter = new CustomReviewListAdapter(reviewHistoryDataList);
                     listView.setAdapter(adapter);
                 }
