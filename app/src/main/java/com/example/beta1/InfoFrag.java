@@ -390,10 +390,7 @@ public class InfoFrag extends Fragment {
         refPath.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
             @Override
             public void onSuccess(ListResult listResult) {
-                // Check if the folder exists by checking if it is present in the list
                 if (listResult.getItems().size() > 0) {
-                    // The folder exists, so you can do something here
-                    // For example, you can delete its contents by calling delete() on each of the items in the list
                     for (StorageReference item : listResult.getItems()) {
                         item.delete();
                     }

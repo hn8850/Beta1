@@ -42,7 +42,6 @@ public class ActiveParkAds extends AppCompatActivity {
     ArrayList<String> activeParkAdIDs = new ArrayList<>();
     boolean parkHasOrders = false;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,91 +58,94 @@ public class ActiveParkAds extends AppCompatActivity {
              */
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-                AlertDialog.Builder adb = new AlertDialog.Builder(ActiveParkAds.this);
-                adb.setTitle("You Have Selected a ParkAd");
-                adb.setNeutralButton("Go Back", new DialogInterface.OnClickListener() {
-                    /** AlertDialog Click Method to close the AlertDialog box.
-                     *
-                     * @param dialogInterface: The AlertDialog Created.
-                     * @param i
-                     */
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                });
-                adb.setNegativeButton("Remove ParkAd", new DialogInterface.OnClickListener() {
-                    /** AlertDialog Click Method to remove a ParkAd.
-                     *
-                     * @param dialogInterface: The AlertDialog Created.
-                     * @param i
-                     */
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        String canceledParkAdID = activeParkAdIDs.get(pos);
-                        DatabaseReference ordersRef = fbDB.getReference("Orders");
-                        ordersRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                for (DataSnapshot snapshot1 : snapshot.getChildren()){
-                                    Order order = snapshot1.getValue(Order.class);
-                                    if (order.getParkAdID().matches(canceledParkAdID)){
-                                        parkHasOrders = true;
-                                        break;
+                    AlertDialog.Builder adb = new AlertDialog.Builder(ActiveParkAds.this);
+                    adb.setTitle("You Have Selected a ParkAd");
+                    adb.setNeutralButton("Go Back", new DialogInterface.OnClickListener() {
+                        /** AlertDialog Click Method to close the AlertDialog box.
+                         *
+                         * @param dialogInterface: The AlertDialog Created.
+                         * @param i
+                         */
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    });
+                    adb.setNegativeButton("Remove ParkAd", new DialogInterface.OnClickListener() {
+                        /** AlertDialog Click Method to remove a ParkAd.
+                         *
+                         * @param dialogInterface: The AlertDialog Created.
+                         * @param i
+                         */
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            String canceledParkAdID = activeParkAdIDs.get(pos);
+                            DatabaseReference ordersRef = fbDB.getReference("Orders");
+                            ordersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    for (DataSnapshot snapshot1 : snapshot.getChildren()){
+                                        Order order = snapshot1.getValue(Order.class);
+                                        if (order.getParkAdID().matches(canceledParkAdID)){
+                                            parkHasOrders = true;
+                                            break;
+                                        }
                                     }
-                                }
-                                if (!parkHasOrders){
-                                    DatabaseReference canceledParkAdRef4User = fbDB.getReference("Users").child(currUserID).child("ParkAds").child(canceledParkAdID);
-                                    canceledParkAdRef4User.child("active").setValue(0);
-                                    DatabaseReference canceledParkAdRefGeneral = fbDB.getReference("ParkAds").child(canceledParkAdID);
-                                    canceledParkAdRefGeneral.setValue(null);
+                                    if (!parkHasOrders){
+                                        DatabaseReference canceledParkAdRef4User = fbDB.getReference("Users").child(currUserID).child("ParkAds").child(canceledParkAdID);
+                                        canceledParkAdRef4User.child("active").setValue(0);
+                                        DatabaseReference canceledParkAdRefGeneral = fbDB.getReference("ParkAds").child(canceledParkAdID);
+                                        canceledParkAdRefGeneral.setValue(null);
 
 
-                                    activeParkAdDataList.remove(pos);
-                                    if (activeParkAdDataList.size()==0){
-                                        String[] listString = new String[]{"Nothing to see here!"};
-                                        ArrayAdapter<String> adapter = new ArrayAdapter<String>(ActiveParkAds.this, android.R.layout.simple_list_item_1, listString);
-                                        listView.setAdapter(adapter);
+                                        activeParkAdDataList.remove(pos);
+                                        if (activeParkAdDataList.size()==0){
+                                            String[] listString = new String[]{"Nothing to see here!"};
+                                            ArrayAdapter<String> adapter = new ArrayAdapter<String>(ActiveParkAds.this, android.R.layout.simple_list_item_1, listString);
+                                            listView.setAdapter(adapter);
+                                        }
+                                        else{
+                                            CustomParkAdListAdapter adapter = new CustomParkAdListAdapter(activeParkAdDataList);
+                                            listView.setAdapter(adapter);
+                                        }
+                                        AlertDialog.Builder adb2 =new AlertDialog.Builder(ActiveParkAds.this);
+                                        adb2.setTitle("ParkAd Removed.");
+                                        adb2.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface2, int i) {
+                                                dialogInterface2.dismiss();
+                                            }
+                                        });
+                                        adb2.create().show();
+                                        dialogInterface.dismiss();
                                     }
                                     else{
-                                        CustomParkAdListAdapter adapter = new CustomParkAdListAdapter(activeParkAdDataList);
-                                        listView.setAdapter(adapter);
+                                        AlertDialog.Builder adb2 =new AlertDialog.Builder(ActiveParkAds.this);
+                                        adb2.setTitle("Cant remove ParkAd");
+                                        adb2.setMessage("This ParkAd has orders that have not been completed related to it.");
+                                        adb2.setNeutralButton("Close", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface2, int i) {
+                                                dialogInterface2.dismiss();
+                                            }
+                                        });
+                                        adb2.create().show();
+                                        dialogInterface.dismiss();
                                     }
-                                    AlertDialog.Builder adb2 =new AlertDialog.Builder(ActiveParkAds.this);
-                                    adb2.setTitle("ParkAd Removed.");
-                                    adb2.setNeutralButton("Close", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialogInterface2, int i) {
-                                            dialogInterface2.dismiss();
-                                        }
-                                    });
-                                    adb2.create().show();
-                                    dialogInterface.dismiss();
                                 }
-                                else{
-                                    AlertDialog.Builder adb2 =new AlertDialog.Builder(ActiveParkAds.this);
-                                    adb2.setTitle("Cant remove ParkAd");
-                                    adb2.setMessage("This ParkAd has orders that have not been completed related to it.");
-                                    adb2.setNeutralButton("Close", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialogInterface2, int i) {
-                                            dialogInterface2.dismiss();
-                                        }
-                                    });
-                                    adb2.create().show();
-                                    dialogInterface.dismiss();
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
                                 }
-                            }
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
+                            });
 
-                            }
-                        });
-
+                        }
+                    });
+                    if (activeParkAdDataList.size()==0){
+                        AlertDialog dialog = adb.create();
+                        dialog.show();
                     }
-                });
-                AlertDialog dialog = adb.create();
-                dialog.show();
+
             }
         });
 

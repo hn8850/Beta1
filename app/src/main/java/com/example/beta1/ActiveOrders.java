@@ -96,7 +96,7 @@ public class ActiveOrders extends AppCompatActivity {
                             listView.setAdapter(adapter);
                         }
                         else{
-                            CustomParkAdListAdapter adapter = new CustomParkAdListAdapter(activeOrdersDataList);
+                            CustomOrderListAdapter adapter = new CustomOrderListAdapter(activeOrdersDataList);
                             listView.setAdapter(adapter);
                         }
                         AlertDialog.Builder adb2 =new AlertDialog.Builder(ActiveOrders.this);
@@ -111,8 +111,11 @@ public class ActiveOrders extends AppCompatActivity {
                         dialogInterface.dismiss();
                     }
                 });
-                AlertDialog dialog = adb.create();
-                dialog.show();
+                if(!(activeOrdersDataList.size()==0)){
+                    AlertDialog dialog = adb.create();
+                    dialog.show();
+                }
+
             }
         });
 
@@ -207,17 +210,15 @@ public class ActiveOrders extends AppCompatActivity {
                             public void onDataChange(@NonNull DataSnapshot snapshot) {
                                 User seller = snapshot.getValue(User.class);
                                 saveStringToSharedPref("seller", seller.getName());
-                                ContinueReading(order);
+                                createHashMap4Order(order);
                                 CustomOrderListAdapter adapter = new CustomOrderListAdapter(activeOrdersDataList);
                                 listView.setAdapter(adapter);
                             }
-
                             @Override
                             public void onCancelled(@NonNull DatabaseError error) {
 
                             }
                         });
-
                     }
                 }
                 if (activeOrdersDataList.size()==0){
@@ -225,13 +226,9 @@ public class ActiveOrders extends AppCompatActivity {
                     ArrayAdapter<String> adapter = new ArrayAdapter<String>(ActiveOrders.this, android.R.layout.simple_list_item_1, listString);
                     listView.setAdapter(adapter);
                 }
-
             }
-
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
             }
         });
         deleteSharedPref();
@@ -243,7 +240,7 @@ public class ActiveOrders extends AppCompatActivity {
      *
      * @param order: The Order Object that was read from the database.
      */
-    public void ContinueReading(Order order) {
+    public void createHashMap4Order(Order order) {
         HashMap<String, String> data = new HashMap<>();
         SharedPreferences sharedPreferences = getSharedPreferences("my_shared_prefs", MODE_PRIVATE);
         String sellerName = sharedPreferences.getString("seller", null);

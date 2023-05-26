@@ -259,37 +259,28 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
     public void SetParkAdMarkers() {
         DatabaseReference AdsDB = fbDB.getReference("ParkAds");
         Query parkAdUpdateQuery = AdsDB;
-        System.out.println("WHATS GOING ON");
         parkAdUpdateListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                System.out.println("check");
                 SimpleDateFormat dateFormat = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
                 SimpleDateFormat hourFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
                 String currentDate = dateFormat.format(new Date());
-                System.out.println("NEWCURRENT: " + currentDate);
                 currentDate = Services.addLeadingZerosToDate(currentDate, false);
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     ParkAd parkAd = snapshot1.getValue(ParkAd.class);
                     if (!currUserID.matches(parkAd.getUserID())) {
-                        System.out.println("yes");
-
                         String parkAdDateStr = parkAd.getDate();
                         parkAdDateStr = Services.addLeadingZerosToDate(parkAdDateStr, false);
                         try {
-                            System.out.println("Dates: " + currentDate + "," + parkAdDateStr);
                             if (Integer.valueOf(currentDate) > Integer.valueOf(parkAdDateStr)) {
                                 UpdateParkAdCompleted(snapshot1.getKey()); //parkDate has passed,hence its completed
                             } else if (parkAdDateStr.matches(currentDate)) {
                                 long currentTimeMillis = System.currentTimeMillis();
                                 Date current2 = new Date(currentTimeMillis);
                                 String currentHour = hourFormat.format(current2);
-                                System.out.println("HOURS: " + currentHour + "," + parkAd.getBeginHour() + "," + parkAd.getFinishHour());
                                 if (!Services.isFirstTimeBeforeSecond(currentHour, parkAd.getFinishHour())) {
-                                    System.out.println("WHYTHO:" + parkAd.getFinishHour());
                                     UpdateParkAdCompleted(snapshot1.getKey()); //ParkHour has passed,hence its completed
                                 } else {
-                                    System.out.println("WHYTHO2:" + parkAd.getFinishHour());
                                     parkAds.add(parkAd);
                                     parkAdIDs.add(snapshot1.getKey());
                                 }
@@ -298,7 +289,7 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
                                 parkAdIDs.add(snapshot1.getKey());
                             }
                         } catch (Error e) {
-                            System.out.println("CHECK THIS");
+                            Services.ErrorAlert(e.getMessage(),Navi.this);
                         }
                     }
 
@@ -311,7 +302,6 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
                     Marker marker = mMap.addMarker(markerOptions);
                     marker.showInfoWindow();
 
-
                     parkAdMarkerOptions.add(markerOptions);
                     parkAdMarkers.add(marker);
                     sortedAds.add(parkAd);
@@ -319,8 +309,6 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
                     sortedParkAdMarkerOptions.add(markerOptions);
                     sortedParkAdMarkers.add(marker);
                 }
-                System.out.println("Count of Parks = + " + parkAds.size());
-                System.out.println("Count of Markers = + " + parkAdMarkers.size());
                 VerifyDateOfOrders();
             }
 
@@ -344,35 +332,27 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
                 SimpleDateFormat sdf = new SimpleDateFormat("d/M/yyyy", Locale.getDefault());
                 SimpleDateFormat sdf2 = new SimpleDateFormat("HH:mm", Locale.getDefault());
                 for (DataSnapshot orderSnap : snapshot.getChildren()) {
-                    System.out.println("WORK");
                     Order order = orderSnap.getValue(Order.class);
                     String currentDate = sdf.format(new Date());
                     String parkAdDateStr = order.getParkDate();
-                    System.out.println("THIS IS DATE = " + parkAdDateStr);
                     DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                             .appendPattern("d/M/yyyy")
                             .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
                             .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
                             .toFormatter();
                     try {
-                        System.out.println("STATUS NOW = " + order.isComplete);
                         if (!(order.isComplete || order.isCanceled)) {
                             LocalDate current = LocalDate.parse(currentDate, formatter);
                             LocalDate parkAdDate = LocalDate.parse(parkAdDateStr, formatter);
-                            System.out.println("current = " + current.toString() + " parkDate = " + parkAdDate.toString());
                             if (current.isAfter(parkAdDate)) {
-                                System.out.println("Bad!");
                                 UpdateOrderCompleted(orderSnap.getKey(), order); //OrderDate has passed,hence its completed
                             } else if (current.toString().equals(parkAdDate.toString())) {
-                                System.out.println("good!");
                                 long currentTimeMillis = System.currentTimeMillis();
                                 Date current2 = new Date(currentTimeMillis);
                                 String currentHour = sdf2.format(current2);
-                                System.out.println("Current2 = " + currentHour);
 
                                 if (!Services.isFirstTimeBeforeSecond(currentHour, order.getBeginHour())) {
                                     if (Services.isHourBetween(currentHour, order.getBeginHour(), order.getEndHour())) {
-                                        System.out.println("great!");
                                         UpdateOrderActive(order,orderSnap.getKey());
                                     } else {
                                         UpdateOrderCompleted(orderSnap.getKey(), order); //OrderHour has passed,hence its completed
@@ -401,7 +381,6 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
      * @param OrderID: The KeyID in the database for the completed order.
      */
     public void UpdateOrderCompleted(String OrderID, Order order) {
-        System.out.println("ORDERID = " + OrderID);
         DatabaseReference finishedOrder = fbDB.getReference("Users").child(currUserID).child("Orders").child(OrderID);
         finishedOrder.child("complete").setValue(true);
         finishedOrder.child("active").setValue(false);
@@ -440,10 +419,8 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
      */
     public void UpdateOrderActive(Order order,String orderID) {
         String parkAdID = order.getParkAdID();
-        System.out.println("PARKID =" + parkAdID);
         int pos = -1;
         for (String parkAdIDtemp : sortedIDs) {
-            System.out.println("TEMP= " + parkAdIDtemp);
             if (parkAdIDtemp.matches(parkAdID)) {
                 pos = sortedIDs.indexOf(parkAdIDtemp);
                 break;
@@ -489,7 +466,6 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
         ExpiredAd.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                System.out.println("PARKADID=" + ParkAdID);
                 ParkAd completeAd = snapshot.getValue(ParkAd.class);
                 completeAd.setActive(0);
                 DatabaseReference completeBranch = fbDB.getReference("Users").child(completeAd.getUserID()).child("ParkAds");
@@ -513,7 +489,6 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
     public void createFilterDialog() {
         final Dialog dialog = new Dialog(Navi.this);
         dialog.setContentView(R.layout.query_dialog_box);
-
         // Get references to the EditText fields
         final EditText editTextDD1 = dialog.findViewById(R.id.edit_text_dd_1);
         final EditText editTextMM1 = dialog.findViewById(R.id.edit_text_mm_1);
@@ -681,13 +656,8 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
         String[] addressComponents;
         int pos;
         for (ParkAd parkAd : sortedAds) {
-            System.out.println("Address" + parkAd.getAddress());
-            System.out.println("comp" + (parkAd.getAddress().split(","))[1]);
-
             pos = sortedAds.indexOf(parkAd);
             addressComponents = parkAd.getAddress().split(",");
-            System.out.println("SearchQUERY=" + searchQuery);
-            System.out.println("address=" + parkAd.getAddress());
             if (searchQuery.matches(parkAd.getAddress())) {
                 searchedParkAdLocation = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
                 zoomToAddress(this, mMap, parkAd.getAddress());
@@ -816,10 +786,6 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
         if (location != null) {
             Log.d("TAG", "Latitude: " + location.getLatitude() +
                     " Longitude: " + location.getLongitude());
-        }
-        try {
-            System.out.println(location.toString());
-        } catch (Exception e) {
         }
         return location;
     }

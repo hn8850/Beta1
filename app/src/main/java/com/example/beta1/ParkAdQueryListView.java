@@ -49,7 +49,6 @@ public class ParkAdQueryListView extends AppCompatActivity {
         FirebaseUser currUser = mAuth.getCurrentUser();
         UID = currUser.getUid();
 
-
         Intent gi = getIntent();
         lat = gi.getStringExtra("lat");
         lan = gi.getStringExtra("long");
@@ -57,8 +56,7 @@ public class ParkAdQueryListView extends AppCompatActivity {
             queryDate1 = gi.getStringExtra("date1");
             queryDate2 = gi.getStringExtra("date2");
         } else {
-            queryDate1 = "1/1/1970";
-            queryDate2 = "12/12/3000";
+            queryDate1 = "NONE";
         }
         SetParkAdsDataList();
     }
@@ -76,7 +74,15 @@ public class ParkAdQueryListView extends AppCompatActivity {
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     ParkAd parkAd = snapshot1.getValue(ParkAd.class);
                     if (parkAd.getLatitude().matches(lat) && parkAd.getLongitude().matches(lan) && !parkAd.getUserID().matches(UID)) {
-                        if (Services.isDateBetween(parkAd.getDate(), queryDate1, queryDate2)) {
+                        if (queryDate1.matches("NONE")){
+                            HashMap<String, String> data = new HashMap<>();
+                            data.put("date", parkAd.getDate());
+                            data.put("begin", parkAd.getBeginHour());
+                            data.put("end", parkAd.getFinishHour());
+                            data.put("price", String.valueOf(parkAd.getHourlyRate()));
+                            parkAdsDataList.add(data);
+                        }
+                        else if (Services.isDateBetween(parkAd.getDate(), queryDate1, queryDate2)) {
                             HashMap<String, String> data = new HashMap<>();
                             data.put("date", parkAd.getDate());
                             data.put("begin", parkAd.getBeginHour());

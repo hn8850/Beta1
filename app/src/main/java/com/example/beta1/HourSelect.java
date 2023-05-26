@@ -1,9 +1,15 @@
 package com.example.beta1;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -13,6 +19,17 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.wallet.AutoResolveHelper;
+import com.google.android.gms.wallet.IsReadyToPayRequest;
+import com.google.android.gms.wallet.PaymentData;
+import com.google.android.gms.wallet.PaymentDataRequest;
+import com.google.android.gms.wallet.PaymentsClient;
+import com.google.android.gms.wallet.Wallet;
+import com.google.android.gms.wallet.WalletConstants;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -21,8 +38,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
@@ -44,18 +66,25 @@ public class HourSelect extends AppCompatActivity {
     ParkAd parkAd;
     TextView startTv, endTv;
     String beginHour, beginMinute, endHour, endMinute;
+    double finalPrice;
 
     Spinner SpinBeginHour, SpinBeginMinute, SpinEndHour, SpinEndMinute;
-
     TimeBarView timeBarView;
-
     FirebaseDatabase fbDB;
     FirebaseAuth mAuth;
-
     ArrayList<TimeBarView.Segment> segments = new ArrayList<>();
-
-
     Receipt receipt;
+    Order order;
+
+    private PaymentsClient paymentsClient;
+    private JSONObject transactionInfo = new JSONObject();
+    private JSONObject tokenizationSpecification = new JSONObject();
+    private JSONObject cardPaymentMethod = new JSONObject();
+    private JSONObject merchantInfo = new JSONObject();
+    private JSONObject paymentDataRequestJson = new JSONObject();
+    PaymentDataRequest paymentDataRequest;
+    private final int LOAD_PAYMENT_DATA_REQUEST_CODE = 101;
+    private final int SMS_PERMISSION_REQUEST_CODE = 3;
 
 
     @Override
@@ -163,7 +192,7 @@ public class HourSelect extends AppCompatActivity {
      */
     public void makeOrder(View view) {
         if (SpinEndHour.getSelectedItemPosition() == 0 || SpinBeginHour.getSelectedItemPosition() == 0 || SpinBeginMinute.getSelectedItemPosition() == 0 || SpinEndMinute.getSelectedItemPosition() == 0) {
-            Services.ErrorAlert("Please enter valid times!",HourSelect.this);
+            Services.ErrorAlert("Please enter valid times!", HourSelect.this);
         } else {
             String beginFull = beginHour + ":" + beginMinute;
             String endFull = endHour + ":" + endMinute;
@@ -177,8 +206,8 @@ public class HourSelect extends AppCompatActivity {
                 String sellerID = parkAd.getUserID();
                 String parkAddress = parkAd.getAddress();
 
-                Order order = new Order(parkAdID, userID, confirmDate, parkDate, beginFull, endFull, hourlyRate, sellerID, parkAddress);
-                double finalPrice = order.getPrice();
+                order = new Order(parkAdID, userID, confirmDate, parkDate, beginFull, endFull, hourlyRate, sellerID, parkAddress);
+                finalPrice = order.getPrice();
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Nearly Finished!");
@@ -186,55 +215,31 @@ public class HourSelect extends AppCompatActivity {
                 builder.setPositiveButton("Pay Up", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        DatabaseReference ordersRef = fbDB.getReference("Orders");
-                        String Orderkey = ordersRef.push().getKey();
-                        ordersRef.child(Orderkey).setValue(order);
-                        DatabaseReference usersRef = fbDB.getReference("Users");
-                        usersRef.child(userID).child("Orders").child(Orderkey).setValue(order);
-                        UUID uuid = UUID.randomUUID();
-                        String paymentID = uuid.toString();
-
-                        DatabaseReference sellerRef = fbDB.getReference("Users").child(sellerID);
-                        sellerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        paymentsClient = createPaymentsClient(HourSelect.this);
+                        IsReadyToPayRequest readyToPayRequest = IsReadyToPayRequest.fromJson(googlePayBaseConfiguration.toString());
+                        Task<Boolean> readyToPayTask = paymentsClient.isReadyToPay(readyToPayRequest);
+                        readyToPayTask.addOnCompleteListener(new OnCompleteListener<Boolean>() {
                             @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                User seller = snapshot.getValue(User.class);
-                                receipt = new Receipt(sellerID, userID, parkAdID, Orderkey, finalPrice, confirmDate, paymentID,seller.getName());
-                                DatabaseReference receiptRefSeller = fbDB.getReference("Users").child(sellerID).child("Receipts");
-                                String receiptKey = receiptRefSeller.push().getKey();
-                                receiptRefSeller.child(receiptKey).setValue(receipt);
-                                DatabaseReference receiptRefUser = fbDB.getReference("Users").child(userID).child("Receipts");
-                                receiptRefUser.child(receiptKey).setValue(receipt);
-
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-
+                            public void onComplete(@NonNull Task<Boolean> task) {
+                                try {
+                                    if (task.getResult(ApiException.class) != null) {
+                                        setGooglePayAvailable(task.getResult(ApiException.class));
+                                    }
+                                } catch (ApiException exception) {
+                                    // Error determining readiness to use Google Pay.
+                                    // Inspect the logs for more details.
+                                }
                             }
                         });
-
-
-
-//                        String[] beginHourParts = beginFull.split(":");
-//                        beginHourParts[0] = String.valueOf(Integer.valueOf(beginHourParts[0]) - 1);
-//                        String notiTime = beginHourParts[0] + ":" + beginHourParts[1]; //1 hour before Order Begin Time
-//                        NotificationScheduler.scheduleNotification(getApplicationContext(), "Spark Alert", "The ParkAd you ordered at " + parkAddress + " will be available in an hour!", parkDate, notiTime, 1); //Begin Noti
-//                        NotificationScheduler.scheduleNotification(getApplicationContext(), "Spark Alert", "Your time with the ParkAd at " + parkAddress + " has finished!", parkDate, endFull, 2); //Ending Noti
-                        // Launch Google Pay
-
                     }
                 });
-
                 builder.show();
 
-
             } else {
-                Services.ErrorAlert("Select Hour in Available Range",HourSelect.this);
+                Services.ErrorAlert("Select Hour in Available Range", HourSelect.this);
             }
         }
     }
-
 
 
     /**
@@ -300,7 +305,6 @@ public class HourSelect extends AppCompatActivity {
 
         }
     };
-
 
 
     /**
@@ -376,6 +380,240 @@ public class HourSelect extends AppCompatActivity {
         int hour = Integer.parseInt(parts[0]);
         int minute = Integer.parseInt(parts[1]);
         return hour + minute / 60.0;
+    }
+
+
+    /**
+     * This Method creates a PaymentsClient to use for Google Pay.
+     *
+     * @param context: The App's Context.
+     * @return: The Method returns the PaymentsClient Object.
+     */
+    private PaymentsClient createPaymentsClient(Context context) {
+        Wallet.WalletOptions walletOptions = new Wallet.WalletOptions.Builder()
+                .setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
+        return Wallet.getPaymentsClient(context, walletOptions);
+    }
+
+    private JSONObject baseCardPaymentMethod = new JSONObject();
+
+    {
+        try {
+            baseCardPaymentMethod.put("type", "CARD");
+            JSONObject parameters = new JSONObject();
+            parameters.put("allowedCardNetworks", new JSONArray(Arrays.asList("VISA", "MASTERCARD")));
+            parameters.put("allowedAuthMethods", new JSONArray(Arrays.asList("PAN_ONLY", "CRYPTOGRAM_3DS")));
+
+            baseCardPaymentMethod.put("parameters", parameters);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private JSONObject googlePayBaseConfiguration = new JSONObject();
+
+    {
+        try {
+            googlePayBaseConfiguration.put("apiVersion", 2);
+            googlePayBaseConfiguration.put("apiVersionMinor", 0);
+
+            JSONArray allowedPaymentMethods = new JSONArray();
+            allowedPaymentMethods.put(baseCardPaymentMethod);
+
+            googlePayBaseConfiguration.put("allowedPaymentMethods", allowedPaymentMethods);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * SubMethod for the Google Pay payment process that checks if Google Pay is available to
+     * continue the process.
+     *
+     * @param available: Boolean - if true, then Google Pay is available, if false, the Google Pay
+     *                   isn't available.
+     */
+    private void setGooglePayAvailable(Boolean available) {
+        if (available) {
+            requestPayment();
+        } else {
+            Services.ErrorAlert("Error launching Google Pay!", HourSelect.this);
+        }
+    }
+
+    /**
+     * This Method sets up all of the necessary parameters for a Google Pay payment, and then
+     * requests a payment.
+     */
+    private void requestPayment() {
+        try {
+            tokenizationSpecification.put("type", "PAYMENT_GATEWAY");
+            JSONObject parameters = new JSONObject();
+            parameters.put("gateway", "example");
+            parameters.put("gatewayMerchantId", "exampleGatewayMerchantId");
+            tokenizationSpecification.put("parameters", parameters);
+            try {
+                transactionInfo.put("totalPrice", String.valueOf(finalPrice));
+                transactionInfo.put("totalPriceStatus", "FINAL");
+                transactionInfo.put("currencyCode", "NIS");
+
+                try {
+                    cardPaymentMethod.put("type", "CARD");
+                    cardPaymentMethod.put("tokenizationSpecification", tokenizationSpecification);
+                    JSONObject parameters2 = new JSONObject();
+                    parameters2.put("allowedCardNetworks", new JSONArray(Arrays.asList("VISA", "MASTERCARD")));
+                    parameters2.put("allowedAuthMethods", new JSONArray(Arrays.asList("PAN_ONLY", "CRYPTOGRAM_3DS")));
+                    parameters2.put("billingAddressRequired", true);
+                    JSONObject billingAddressParameters = new JSONObject();
+                    billingAddressParameters.put("format", "FULL");
+                    parameters2.put("billingAddressParameters", billingAddressParameters);
+                    cardPaymentMethod.put("parameters", parameters2);
+
+                    try {
+                        merchantInfo.put("merchantName", "Example Merchant");
+                        merchantInfo.put("merchantId", "01234567890123456789");
+
+                        try {
+                            paymentDataRequestJson = new JSONObject(googlePayBaseConfiguration.toString());
+                            paymentDataRequestJson.put("allowedPaymentMethods", new JSONArray().put(cardPaymentMethod));
+                            paymentDataRequestJson.put("transactionInfo", transactionInfo);
+                            paymentDataRequestJson.put("merchantInfo", merchantInfo);
+
+                            try {
+                                paymentDataRequest = PaymentDataRequest.fromJson(paymentDataRequestJson.toString());
+                                AutoResolveHelper.resolveTask(
+                                        paymentsClient.loadPaymentData(paymentDataRequest),
+                                        this,
+                                        LOAD_PAYMENT_DATA_REQUEST_CODE);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    /**
+     * OnActivityResult for the RequestPayment Method. Used to check if the Payment went through
+     * as planned.
+     *
+     * @param requestCode: The Payment Data request code. (Integer)
+     * @param resultCode:  The result code from the payment attempt. (Integer)
+     * @param data:        Intent containing the payment data.
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == LOAD_PAYMENT_DATA_REQUEST_CODE) {
+            switch (resultCode) {
+                case Activity.RESULT_OK:
+                    PaymentData paymentData = PaymentData.getFromIntent(data);
+                    if (paymentData != null) {
+                        handlePaymentSuccess(paymentData);
+                    }
+                    break;
+                case Activity.RESULT_CANCELED:
+                    // The user cancelled without selecting a payment method.
+                    break;
+                case AutoResolveHelper.RESULT_ERROR:
+                    Status status = AutoResolveHelper.getStatusFromIntent(data);
+                    if (status != null) {
+                        Services.ErrorAlert("An error occurred during the payment process: " + status.getStatusMessage(), HourSelect.this);
+                    }
+                    break;
+                default:
+                    // Unexpected resultCode.
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Final Method for the Google Pay payment process. Used to notify the user and the seller
+     * that the payment went through.
+     *
+     * @param paymentData
+     */
+    private void handlePaymentSuccess(PaymentData paymentData) {
+        String confirmDate = order.getConfirmDate();
+        String sellerID = order.getSellerId();
+        DatabaseReference ordersRef = fbDB.getReference("Orders");
+        String Orderkey = ordersRef.push().getKey();
+        ordersRef.child(Orderkey).setValue(order);
+        DatabaseReference usersRef = fbDB.getReference("Users");
+        usersRef.child(userID).child("Orders").child(Orderkey).setValue(order);
+        UUID uuid = UUID.randomUUID();
+        String paymentID = uuid.toString();
+
+        DatabaseReference sellerRef = fbDB.getReference("Users").child(sellerID);
+        sellerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User seller = snapshot.getValue(User.class);
+                receipt = new Receipt(sellerID, userID, parkAdID, Orderkey, finalPrice, confirmDate, paymentID, seller.getName());
+                DatabaseReference receiptRefSeller = fbDB.getReference("Users").child(sellerID).child("Receipts");
+                String receiptKey = receiptRefSeller.push().getKey();
+                receiptRefSeller.child(receiptKey).setValue(receipt);
+                DatabaseReference receiptRefUser = fbDB.getReference("Users").child(userID).child("Receipts");
+                receiptRefUser.child(receiptKey).setValue(receipt);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{Manifest.permission.SEND_SMS}, SMS_PERMISSION_REQUEST_CODE);
+                    } else {
+                        SmsManager smsManager = SmsManager.getDefault();
+                        String formattedNumber = "+972" + seller.getPhoneNumber().substring(1);
+                        smsManager.sendTextMessage(formattedNumber, null, "Someone has ordered from your ParkAd!", null, null);
+                    }
+                } else {
+                    SmsManager smsManager = SmsManager.getDefault();
+                    String formattedNumber = "+972" + seller.getPhoneNumber().substring(1);
+                    smsManager.sendTextMessage(formattedNumber, null, "I ordered from your ParkAd using Spark!", null, null);
+                }
+
+
+                AlertDialog.Builder adb = new AlertDialog.Builder(HourSelect.this);
+                adb.setTitle("Payment Success!");
+                adb.setMessage("You may now return to the Home Screen.");
+                adb.setNeutralButton("Return", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Intent si = new Intent(HourSelect.this, Navi.class);
+                        startActivity(si);
+                    }
+                });
+                AlertDialog dialog = adb.create();
+                dialog.show();
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+
     }
 
 

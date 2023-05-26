@@ -291,11 +291,11 @@ public class EditProfile extends AppCompatActivity {
 
 
     /**
-     * OnClickMethod for the profile picture ImageView. Used to launch the gallery
+     * OnClickMethod for the profile picture ImageView. Used to launch the gallery/camera.
      *
      * @param view: The profile picture ImageView.
      */
-    public void ProfilePic(View view) {
+    public void openGalleryOrCamera(View view) {
         CharSequence options[] = new CharSequence[]{"Take Photo", "Choose from Gallery"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(EditProfile.this);

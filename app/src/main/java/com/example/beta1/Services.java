@@ -249,7 +249,7 @@ public class Services {
      */
     public static  void ErrorAlert(String message, Context context) {
         AlertDialog.Builder adb = new AlertDialog.Builder(context);
-        adb.setTitle("An error occurred when saving your info!");
+        adb.setTitle("An error occurred!");
         adb.setMessage(message);
         adb.setNeutralButton("Return", new DialogInterface.OnClickListener() {
             @Override

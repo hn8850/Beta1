@@ -1,14 +1,17 @@
 package com.example.beta1;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +20,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
@@ -52,7 +56,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 
 public class LocationFrag extends Fragment {
-
     private ViewPager mViewPager;
 
     EditText countryEditText, cityEditText, streetEditText, houseNumberEditText;
@@ -64,6 +67,8 @@ public class LocationFrag extends Fragment {
 
     private final String PREFS_NAME = "ParkAd" + formattedDate;
     private static final int PREFS_MODE = Context.MODE_PRIVATE;
+    private final int SMS_PERMISSION_REQUEST_CODE = 3;
+
 
     FirebaseDatabase mDb;
     FirebaseStorage mStorage;
@@ -77,7 +82,6 @@ public class LocationFrag extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_location, container, false);
-
         // Set up the edit texts and button
         countryEditText = view.findViewById(R.id.country);
         cityEditText = view.findViewById(R.id.city);
@@ -98,6 +102,27 @@ public class LocationFrag extends Fragment {
 
         mDb = FirebaseDatabase.getInstance();
         mStorage = FirebaseStorage.getInstance();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder adb = new AlertDialog.Builder(getContext());
+                adb.setTitle("Just so you know...");
+                adb.setMessage("To know if someone purchased from your ParkAd, you should give Spark SMS permissions");
+                adb.setNeutralButton("Dismiss", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+                adb.setPositiveButton("Sure!", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        requestPermissions(new String[]{Manifest.permission.SEND_SMS}, SMS_PERMISSION_REQUEST_CODE);
+                    }
+                });
+                adb.create().show();
+            }
+        }
 
         return view;
     }
@@ -143,14 +168,9 @@ public class LocationFrag extends Fragment {
                     }
                 } else {
                     Services.ErrorAlert("The address you provided is not valid!", getContext());
-
                 }
-
             }
-
         }
-
-
     };
 
 
@@ -168,7 +188,6 @@ public class LocationFrag extends Fragment {
             sharedPrefs = getActivity().getSharedPreferences(PREFS_NAME, PREFS_MODE);
             String latitude = sharedPrefs.getString("latitude", "0");
             String longitude = sharedPrefs.getString("longitude", "0");
-
             List<String> imageUris = new ArrayList<>();
             if (sharedPrefs.contains(getString(R.string.prefs_URI1_key))) {
                 imageUris.add(sharedPrefs.getString("URI1", null));
@@ -177,7 +196,6 @@ public class LocationFrag extends Fragment {
                 imageUris.add(sharedPrefs.getString("URI4", null));
                 imageUris.add(sharedPrefs.getString("URI5", null));
             }
-
             FirebaseUser currUser = FirebaseAuth.getInstance().getCurrentUser();
             String userUid = currUser.getUid();
 
@@ -186,7 +204,6 @@ public class LocationFrag extends Fragment {
             StorageReference refStorage = mStorage.getReference("ParkAdPics");
             StorageReference refPath = refStorage.child(path);
             ReCreateFolder(path);
-
             final AtomicInteger count = new AtomicInteger();
             ArrayList<String> imageURLS = new ArrayList<>();
             for (int i = 0; i < imageUris.size(); i++) {

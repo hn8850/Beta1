@@ -4,10 +4,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -52,7 +55,6 @@ public class Login extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
         etLoginEmail = findViewById(R.id.etLoginEmail);
         etLoginPassword = findViewById(R.id.etLoginPass);
         tvRegisterHere = findViewById(R.id.tvRegisterHere);
@@ -66,14 +68,13 @@ public class Login extends AppCompatActivity {
         super.onResume();
         if (!isUsingNetworkTime()) {
             showTimeWarningDialog();
-            saveStringToSharedPref("remember","0");
-        }
-        else{
+            saveStringToSharedPref("remember", "0");
+        } else {
             mAuth = FirebaseAuth.getInstance();
-            if (mAuth.getCurrentUser()!=null){
-                SharedPreferences sharedPreferences = getSharedPreferences("rember",PREFS_MODE);
-                if (sharedPreferences.getString("remember","-1").matches("1")){
-                    Intent si = new Intent(Login.this,Navi.class);
+            if (mAuth.getCurrentUser() != null) {
+                SharedPreferences sharedPreferences = getSharedPreferences("rember", PREFS_MODE);
+                if (sharedPreferences.getString("remember", "-1").matches("1")) {
+                    Intent si = new Intent(Login.this, Navi.class);
                     startActivity(si);
                 }
             }
@@ -109,11 +110,10 @@ public class Login extends AppCompatActivity {
                         FirebaseUser currUser = mAuth.getCurrentUser();
                         if (currUser.isEmailVerified()) {
                             Toast.makeText(Login.this, "User logged in successfully", Toast.LENGTH_SHORT).show();
-                            if (rember.isChecked()){
-                                saveStringToSharedPref("remember","1");
-                            }
-                            else{
-                                saveStringToSharedPref("remember","0");
+                            if (rember.isChecked()) {
+                                saveStringToSharedPref("remember", "1");
+                            } else {
+                                saveStringToSharedPref("remember", "0");
                             }
                             Intent si = new Intent(getApplicationContext(), Navi.class);
                             startActivity(si);
@@ -159,7 +159,7 @@ public class Login extends AppCompatActivity {
     public void resetPass(View view) {
         String email = etLoginEmail.getText().toString();
         if (!(isValidEmail(email))) {
-            ErrorAlert("An error occurred!","Please enter a Valid Email!");
+            ErrorAlert("An error occurred!", "Please enter a Valid Email!");
         } else {
             AlertDialog.Builder adb = new AlertDialog.Builder(this);
             adb.setTitle("Send Email?");
@@ -172,9 +172,9 @@ public class Login extends AppCompatActivity {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
                                     if (task.isSuccessful()) {
-                                        ErrorAlert("Password reset email sent.","Check your email for password reset instructions!  \n  Please note that you cant login until setting a new password!");
+                                        ErrorAlert("Password reset email sent.", "Check your email for password reset instructions!  \n  Please note that you cant login until setting a new password!");
                                     } else {
-                                        ErrorAlert("An error occurred!","Email not registered!");
+                                        ErrorAlert("An error occurred!", "Email not registered!");
                                     }
                                 }
                             });

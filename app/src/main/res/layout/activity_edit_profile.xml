@@ -20,7 +20,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="center|center_horizontal"
             android:foregroundGravity="center"
-            android:onClick="ProfilePic"
+            android:onClick="openGalleryOrCamera"
             android:src="@drawable/login" />
     </LinearLayout>
 
