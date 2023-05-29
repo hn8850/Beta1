@@ -164,7 +164,7 @@ public class Register extends AppCompatActivity {
                                         progressDialog.dismiss();
                                         picUrl = uri.toString();
                                         date = Services.addLeadingZerosToDate(date,true);
-                                        User userDB = new User(1, name, date, phone, picUrl);
+                                        User userDB = new User(name, date, phone, picUrl);
                                         DatabaseReference refDb = mDb.getReference("Users");
                                         refDb.child(UID).setValue(userDB);
                                         AlertDialog.Builder adb = new AlertDialog.Builder(Register.this);
@@ -310,11 +310,11 @@ public class Register extends AppCompatActivity {
 
 
     /**
-     * OnClickMethod for the profile picture ImageView. Used to launch the gallery
+     * OnClickMethod for the profile picture ImageView. Used to launch the gallery/camera.
      *
      * @param view: The profile picture ImageView.
      */
-    public void ProfilePic(View view) {
+    public void openGalleryOrCamera(View view) {
         CharSequence options[] = new CharSequence[]{"Take Photo", "Choose from Gallery"};
         AlertDialog.Builder builder = new AlertDialog.Builder(Register.this);
         builder.setTitle("Select Option");

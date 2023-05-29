@@ -27,15 +27,11 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.TextView;
-import android.provider.Settings;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
 
 import com.example.beta1.databinding.Navi2Binding;
 import com.google.android.gms.common.util.MapUtils;
@@ -58,7 +54,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -710,7 +705,7 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
 
         if (doAppsExist(appsList)) {
             // Create an app chooser using the createChooser method of the Intent class and pass in the Intents for Google Maps and Waze
-            Intent chooserIntent = Intent.createChooser(googleMapsIntent, "Navigate using:");
+              Intent chooserIntent = Intent.createChooser(googleMapsIntent, "Navigate using:");
             chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{wazeIntent});
             chooserIntent.putExtra(Intent.EXTRA_TITLE, "Choose a navigation app:");
 

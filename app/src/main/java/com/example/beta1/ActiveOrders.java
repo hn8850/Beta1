@@ -63,6 +63,7 @@ public class ActiveOrders extends AppCompatActivity {
              */
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
+                String canceledOrderID = orderIDs.get(pos);
                 AlertDialog.Builder adb = new AlertDialog.Builder(ActiveOrders.this);
                 adb.setTitle("You Have Selected an Order");
                 adb.setNeutralButton("Go Back", new DialogInterface.OnClickListener() {
@@ -90,6 +91,7 @@ public class ActiveOrders extends AppCompatActivity {
                         DatabaseReference canceledOrderRefGeneral = fbDB.getReference("Orders").child(canceledOrderID);
                         canceledOrderRefGeneral.setValue(null);
                         activeOrdersDataList.remove(pos);
+                        orderIDs.remove(pos);
                         if (activeOrdersDataList.size()==0){
                             String[] listString = new String[]{"Nothing to see here!"};
                             ArrayAdapter<String> adapter = new ArrayAdapter<String>(ActiveOrders.this, android.R.layout.simple_list_item_1, listString);

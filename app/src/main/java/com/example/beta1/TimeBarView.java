@@ -157,13 +157,14 @@ public class TimeBarView extends View {
     public static class Segment {
 
         /**
-         * The End hour.
-         */
-        public String endHour;
-        /**
          * The Begin hour.
          */
         public String beginHour;
+
+        /**
+         * The End hour.
+         */
+        public String endHour;
 
         /**
          * Instantiates a new Segment.
@@ -172,7 +173,6 @@ public class TimeBarView extends View {
          * @param endH   the end hour
          */
         public Segment(String beginH, String endH) {
-
             endHour = endH;
             beginHour = beginH;
         }

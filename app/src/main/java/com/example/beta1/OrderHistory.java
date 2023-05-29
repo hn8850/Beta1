@@ -8,7 +8,6 @@ import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -74,8 +73,6 @@ public class OrderHistory extends AppCompatActivity {
                             .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
                             .toFormatter();
                     try {
-//                        Date current2 = sdf.parse(currentDate);
-//                        Date parkAdDate = sdf.parse(parkAdDateStr.trim());
                         LocalDate current = LocalDate.parse(currentDate, formatter);
                         LocalDate parkAdDate = LocalDate.parse(parkAdDateStr, formatter);
                         if (current.isAfter(parkAdDate)) {
@@ -139,7 +136,7 @@ public class OrderHistory extends AppCompatActivity {
                             public void onDataChange(@NonNull DataSnapshot snapshot) {
                                 User seller = snapshot.getValue(User.class);
                                 saveStringToSharedPref("seller", seller.getName());
-                                ContinueReading(order);
+                                createHashMap4Order(order);
                                 CustomOrderListAdapter adapter = new CustomOrderListAdapter(orderHistoryDataList);
                                 listView.setAdapter(adapter);
                             }
@@ -172,7 +169,7 @@ public class OrderHistory extends AppCompatActivity {
      *
      * @param order: The Order Object that was read from the database.
      */
-    public void ContinueReading(Order order) {
+    public void createHashMap4Order(Order order) {
         HashMap<String, String> data = new HashMap<>();
         SharedPreferences sharedPreferences = getSharedPreferences("my_shared_prefs", MODE_PRIVATE);
         String sellerName = sharedPreferences.getString("seller", null);

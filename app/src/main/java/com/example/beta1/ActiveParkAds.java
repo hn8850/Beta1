@@ -99,6 +99,7 @@ public class ActiveParkAds extends AppCompatActivity {
 
 
                                         activeParkAdDataList.remove(pos);
+                                        activeParkAdIDs.remove(pos);
                                         if (activeParkAdDataList.size()==0){
                                             String[] listString = new String[]{"Nothing to see here!"};
                                             ArrayAdapter<String> adapter = new ArrayAdapter<String>(ActiveParkAds.this, android.R.layout.simple_list_item_1, listString);
@@ -141,7 +142,7 @@ public class ActiveParkAds extends AppCompatActivity {
 
                         }
                     });
-                    if (activeParkAdDataList.size()==0){
+                    if (!(activeParkAdDataList.size()==0)){
                         AlertDialog dialog = adb.create();
                         dialog.show();
                     }

@@ -1,13 +1,13 @@
 package com.example.beta1;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -64,7 +64,7 @@ public class ReceiptHistory extends AppCompatActivity {
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             User buyer = snapshot.getValue(User.class);
                             saveStringToSharedPref("buyer", buyer.getName());
-                            ContinueReading(receipt);
+                            createHashMap4Receipt(receipt);
                             CustomReceiptListAdapter adapter = new CustomReceiptListAdapter(receiptHistoryDataList);
                             listView.setAdapter(adapter);
                         }
@@ -96,7 +96,7 @@ public class ReceiptHistory extends AppCompatActivity {
      *
      * @param receipt: The Receipt Object that was read from the database.
      */
-    public void ContinueReading(Receipt receipt) {
+    public void createHashMap4Receipt(Receipt receipt) {
         HashMap<String, String> data = new HashMap<>();
         SharedPreferences sharedPreferences = getSharedPreferences("my_shared_prefs", MODE_PRIVATE);
         String buyerName = sharedPreferences.getString("buyer", null);

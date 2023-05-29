@@ -32,7 +32,7 @@
             android:layout_gravity="center"
             android:layout_weight="8"
             android:autoSizeTextType="uniform"
-            android:onClick="ProfilePic"
+            android:onClick="openGalleryOrCamera"
             android:src="@drawable/login" />
 
     </LinearLayout>

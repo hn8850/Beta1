@@ -124,8 +124,8 @@ public class ViewUser extends AppCompatActivity {
 
                 DataSnapshot reviewsSnapshot = snapshot.child("Reviews");
 
-                int sumOfStars = 0;
-                int count = 0;
+                double sumOfStars = 0;
+                double count = 0;
                 for (DataSnapshot reviewSnapshot : reviewsSnapshot.getChildren()) {
                     Review review = reviewSnapshot.getValue(Review.class);
                     if (recentReviewDataList.size() < 3) {
@@ -154,7 +154,7 @@ public class ViewUser extends AppCompatActivity {
                     allReviewsBtn.setClickable(false);
                 } else {
                     double average = sumOfStars / count;
-                    rating.setText("Average Ratings: " + average);
+                    rating.setText("Average Ratings: " + String.valueOf(average).substring(0,4));
                 }
 
                 progressDialog.dismiss();

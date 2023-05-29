@@ -59,8 +59,8 @@ public class ReviewHistory extends AppCompatActivity {
         reviewsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                int sumOfStars = 0;
-                int count = 0;
+                double sumOfStars = 0;
+                double count = 0;
                 for (DataSnapshot snapshot1 : snapshot.getChildren()) {
                     Review review = snapshot1.getValue(Review.class);
                     sumOfStars = sumOfStars + review.getStars();
@@ -79,7 +79,7 @@ public class ReviewHistory extends AppCompatActivity {
                     starIv.setImageResource(0);
                 } else {
                     double average = sumOfStars / count;
-                    rating.setText("Average Ratings: " + average);
+                    rating.setText("Average Ratings: " + String.valueOf(average).substring(0,4));
                     CustomReviewListAdapter adapter = new CustomReviewListAdapter(reviewHistoryDataList);
                     listView.setAdapter(adapter);
                 }
