@@ -79,7 +79,8 @@ public class ReviewHistory extends AppCompatActivity {
                     starIv.setImageResource(0);
                 } else {
                     double average = sumOfStars / count;
-                    rating.setText("Average Ratings: " + String.valueOf(average).substring(0,4));
+                    if (String.valueOf(average).length()>=5)rating.setText("Average Ratings: " + String.valueOf(average).substring(0,4));
+                    else rating.setText("Average Ratings: " + String.valueOf(average));
                     CustomReviewListAdapter adapter = new CustomReviewListAdapter(reviewHistoryDataList);
                     listView.setAdapter(adapter);
                 }

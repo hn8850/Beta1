@@ -101,6 +101,7 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
     ValueEventListener parkAdUpdateListener;
     FirebaseAuth mAuth;
     String currUserID;
+    String searchQuery;
 
     LatLng searchedParkAdLocation;
 
@@ -512,7 +513,7 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
             @Override
             public void onClick(View v) {
                 // Get the user input
-                try {
+
                     String date1 = editTextDD1.getText().toString() + "/" +
                             editTextMM1.getText().toString() + "/" +
                             editTextYYYY1.getText().toString();
@@ -521,31 +522,38 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
                             editTextMM2.getText().toString() + "/" +
                             editTextYYYY2.getText().toString();
 
-                    date1 = Services.addLeadingZerosToDate(date1, true);
-                    date2 = Services.addLeadingZerosToDate(date2, true);
-
-
-                    if (Services.isValidDate2(date1) && Services.isValidDate2(date2)) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                        Date Date1 = sdf.parse(date1);
-                        Date Date2 = sdf.parse(date2);
-                        if (Date2.after(Date1) || Date2.compareTo(Date1) == 0) {
-                            query.put("date1", date1);
-                            query.put("date2", date2);
-                            sortParkAds();
-                            dialog.dismiss();
-
-
-                        } else {
-                            Services.ErrorAlert("Dates must be in order!", Navi.this);
-                        }
-                    } else {
-                        Services.ErrorAlert("Please enter valid dates!", Navi.this);
+                    if (date1.matches("//") && date2.matches("//")){
+                        query.put("date1", "NONE");
+                        query.put("date2", "NONE");
+                        sortParkAds();
+                        dialog.dismiss();
                     }
+                    else{
+                        try {
+                            date1 = Services.addLeadingZerosToDate(date1, true);
+                            date2 = Services.addLeadingZerosToDate(date2, true);
+                            if (Services.isValidDate2(date1) && Services.isValidDate2(date2)) {
+                                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                                Date Date1 = sdf.parse(date1);
+                                Date Date2 = sdf.parse(date2);
+                                if (Date2.after(Date1) || Date2.compareTo(Date1) == 0) {
+                                    query.put("date1", date1);
+                                    query.put("date2", date2);
+                                    sortParkAds();
+                                    dialog.dismiss();
 
-                } catch (Exception e) {
-                    Services.ErrorAlert("Please enter valid dates!",Navi.this);
-                }
+
+                                } else {
+                                    Services.ErrorAlert("Dates must be in order!", Navi.this);
+                                }
+                            } else {
+                                Services.ErrorAlert("Please enter valid dates!", Navi.this);
+                            }
+
+                        } catch (Exception e) {
+                            Services.ErrorAlert(e.getMessage(),Navi.this);
+                        }
+                    }
             }
         });
 
@@ -612,7 +620,12 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
         for (ParkAd parkAd : sortedAds) {
             LatLng location = new LatLng(Double.parseDouble(parkAd.getLatitude()), Double.parseDouble(parkAd.getLongitude()));
             MarkerOptions markerOptions;
-            if (searchedParkAdLocation != null && location.latitude == searchedParkAdLocation.latitude && location.longitude == searchedParkAdLocation.longitude) {
+            if (searchQuery!=null)     System.out.println("QUERY:" + searchQuery);
+            else             System.out.println("QUERY:NULL");
+            System.out.println("TEXT:" + searchBar.getText().toString());
+
+
+            if (searchQuery!=null &&searchQuery.matches(searchBar.getText().toString()) && location.latitude == searchedParkAdLocation.latitude && location.longitude == searchedParkAdLocation.longitude) {
                 markerOptions = new MarkerOptions().icon(greenMarkerIcon)
                         .position(location)
                         .snippet(String.valueOf(parkAd.getHourlyRate()));
@@ -641,7 +654,6 @@ public class Navi extends AppCompatActivity implements OnMapReadyCallback {
             marker.setIcon(blueMarkerIcon);
 
         }
-        String searchQuery;
         try {
             searchQuery = searchBar.getText().toString().trim();
         } catch (Exception e) {

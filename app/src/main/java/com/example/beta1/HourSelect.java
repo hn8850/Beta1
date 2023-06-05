@@ -146,8 +146,8 @@ public class HourSelect extends AppCompatActivity {
      */
     public void setTimeBar() {
         timeBarView = findViewById(R.id.time_bar_view);
-        timeBarView.setTopNumber(getHour(topHour));
-        timeBarView.setBottomNumber(getHour(bottomHour));
+        timeBarView.setTopNumber(getValueOfHour(topHour));
+        timeBarView.setBottomNumber(getValueOfHour(bottomHour));
         getSegments();
 
     }
@@ -325,7 +325,7 @@ public class HourSelect extends AppCompatActivity {
                 return false;
             }
         }
-        if (getHour(hour2) <= getHour(hour1)) return false;
+        if (getValueOfHour(hour2) <= getValueOfHour(hour1)) return false;
 
         if (!Services.isHourBetween(hour2, topHour, bottomHour)) {
             if (!(hour2.matches(bottomHour))) {
@@ -353,10 +353,10 @@ public class HourSelect extends AppCompatActivity {
      * described in the limit1 and limit2 Strings.
      */
     public static boolean checkOverlap(String beginHour, String endHour, String limit1, String limit2) {
-        double begin = getHour(beginHour);
-        double end = getHour(endHour);
-        double limitOne = getHour(limit1);
-        double limitTwo = getHour(limit2);
+        double begin = getValueOfHour(beginHour);
+        double end = getValueOfHour(endHour);
+        double limitOne = getValueOfHour(limit1);
+        double limitTwo = getValueOfHour(limit2);
 
         if (begin > end) {
             return false;
@@ -375,7 +375,7 @@ public class HourSelect extends AppCompatActivity {
      * @param time: Time String
      * @return the double value of the given time String (e.g: the input "16:45" will return 1645).
      */
-    private static double getHour(String time) {
+    private static double getValueOfHour(String time) {
         String[] parts = time.split(":");
         int hour = Integer.parseInt(parts[0]);
         int minute = Integer.parseInt(parts[1]);
@@ -456,7 +456,6 @@ public class HourSelect extends AppCompatActivity {
                 transactionInfo.put("totalPrice", String.valueOf(finalPrice));
                 transactionInfo.put("totalPriceStatus", "FINAL");
                 transactionInfo.put("currencyCode", "NIS");
-
                 try {
                     cardPaymentMethod.put("type", "CARD");
                     cardPaymentMethod.put("tokenizationSpecification", tokenizationSpecification);
@@ -468,7 +467,6 @@ public class HourSelect extends AppCompatActivity {
                     billingAddressParameters.put("format", "FULL");
                     parameters2.put("billingAddressParameters", billingAddressParameters);
                     cardPaymentMethod.put("parameters", parameters2);
-
                     try {
                         merchantInfo.put("merchantName", "Example Merchant");
                         merchantInfo.put("merchantId", "01234567890123456789");
@@ -583,7 +581,7 @@ public class HourSelect extends AppCompatActivity {
                     } else {
                         SmsManager smsManager = SmsManager.getDefault();
                         String formattedNumber = "+972" + seller.getPhoneNumber().substring(1);
-                        smsManager.sendTextMessage(formattedNumber, null, "Someone has ordered from your ParkAd!", null, null);
+                        smsManager.sendTextMessage(formattedNumber, null, "I ordered from your ParkAd using Spark!", null, null);
                     }
                 } else {
                     SmsManager smsManager = SmsManager.getDefault();

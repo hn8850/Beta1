@@ -154,7 +154,9 @@ public class ViewUser extends AppCompatActivity {
                     allReviewsBtn.setClickable(false);
                 } else {
                     double average = sumOfStars / count;
-                    rating.setText("Average Ratings: " + String.valueOf(average).substring(0,4));
+                    if (String.valueOf(average).length()>=5)rating.setText("Average Ratings: " + String.valueOf(average).substring(0,4));
+                    else rating.setText("Average Ratings: " + String.valueOf(average));
+
                 }
 
                 progressDialog.dismiss();
